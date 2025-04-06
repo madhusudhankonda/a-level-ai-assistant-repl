@@ -34,8 +34,8 @@ app.register_blueprint(user_bp, url_prefix='/user')
 # Redirect root to user interface
 @app.route('/')
 def index():
-    from flask import redirect
-    return redirect('/user')
+    from flask import redirect, url_for
+    return redirect(url_for('user.index'))
 
 # Create database tables
 with app.app_context():
