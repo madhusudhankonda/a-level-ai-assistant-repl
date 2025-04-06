@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Process Paper - {{ paper.title }} - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Process Paper</h1>
+        <p class="lead">{{ paper.title }} ({{ paper.subject }})</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<hr>
+
+<!-- Paper details card -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <p><strong>File:</strong> {{ paper.original_filename }}</p>
+            </div>
+            <div class="col-md-4">
+                <p><strong>Uploaded:</strong> {{ paper.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+            </div>
+            <div class="col-md-4">
+                <p>
+                    <strong>Status:</strong> 
+                    <span id="paperStatus">
+                        {% if paper.processed %}
+                        <span class="badge bg-success">Processed</span>
+                        {% else %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing controls -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Processing Options</h5>
+            </div>
+            <div class="card-body">
+                {% if not paper.processed %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> This paper needs to be processed to extract questions and generate answers.
+                </div>
+                
+                <div class="d-grid">
+                    <button class="btn btn-primary btn-lg" onclick="processPaper({{ paper.id }})">
+                        <i class="fas fa-play me-1"></i> Start Processing
+                    </button>
+                </div>
+                
+                <div class="mt-3 small">
+                    <p>Processing will:</p>
+                    <ol>
+                        <li>Clip individual questions from the paper</li>
+                        <li>Generate AI-powered answers for each question</li>
+                        <li>Make the paper available to students</li>
+                    </ol>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i> This paper has been processed and is ready for students.
+                </div>
+                
+                <p>The paper contains {{ paper.questions|length }} questions with AI-generated answers.</p>
+                
+                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i> View in Student Mode
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Processing Logs</h5>
+            </div>
+            <div class="card-body">
+                <div id="logsList" class="logs-container">
+                    {% if logs %}
+                        {% for log in logs %}
+                        <div class="log-entry mb-2 p-2 border-bottom">
+                            <div>
+                                <strong>{{ log.action }}</strong> 
+                                <span class="{% if log.status == 'Success' %}text-success{% else %}text-danger{% endif %}">
+                                    {{ log.status }}
+                                </span>
+                            </div>
+                            <div>{{ log.message }}</div>
+                            <div class="text-muted small">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No processing logs available yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Processing Modal -->
+<div class="modal fade" id="processingModal" tabindex="-1" aria-labelledby="processingModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="processingModalLabel">Processing Paper</h5>
+            </div>
+            <div class="modal-body">
+                <!-- Processing Steps -->
+                <div class="processing-steps">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">1. Clipping Questions</span>
+                                <div id="clipStatus"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">2. Generating Answers</span>
+                                <div id="answerStatus"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Processing Logs -->
+                <div id="processingLogs" class="border p-3 rounded">
+                    <div class="alert alert-info">Preparing to process paper...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize logs refresh if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if paper.processed %}
+        // Refresh logs periodically
+        setInterval(function() {
+            refreshLogs({{ paper.id }});
+        }, 10000);
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ paper.title }} - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>{{ paper.title }}</h1>
+        <p class="lead">
+            <span class="badge bg-subject-{{ paper.subject.lower() }}">{{ paper.subject }}</span>
+            <small class="text-muted ms-2">{{ questions|length }} questions</small>
+        </p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Papers
+        </a>
+    </div>
+</div>
+
+<hr>
+
+<!-- Instructions -->
+<div class="alert alert-info mb-4">
+    <div class="d-flex">
+        <div class="me-3">
+            <i class="fas fa-lightbulb fa-2x"></i>
+        </div>
+        <div>
+            <h5 class="alert-heading">How to use this study aid</h5>
+            <p class="mb-0">Attempt each question on your own first. When ready, click "Show Answer" to see the correct solution, or "Explain Answer" to get a detailed explanation of concepts and methodology.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Questions List -->
+<div class="row">
+    <div class="col-12">
+        {% for question in questions %}
+        <div class="card question-card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Question {{ question.question_number }}</h5>
+            </div>
+            <div class="card-body">
+                <!-- Question Image -->
+                <div class="text-center mb-3">
+                    <img src="{{ url_for('user.get_question_image', question_id=question.id) }}" 
+                         alt="Question {{ question.question_number }}" 
+                         class="question-image img-fluid">
+                </div>
+                
+                <!-- Controls -->
+                <div class="question-controls">
+                    <button class="btn btn-primary" onclick="viewAnswer({{ question.id }})" data-bs-toggle="collapse" data-bs-target="#answerCollapse{{ question.id }}">
+                        <i class="fas fa-eye me-1"></i> Show Answer
+                    </button>
+                    <button class="btn btn-info" onclick="explainAnswer({{ question.id }})" data-bs-toggle="collapse" data-bs-target="#explanationCollapse{{ question.id }}">
+                        <i class="fas fa-chalkboard-teacher me-1"></i> Explain Answer
+                    </button>
+                </div>
+                
+                <!-- Answer Section (Collapsed) -->
+                <div class="collapse mt-3" id="answerCollapse{{ question.id }}">
+                    <div class="answer-section">
+                        <h5><i class="fas fa-check-circle text-success"></i> Answer</h5>
+                        <div id="answer-{{ question.id }}">
+                            <div class="d-flex justify-content-center my-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Explanation Section (Collapsed) -->
+                <div class="collapse mt-3" id="explanationCollapse{{ question.id }}">
+                    <div class="explanation-section">
+                        <h5><i class="fas fa-lightbulb text-warning"></i> Explanation</h5>
+                        <div id="explanation-{{ question.id }}">
+                            <div class="d-flex justify-content-center my-3">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

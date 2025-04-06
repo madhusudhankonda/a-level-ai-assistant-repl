@@ -1,0 +1,120 @@
+/* Custom CSS styles for A-Level AI Assistant App */
+
+/* General styling */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+}
+
+/* Question display */
+.question-card {
+    margin-bottom: 1.5rem;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.question-image {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+}
+
+.question-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Answer and explanation sections */
+.answer-section, .explanation-section {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    background-color: rgba(var(--bs-dark-rgb), 0.05);
+}
+
+.answer-section h5, .explanation-section h5 {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.answer-section h5 i, .explanation-section h5 i {
+    margin-right: 8px;
+}
+
+.answer-content {
+    white-space: pre-line;
+    line-height: 1.6;
+}
+
+/* Admin paper processing */
+.processing-steps {
+    margin-bottom: 20px;
+}
+
+.log-entry {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    background-color: rgba(var(--bs-dark-rgb), 0.03);
+}
+
+/* Custom backgrounds */
+.bg-subject-maths {
+    background-color: rgba(var(--bs-info-rgb), 0.1);
+    border-left: 4px solid var(--bs-info);
+}
+
+.bg-subject-physics {
+    background-color: rgba(var(--bs-success-rgb), 0.1);
+    border-left: 4px solid var(--bs-success);
+}
+
+.bg-subject-chemistry {
+    background-color: rgba(var(--bs-warning-rgb), 0.1);
+    border-left: 4px solid var(--bs-warning);
+}
+
+.bg-subject-biology {
+    background-color: rgba(var(--bs-danger-rgb), 0.1);
+    border-left: 4px solid var(--bs-danger);
+}
+
+/* Paper list */
+.paper-list-item {
+    transition: transform 0.2s;
+    cursor: pointer;
+}
+
+.paper-list-item:hover {
+    transform: translateY(-3px);
+}
+
+/* Admin upload form */
+.upload-paper-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Processing logs */
+#processingLogs {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Dark mode specific adjustments */
+[data-bs-theme="dark"] .answer-section,
+[data-bs-theme="dark"] .explanation-section {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .log-entry {
+    background-color: rgba(255, 255, 255, 0.03);
+}

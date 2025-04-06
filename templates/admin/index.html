@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h1>Admin Dashboard</h1>
+        <p class="lead">Manage question papers and generate AI-powered answers</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPaperModal">
+            <i class="fas fa-upload me-1"></i> Upload New Paper
+        </button>
+    </div>
+</div>
+
+<hr>
+
+<!-- Papers List -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Question Papers</h5>
+            </div>
+            <div class="card-body">
+                {% if papers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Subject</th>
+                                <th>Uploaded</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for paper in papers %}
+                            <tr>
+                                <td>{{ paper.title }}</td>
+                                <td>
+                                    <span class="badge bg-subject-{{ paper.subject.lower() }}">
+                                        {{ paper.subject }}
+                                    </span>
+                                </td>
+                                <td>{{ paper.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if paper.processed %}
+                                    <span class="badge bg-success">Processed</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.process_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary">
+                                        {% if paper.processed %}
+                                        <i class="fas fa-eye me-1"></i> View
+                                        {% else %}
+                                        <i class="fas fa-cogs me-1"></i> Process
+                                        {% endif %}
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> No papers uploaded yet. Use the "Upload New Paper" button to add your first paper.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Paper Modal -->
+<div class="modal fade" id="uploadPaperModal" tabindex="-1" aria-labelledby="uploadPaperModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPaperModalLabel">Upload Question Paper</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('admin.upload_paper') }}" method="POST" enctype="multipart/form-data" class="upload-paper-form">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Paper Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required placeholder="e.g., June 2023 Mathematics Paper 1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <select class="form-select" id="subject" name="subject" required>
+                            <option value="" selected disabled>Select Subject</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paper_file" class="form-label">Question Paper File (PDF or Image)</label>
+                        <input type="file" class="form-control" id="paper_file" name="paper_file" required accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="form-text">Upload a clear scan of the question paper</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i> Upload Paper
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
