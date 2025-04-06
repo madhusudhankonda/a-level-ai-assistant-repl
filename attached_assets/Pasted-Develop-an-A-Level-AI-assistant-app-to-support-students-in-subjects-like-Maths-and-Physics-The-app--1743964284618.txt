@@ -1,0 +1,52 @@
+Develop an A-Level AI assistant app to support students in subjects like Maths and Physics. The app will have two primary modules: Admin and User.
+
+Admin Module Requirements:
+1. Data Loading & Preparation:
+    * Load pre-existing question papers and corresponding mark schemes from a local data folder.
+    * Each question paper contains questions that are pre-clipped as PNG images (e.g., “703866-q1.png”).
+2. Image Clipping & Storage:
+    * Process each question paper by clipping individual questions into separate PNG images.
+    * Save the PNGs in a sub-folder named after the question paper.
+    * Ensure every PNG is uniquely keyed to its respective question.
+3. Automated Answer Generation:
+    * For each clipped question, invoke GPT-4o to generate an answer that aligns with the loaded mark scheme.
+    * Map each question (via its PNG) to the corresponding generated answer.
+4. Key Mapping & Logging:
+    * Create a comprehensive key map linking the question paper, its PNG images, and the generated answers.
+    * Log a confirmation message once the entire process (clipping, answer generation, and key mapping) is complete.
+
+User Module Requirements:
+1. User Interface & Navigation:
+    * Provide a clean, responsive interface where students can select a question paper from a list.
+    * Display the selected questions centrally on a canvas as PNG images.
+2. Interactive Features:
+    * Allow students to attempt solving questions offline.
+    * For each question, offer two interactive options:
+        * Show Answer:
+            * A button that, when clicked, immediately reveals the pre-generated answer.
+        * Explain Answer:
+            * A button that triggers GPT-4o to provide a clear, succinct explanation of the answer.
+            * The explanation should be detailed enough to help the student understand the underlying concepts.
+
+Technical & Development Guidelines:
+* Modular Architecture:
+    * Develop separate modules for the admin and user functionalities to ensure scalability and ease of future updates.
+* Local Data Management:
+    * Securely access and manage the local data folder containing question papers and mark schemes.
+* LLM Integration:
+    * Integrate GPT-4o for both initial answer generation (admin module) and on-demand answer explanations (user module).
+* Error Handling & Logging:
+    * Implement robust error handling and logging to monitor processing and user interactions.
+* Documentation & Maintainability:
+    * Write clear, maintainable code with comprehensive inline documentation.
+    * Provide deployment instructions and user guides for troubleshooting and updates.
+* Security Measures:
+    * Incorporate basic security practices to protect local data (especially mark schemes) from unauthorized access.
+* Extensibility:
+    * Design the app to be easily extended to include additional subjects or functionalities in the future.
+
+Deliverables:
+* Complete source code for the A-Level AI assistant app.
+* Detailed deployment instructions.
+* Documentation outlining the architecture and structure of both admin and user modules.
+* Test cases or guidelines to verify functionalities such as image clipping, answer generation, and interactive user responses.
