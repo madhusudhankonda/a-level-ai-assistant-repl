@@ -3,166 +3,372 @@
 {% block title %}Available Papers - A-Level AI Assistant{% endblock %}
 
 {% block content %}
-<div class="row mb-4 py-3">
-    <div class="col-md-8">
-        <h1 class="display-5 mb-3">A-Level AI Assistant</h1>
-        <p class="lead">Get instant explanations for A-Level questions in Mathematics, Physics, Chemistry, and Biology</p>
-    </div>
-    <div class="col-md-4 text-center">
-        <div class="card">
-            <div class="card-body text-center">
-                <i class="fas fa-camera fa-3x mb-3 text-primary"></i>
-                <h5 class="card-title">Analyze with Camera</h5>
-                <p class="card-text">Take a photo of any question for an instant AI-powered explanation</p>
-                <a href="{{ url_for('user.camera_capture') }}" class="btn btn-primary">
-                    <i class="fas fa-camera me-1"></i> Capture Now
-                </a>
+<!-- Hero section with mobile optimization -->
+<div class="hero-section mb-4 py-3">
+    <div class="row align-items-center">
+        <div class="col-md-8 mb-4 mb-md-0">
+            <h1 class="display-5 mb-3">A-Level AI Assistant</h1>
+            <p class="lead">Get instant explanations for A-Level questions in Mathematics, Physics, Chemistry, and Biology</p>
+        </div>
+        <div class="col-md-4">
+            <!-- Camera capture card with prominent styling for easy mobile access -->
+            <div class="card border-primary shadow-sm">
+                <div class="card-body text-center p-4">
+                    <i class="fas fa-camera fa-3x mb-3 text-primary"></i>
+                    <h5 class="card-title">Analyze with Camera</h5>
+                    <p class="card-text d-none d-sm-block">Take a photo of any question for an instant AI-powered explanation</p>
+                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-lg btn-primary w-100">
+                        <i class="fas fa-camera me-1"></i> Capture Question
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<h2 class="mb-4">Available Question Papers</h2>
-
-<div class="row">
-    <!-- Mathematics -->
-    <div class="col-12 mb-4">
-        <h3>
-            <i class="fas fa-square-root-alt me-2"></i>
-            Mathematics
-        </h3>
-        <hr>
-        <div class="row">
-            {% set math_papers = papers|selectattr('subject', 'equalto', 'Mathematics')|list %}
-            {% if math_papers %}
-                {% for paper in math_papers %}
-                <div class="col-md-4 mb-4">
-                    <div class="card question-card subject-mathematics h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ paper.title }}</h5>
-                            <p class="card-text">{{ paper.description }}</p>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i> View Questions
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> No Mathematics papers available at the moment.
-                    </div>
-                </div>
-            {% endif %}
-        </div>
+<!-- Mobile-optimized subject navigation -->
+<div class="subject-navigation mb-4">
+    <h2 class="mb-3">Available Question Papers</h2>
+    
+    <!-- Mobile subject tabs -->
+    <div class="d-md-none mb-3">
+        <ul class="nav nav-pills nav-fill">
+            <li class="nav-item">
+                <a class="nav-link active" href="#math-section" data-bs-toggle="pill">Math</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#physics-section" data-bs-toggle="pill">Physics</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#chemistry-section" data-bs-toggle="pill">Chemistry</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#biology-section" data-bs-toggle="pill">Biology</a>
+            </li>
+        </ul>
     </div>
     
-    <!-- Physics -->
-    <div class="col-12 mb-4">
-        <h3>
-            <i class="fas fa-atom me-2"></i>
-            Physics
-        </h3>
-        <hr>
-        <div class="row">
-            {% set physics_papers = papers|selectattr('subject', 'equalto', 'Physics')|list %}
-            {% if physics_papers %}
-                {% for paper in physics_papers %}
-                <div class="col-md-4 mb-4">
-                    <div class="card question-card subject-physics h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ paper.title }}</h5>
-                            <p class="card-text">{{ paper.description }}</p>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i> View Questions
-                            </a>
+    <!-- Tab content -->
+    <div class="tab-content">
+        <!-- Mathematics Section -->
+        <div class="tab-pane fade show active" id="math-section">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-square-root-alt me-2 fs-4"></i>
+                <h3 class="mb-0">Mathematics</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set math_papers = papers|selectattr('subject', 'equalto', 'Mathematics')|list %}
+                {% if math_papers %}
+                    {% for paper in math_papers %}
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card question-card subject-mathematics h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text small">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> No Physics papers available at the moment.
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Mathematics papers available at the moment.
+                        </div>
                     </div>
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
-    </div>
-    
-    <!-- Chemistry -->
-    <div class="col-12 mb-4">
-        <h3>
-            <i class="fas fa-flask me-2"></i>
-            Chemistry
-        </h3>
-        <hr>
-        <div class="row">
-            {% set chemistry_papers = papers|selectattr('subject', 'equalto', 'Chemistry')|list %}
-            {% if chemistry_papers %}
-                {% for paper in chemistry_papers %}
-                <div class="col-md-4 mb-4">
-                    <div class="card question-card subject-chemistry h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ paper.title }}</h5>
-                            <p class="card-text">{{ paper.description }}</p>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i> View Questions
-                            </a>
+        
+        <!-- Physics Section -->
+        <div class="tab-pane fade" id="physics-section">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-atom me-2 fs-4"></i>
+                <h3 class="mb-0">Physics</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set physics_papers = papers|selectattr('subject', 'equalto', 'Physics')|list %}
+                {% if physics_papers %}
+                    {% for paper in physics_papers %}
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card question-card subject-physics h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text small">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> No Chemistry papers available at the moment.
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Physics papers available at the moment.
+                        </div>
                     </div>
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
-    </div>
-    
-    <!-- Biology -->
-    <div class="col-12 mb-4">
-        <h3>
-            <i class="fas fa-dna me-2"></i>
-            Biology
-        </h3>
-        <hr>
-        <div class="row">
-            {% set biology_papers = papers|selectattr('subject', 'equalto', 'Biology')|list %}
-            {% if biology_papers %}
-                {% for paper in biology_papers %}
-                <div class="col-md-4 mb-4">
-                    <div class="card question-card subject-biology h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ paper.title }}</h5>
-                            <p class="card-text">{{ paper.description }}</p>
-                        </div>
-                        <div class="card-footer bg-transparent">
-                            <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i> View Questions
-                            </a>
+        
+        <!-- Chemistry Section -->
+        <div class="tab-pane fade" id="chemistry-section">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-flask me-2 fs-4"></i>
+                <h3 class="mb-0">Chemistry</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set chemistry_papers = papers|selectattr('subject', 'equalto', 'Chemistry')|list %}
+                {% if chemistry_papers %}
+                    {% for paper in chemistry_papers %}
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card question-card subject-chemistry h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text small">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i> No Biology papers available at the moment.
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Chemistry papers available at the moment.
+                        </div>
                     </div>
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Biology Section -->
+        <div class="tab-pane fade" id="biology-section">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-dna me-2 fs-4"></i>
+                <h3 class="mb-0">Biology</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set biology_papers = papers|selectattr('subject', 'equalto', 'Biology')|list %}
+                {% if biology_papers %}
+                    {% for paper in biology_papers %}
+                    <div class="col-md-4 col-sm-6 mb-4">
+                        <div class="card question-card subject-biology h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text small">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Biology papers available at the moment.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Only show all subjects on desktop -->
+<div class="d-none d-md-block">
+    <div class="row">
+        <!-- Mathematics (Desktop View) -->
+        <div class="col-12 mb-4">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-square-root-alt me-2 fs-4"></i>
+                <h3 class="mb-0">Mathematics</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set math_papers = papers|selectattr('subject', 'equalto', 'Mathematics')|list %}
+                {% if math_papers %}
+                    {% for paper in math_papers %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card question-card subject-mathematics h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Mathematics papers available at the moment.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Physics (Desktop View) -->
+        <div class="col-12 mb-4">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-atom me-2 fs-4"></i>
+                <h3 class="mb-0">Physics</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set physics_papers = papers|selectattr('subject', 'equalto', 'Physics')|list %}
+                {% if physics_papers %}
+                    {% for paper in physics_papers %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card question-card subject-physics h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Physics papers available at the moment.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Chemistry (Desktop View) -->
+        <div class="col-12 mb-4">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-flask me-2 fs-4"></i>
+                <h3 class="mb-0">Chemistry</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set chemistry_papers = papers|selectattr('subject', 'equalto', 'Chemistry')|list %}
+                {% if chemistry_papers %}
+                    {% for paper in chemistry_papers %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card question-card subject-chemistry h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Chemistry papers available at the moment.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Biology (Desktop View) -->
+        <div class="col-12 mb-4">
+            <div class="subject-header d-flex align-items-center mb-3">
+                <i class="fas fa-dna me-2 fs-4"></i>
+                <h3 class="mb-0">Biology</h3>
+            </div>
+            <hr>
+            <div class="row">
+                {% set biology_papers = papers|selectattr('subject', 'equalto', 'Biology')|list %}
+                {% if biology_papers %}
+                    {% for paper in biology_papers %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card question-card subject-biology h-100 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text">{{ paper.description }}</p>
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i> View Questions
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i> No Biology papers available at the moment.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle mobile tab navigation
+        const mobileNavLinks = document.querySelectorAll('.d-md-none .nav-link');
+        
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                mobileNavLinks.forEach(l => l.classList.remove('active'));
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Get target pane ID
+                const targetId = this.getAttribute('href');
+                
+                // Hide all panes
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Show target pane
+                const targetPane = document.querySelector(targetId);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

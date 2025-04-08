@@ -2,7 +2,10 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#212529">
     <title>{% block title %}A-Level AI Assistant{% endblock %}</title>
     
     <!-- Bootstrap CSS (Replit Dark Theme) -->
@@ -14,6 +17,50 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     
+    <!-- Mobile-specific styles -->
+    <style>
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            h1, .h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2, .h2 {
+                font-size: 1.5rem;
+            }
+            
+            .card {
+                margin-bottom: 15px;
+            }
+            
+            .math-container {
+                overflow-x: auto;
+                max-width: 100%;
+            }
+            
+            /* Improve tap targets for mobile */
+            .btn {
+                padding: 0.5rem 0.75rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            /* Fix nav spacing on mobile */
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            /* Better spacing for mobile forms */
+            .form-control, .form-select {
+                margin-bottom: 1rem;
+                height: 45px; /* Larger touch targets */
+            }
+        }
+    </style>
+    
     <!-- MathJax for rendering mathematical notation -->
     <script>
         MathJax = {
@@ -23,7 +70,8 @@
                 processEscapes: true
             },
             svg: {
-                fontCache: 'global'
+                fontCache: 'global',
+                scale: 1.1 /* Slightly larger equations for mobile */
             },
             options: {
                 enableMenu: false
