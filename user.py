@@ -5,7 +5,7 @@ import re
 import uuid
 from datetime import datetime
 from models import db, QuestionPaper, Question, Explanation
-from utils.openai_helper import generate_explanation
+from utils.openai_helper import generate_explanation, test_openai_connection
 
 # Create user blueprint
 user_bp = Blueprint('user', __name__, template_folder='templates/user')
@@ -25,6 +25,18 @@ def camera_capture():
     subjects = [s[0] for s in subjects]
     
     return render_template('user/camera_capture.html', subjects=subjects)
+
+@user_bp.route('/api/test-openai', methods=['GET'])
+def test_openai_api():
+    """Test endpoint to check OpenAI API connection"""
+    current_app.logger.info("Testing OpenAI API connection")
+    
+    success, message = test_openai_connection()
+    
+    return jsonify({
+        'success': success,
+        'message': message
+    })
 
 @user_bp.route('/paper/<int:paper_id>')
 def view_paper(paper_id):

@@ -2,6 +2,7 @@ import os
 import json
 from openai import OpenAI
 import logging
+import time
 
 # Get your API key from the environment variable
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -10,6 +11,37 @@ openai = OpenAI(api_key=OPENAI_API_KEY)
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def test_openai_connection():
+    """
+    Test the OpenAI connection with a simple text prompt
+    
+    Returns:
+        tuple: (success boolean, message string)
+    """
+    try:
+        logger.info("Testing OpenAI connection with simple text prompt")
+        
+        # Simple text completion to test the connection
+        response = openai.chat.completions.create(
+            model="gpt-4o",  # the newest OpenAI model
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": "Say hello world!"}
+            ],
+            max_tokens=10
+        )
+        
+        # Extract the response
+        message = response.choices[0].message.content
+        logger.info(f"OpenAI test successful. Response: {message}")
+        
+        return True, "OpenAI connection successful"
+        
+    except Exception as e:
+        error_message = str(e)
+        logger.error(f"OpenAI test failed: {error_message}")
+        return False, f"OpenAI connection failed: {error_message}"
 
 def generate_explanation(base64_image, subject):
     """
