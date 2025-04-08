@@ -10,7 +10,7 @@ admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
 # Helper function to get data folder
 def get_data_folder():
     """Get or create the data folder for storing papers and questions"""
-    data_folder = os.path.join(os.getcwd(), 'data')
+    data_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
     os.makedirs(data_folder, exist_ok=True)
     return data_folder
 

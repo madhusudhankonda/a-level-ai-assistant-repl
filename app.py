@@ -29,6 +29,10 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
 }
 
+# Make sure data directory exists
+data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+os.makedirs(data_dir, exist_ok=True)
+
 # Initialize the database with the app
 db.init_app(app)
 
@@ -37,7 +41,7 @@ from admin import admin_bp
 from user import user_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
-app.register_blueprint(user_bp, url_prefix='/user')
+app.register_blueprint(user_bp)  # No prefix for user routes to make them the main interface
 
 # Redirect root to user interface
 @app.route('/')
