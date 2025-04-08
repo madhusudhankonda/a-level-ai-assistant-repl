@@ -93,42 +93,78 @@ def process_math_notation(text):
 def analyze_captured_image():
     """API endpoint to analyze a question image captured with the camera"""
     try:
+        current_app.logger.info("Received image analysis request")
+        
+        # Validate request format
+        if not request.json:
+            current_app.logger.error("Invalid request format: No JSON data")
+            return jsonify({
+                'success': False,
+                'message': 'Invalid request format: No JSON data'
+            }), 400
+            
         # Get the image data and subject from the request
         image_data = request.json.get('image_data', '')
         subject = request.json.get('subject', 'Mathematics')
         
+        current_app.logger.info(f"Processing image for subject: {subject}")
+        
         if not image_data:
+            current_app.logger.error("No image data provided")
             return jsonify({
                 'success': False,
                 'message': 'No image data provided'
             }), 400
         
         # Strip the data URI prefix if present
-        if image_data.startswith('data:image'):
+        if isinstance(image_data, str) and 'base64' in image_data and ',' in image_data:
+            # Extract the base64 part after the comma
             image_data = image_data.split(',')[1]
+            current_app.logger.info("Base64 data extracted from data URI")
+        else:
+            current_app.logger.info("Using provided image data as-is")
         
         # Create data directory if it doesn't exist
         data_dir = os.path.join(os.getcwd(), 'data', 'captured_images')
         if not os.path.exists(data_dir):
             os.makedirs(data_dir)
+            current_app.logger.info(f"Created directory: {data_dir}")
         
         # Generate a unique filename and save the image
         filename = f"captured_{uuid.uuid4().hex}.png"
         image_path = os.path.join(data_dir, filename)
         
-        # Decode and save the base64 image
-        image_bytes = base64.b64decode(image_data)
-        with open(image_path, 'wb') as f:
-            f.write(image_bytes)
+        try:
+            # Decode and save the base64 image
+            image_bytes = base64.b64decode(image_data)
+            with open(image_path, 'wb') as f:
+                f.write(image_bytes)
+            current_app.logger.info(f"Image saved to {image_path}")
+        except Exception as image_error:
+            current_app.logger.error(f"Error saving image: {str(image_error)}")
+            return jsonify({
+                'success': False,
+                'message': f'Error processing image data: {str(image_error)}'
+            }), 400
         
-        # Generate explanation using OpenAI
-        explanation_text = generate_explanation(
-            image_data,
-            subject
-        )
+        try:
+            # Generate explanation using OpenAI
+            current_app.logger.info("Calling OpenAI for explanation")
+            explanation_text = generate_explanation(
+                image_data,
+                subject
+            )
+            current_app.logger.info("Received explanation from OpenAI")
+        except Exception as ai_error:
+            current_app.logger.error(f"OpenAI API error: {str(ai_error)}")
+            return jsonify({
+                'success': False,
+                'message': f'Error generating explanation: {str(ai_error)}'
+            }), 500
         
         # Process the mathematical notation for display
         processed_text = process_math_notation(explanation_text)
+        current_app.logger.info("Math notation processed")
         
         return jsonify({
             'success': True,

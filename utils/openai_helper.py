@@ -109,6 +109,13 @@ Follow these guidelines:
 """
 
     try:
+        # Prepare the image URL for OpenAI API
+        image_url = f"data:image/png;base64,{base64_image}"
+        
+        # Make sure the image URL is properly formatted
+        if not base64_image.strip():
+            raise ValueError("Empty base64 image data provided")
+            
         # Make the API call to OpenAI
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -116,7 +123,7 @@ Follow these guidelines:
                 {"role": "system", "content": system_content},
                 {"role": "user", "content": [
                     {"type": "text", "text": f"Please explain this {subject} question in detail with step-by-step working:"},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                    {"type": "image_url", "image_url": {"url": image_url}}
                 ]}
             ],
             max_tokens=1500
