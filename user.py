@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app, send_file
 import os
 import base64
+import re
 from models import db, QuestionPaper, Question, Explanation
 from utils.openai_helper import generate_explanation
 
@@ -43,6 +44,28 @@ def get_question_image(question_id):
             'message': 'Error retrieving image'
         }), 404
 
+def process_math_notation(text):
+    """Process mathematical notation in explanation text to ensure proper rendering"""
+    
+    # Replace markdown headers with HTML headers to avoid conflicts with LaTeX
+    text = re.sub(r'### (.*?)(\n|$)', r'<h3>\1</h3>\n', text)
+    text = re.sub(r'#### (.*?)(\n|$)', r'<h4>\1</h4>\n', text)
+    
+    # Wrap display math ($$..$$) in special containers for better styling
+    text = re.sub(r'\$\$(.*?)\$\$', r'<div class="math-container display-math">\n$$\1$$\n</div>', text, flags=re.DOTALL)
+    
+    # Ensure inline math ($...$) is properly spaced
+    text = re.sub(r'([^\$])\$([^\$])', r'\1 $\2', text)
+    text = re.sub(r'([^\$])\$([^\$])', r'\1$ \2', text)
+    
+    # Wrap code blocks
+    text = re.sub(r'```(.*?)```', r'<pre><code>\1</code></pre>', text, flags=re.DOTALL)
+    
+    # Add class to the content for styling
+    text = f'<div class="markdown-content">{text}</div>'
+    
+    return text
+
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
 def explain_question(question_id):
     """API endpoint to get an explanation for a question"""
@@ -65,7 +88,10 @@ def explain_question(question_id):
                 paper.subject
             )
             
-            # Save the explanation
+            # Process the mathematical notation
+            processed_text = process_math_notation(explanation_text)
+            
+            # Save the original explanation
             explanation = Explanation(
                 question_id=question_id,
                 explanation_text=explanation_text
@@ -77,7 +103,7 @@ def explain_question(question_id):
             return jsonify({
                 'success': True,
                 'question_id': question_id,
-                'explanation': explanation_text,
+                'explanation': processed_text,
                 'is_new': True
             })
             
@@ -89,10 +115,12 @@ def explain_question(question_id):
             }), 500
     
     # Return existing explanation for GET requests when one exists
+    processed_text = process_math_notation(existing_explanation.explanation_text)
+    
     return jsonify({
         'success': True,
         'question_id': question_id,
-        'explanation': existing_explanation.explanation_text,
+        'explanation': processed_text,
         'is_new': False,
         'generated_at': existing_explanation.generated_at.strftime('%Y-%m-%d %H:%M:%S')
     })

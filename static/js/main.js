@@ -85,5 +85,17 @@ function formatExplanation(text) {
     let formatted = text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
     formatted = '<p>' + formatted + '</p>';
     
+    // Trigger MathJax rendering after a small delay to ensure DOM is updated
+    setTimeout(function() {
+        if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+            console.log('Triggering MathJax typesetting from main.js');
+            MathJax.typesetPromise()
+                .then(() => console.log('MathJax typesetting complete'))
+                .catch(err => console.error('MathJax typesetting failed:', err));
+        } else {
+            console.warn('MathJax not available for typesetting');
+        }
+    }, 500);
+    
     return formatted;
 }

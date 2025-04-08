@@ -166,8 +166,17 @@
                     explanationLoading.style.display = 'none';
                     
                     if (data.success) {
-                        // Format the explanation text with line breaks and math
-                        explanationContent.innerHTML = formatExplanation(data.explanation);
+                        // The explanation is already pre-processed on the server
+                        explanationContent.innerHTML = data.explanation;
+                        
+                        // Trigger MathJax typesetting
+                        setTimeout(function() {
+                            if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                                MathJax.typesetPromise([explanationContent])
+                                    .then(() => console.log('MathJax typesetting complete'))
+                                    .catch(err => console.error('MathJax typesetting failed:', err));
+                            }
+                        }, 300);
                     } else {
                         explanationContent.innerHTML = `
                             <div class="alert alert-danger">
@@ -184,22 +193,6 @@
                         </div>
                     `;
                 });
-        }
-        
-        // Function to format explanation text
-        function formatExplanation(text) {
-            // Replace line breaks with paragraphs
-            let formatted = text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-            formatted = '<p>' + formatted + '</p>';
-            
-            // Process the content for MathJax rendering after adding to DOM
-            setTimeout(function() {
-                if (typeof MathJax !== 'undefined') {
-                    MathJax.typesetPromise && MathJax.typesetPromise();
-                }
-            }, 100);
-            
-            return formatted;
         }
         
         // If there's at least one question, select the first one by default

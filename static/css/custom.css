@@ -1,102 +1,145 @@
-/* Custom styles for the AI Assistant application */
+/* A-Level AI Assistant Custom Styles */
 
-/* Subject-specific badges */
-.bg-subject-mathematics {
-    background-color: #3498db !important;
-}
-
-.bg-subject-physics {
-    background-color: #9b59b6 !important;
-}
-
-.bg-subject-chemistry {
-    background-color: #e74c3c !important;
-}
-
-.bg-subject-biology {
-    background-color: #2ecc71 !important;
-}
-
-.bg-subject-computer.science {
-    background-color: #f39c12 !important;
-}
-
-.bg-subject-economics {
-    background-color: #1abc9c !important;
-}
-
-.bg-subject-psychology {
-    background-color: #e67e22 !important;
-}
-
-/* Paper cards with subject-specific accents */
-.paper-card {
-    transition: transform 0.2s ease;
-    border-top: 4px solid var(--bs-gray-700);
-}
-
-.paper-card:hover {
-    transform: translateY(-5px);
-}
-
-.paper-mathematics {
-    border-top-color: #3498db;
-}
-
-.paper-physics {
-    border-top-color: #9b59b6;
-}
-
-.paper-chemistry {
-    border-top-color: #e74c3c;
-}
-
-.paper-biology {
-    border-top-color: #2ecc71;
-}
-
-.paper-computer.science {
-    border-top-color: #f39c12;
-}
-
-.paper-economics {
-    border-top-color: #1abc9c;
-}
-
-.paper-psychology {
-    border-top-color: #e67e22;
-}
-
-/* Question viewer */
-.question-image {
-    max-width: 100%;
-    border: 1px solid var(--bs-gray-700);
+/* Math Formatting */
+.math-container {
+    overflow-x: auto;
+    margin: 1rem 0;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.1);
     border-radius: 0.25rem;
-    margin-bottom: 1rem;
 }
 
-/* Explanation styling */
-#explanation-content {
-    font-size: 1.05rem;
-    line-height: 1.6;
+.display-math {
+    display: block;
+    text-align: center;
+    margin: 1rem 0;
+    font-size: 1.2rem;
 }
 
-#explanation-content p {
-    margin-bottom: 1rem;
+/* Subject-specific colors */
+.subject-mathematics {
+    border-left: 4px solid #007bff;
 }
 
-/* Active question highlight */
-.question-selector.active {
-    background-color: var(--bs-primary);
+.subject-physics {
+    border-left: 4px solid #17a2b8;
+}
+
+.subject-chemistry {
+    border-left: 4px solid #28a745;
+}
+
+.subject-biology {
+    border-left: 4px solid #6f42c1;
+}
+
+/* Card styles */
+.question-card {
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.question-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Explanation styles */
+.explanation-header {
+    background: linear-gradient(90deg, #007bff, #6610f2);
     color: white;
 }
 
-/* Make buttons a bit more prominent */
-.btn-primary {
-    padding: 0.5rem 1rem;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-/* Toast styling */
-.toast {
-    min-width: 300px;
+::-webkit-scrollbar-track {
+    background: #343a40;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #495057;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6c757d;
+}
+
+/* MathJax specific overrides */
+.MathJax {
+    color: inherit !important;
+}
+
+.katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 0;
+}
+
+/* Code blocks */
+pre code {
+    display: block;
+    padding: 1rem;
+    margin: 1rem 0;
+    background-color: #212529;
+    border-radius: 0.25rem;
+    color: #f8f9fa;
+    overflow-x: auto;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    margin-bottom: 1rem;
+    color: inherit;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 0.75rem;
+    border: 1px solid #495057;
+}
+
+thead {
+    background-color: #343a40;
+}
+
+/* Markdown content styling */
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3, 
+.markdown-content h4, 
+.markdown-content h5, 
+.markdown-content h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content h3 {
+    border-bottom: 1px solid #495057;
+    padding-bottom: 0.5rem;
+    margin-top: 2rem;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-content blockquote {
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    border-left: 0.25rem solid #495057;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
 }
