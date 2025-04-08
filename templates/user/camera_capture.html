@@ -212,8 +212,12 @@
             explanationPlaceholder.style.display = 'none';
             explanationError.style.display = 'none';
             
-            // Get the image data as base64
-            const imageData = canvas.toDataURL('image/png');
+            // Get the image data as base64 and ensure proper format
+            let imageData = canvas.toDataURL('image/jpeg', 0.9);
+            console.log('Image format:', imageData.substring(0, 30) + '...');
+            
+            // Remove the data URI prefix to send only the base64 data
+            imageData = imageData.replace(/^data:image\/jpeg;base64,/, '');
             
             // Send to server for analysis
             fetch('/api/analyze-captured-image', {
@@ -258,9 +262,18 @@
                 // Hide loading
                 explanationLoading.style.display = 'none';
                 
+                console.error('API Error:', error);
+                
                 // Show error
                 explanationError.style.display = 'block';
-                errorMessage.textContent = 'Network error: ' + error.message;
+                
+                // Try to provide more helpful error messages
+                let errorMsg = 'Network error: ' + error.message;
+                if (error.message && error.message.includes('pattern')) {
+                    errorMsg = 'Image format error: There was an issue with the captured image. Please try again with a clearer picture.';
+                }
+                
+                errorMessage.textContent = errorMsg;
                 
                 // Re-enable the analyze button
                 analyzeBtn.disabled = false;

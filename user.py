@@ -116,13 +116,29 @@ def analyze_captured_image():
                 'message': 'No image data provided'
             }), 400
         
-        # Strip the data URI prefix if present
-        if isinstance(image_data, str) and 'base64' in image_data and ',' in image_data:
-            # Extract the base64 part after the comma
-            image_data = image_data.split(',')[1]
-            current_app.logger.info("Base64 data extracted from data URI")
+        # We should now have clean base64 data from the client
+        # Let's log some basic info about it for debugging
+        if isinstance(image_data, str):
+            current_app.logger.info(f"Received base64 image data of length: {len(image_data)}")
+            # Just a simple check to make sure it's valid base64
+            try:
+                if not image_data.strip():
+                    raise ValueError("Empty base64 string")
+                # Try decoding a small sample to check validity
+                base64.b64decode(image_data[:20] + "=" * ((4 - len(image_data[:20]) % 4) % 4))
+                current_app.logger.info("Base64 data appears to be valid")
+            except Exception as e:
+                current_app.logger.error(f"Invalid base64 data: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'message': f'Invalid image data format: {str(e)}'
+                }), 400
         else:
-            current_app.logger.info("Using provided image data as-is")
+            current_app.logger.error(f"Received non-string image data: {type(image_data)}")
+            return jsonify({
+                'success': False,
+                'message': 'Image data must be a base64 string'
+            }), 400
         
         # Create data directory if it doesn't exist
         data_dir = os.path.join(os.getcwd(), 'data', 'captured_images')

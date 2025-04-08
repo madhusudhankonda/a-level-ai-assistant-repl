@@ -109,13 +109,21 @@ Follow these guidelines:
 """
 
     try:
-        # Prepare the image URL for OpenAI API
-        image_url = f"data:image/png;base64,{base64_image}"
+        # Clean up the base64 data - ensure it doesn't have data URI prefix
+        if isinstance(base64_image, str) and 'base64' in base64_image and ',' in base64_image:
+            base64_image = base64_image.split(',')[1]
         
-        # Make sure the image URL is properly formatted
-        if not base64_image.strip():
-            raise ValueError("Empty base64 image data provided")
-            
+        logger.info(f"Processing image for {subject} explanation")
+        
+        # Make sure the image data is not empty
+        if not base64_image or not isinstance(base64_image, str) or not base64_image.strip():
+            raise ValueError("Empty or invalid base64 image data provided")
+        
+        # Prepare the image URL with proper data URI format for OpenAI API
+        image_url = f"data:image/jpeg;base64,{base64_image}"
+        
+        logger.info("Calling OpenAI API with multimodal request")
+        
         # Make the API call to OpenAI
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
