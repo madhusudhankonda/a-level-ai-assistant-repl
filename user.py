@@ -128,17 +128,46 @@ def analyze_captured_image():
                 'message': 'No image data provided'
             }), 400
         
-        # We should now have clean base64 data from the client
-        # Let's log some basic info about it for debugging
+        # Check image data format
         if isinstance(image_data, str):
-            current_app.logger.info(f"Received base64 image data of length: {len(image_data)}")
-            # Just a simple check to make sure it's valid base64
+            current_app.logger.info(f"Received image data of length: {len(image_data)}")
+            
+            # Handle data URI format (e.g., data:image/jpeg;base64,...)
+            if image_data.startswith('data:'):
+                current_app.logger.info("Received image in data URI format")
+                try:
+                    # Extract the base64 part from the data URI
+                    if ';base64,' in image_data:
+                        base64_part = image_data.split(';base64,')[1]
+                        current_app.logger.info(f"Extracted base64 data of length: {len(base64_part)}")
+                        
+                        # This variable will be used for saving the image
+                        clean_base64 = base64_part
+                    else:
+                        current_app.logger.error("Invalid data URI format (missing base64 marker)")
+                        return jsonify({
+                            'success': False,
+                            'message': 'Invalid image format (missing base64 marker)'
+                        }), 400
+                except Exception as uri_error:
+                    current_app.logger.error(f"Error parsing data URI: {str(uri_error)}")
+                    return jsonify({
+                        'success': False,
+                        'message': f'Error parsing image data: {str(uri_error)}'
+                    }), 400
+            else:
+                # Assume it's already a clean base64 string
+                current_app.logger.info("Received image data as plain base64")
+                clean_base64 = image_data
+                
+            # Validate the base64 data
             try:
-                if not image_data.strip():
+                if not clean_base64.strip():
                     raise ValueError("Empty base64 string")
-                # Try decoding a small sample to check validity
-                base64.b64decode(image_data[:20] + "=" * ((4 - len(image_data[:20]) % 4) % 4))
-                current_app.logger.info("Base64 data appears to be valid")
+                # Test decode a small sample
+                padding = "=" * ((4 - len(clean_base64[:20]) % 4) % 4)
+                base64.b64decode(clean_base64[:20] + padding)
+                current_app.logger.info("Image data appears to be valid")
             except Exception as e:
                 current_app.logger.error(f"Invalid base64 data: {str(e)}")
                 return jsonify({
@@ -149,7 +178,7 @@ def analyze_captured_image():
             current_app.logger.error(f"Received non-string image data: {type(image_data)}")
             return jsonify({
                 'success': False,
-                'message': 'Image data must be a base64 string'
+                'message': 'Image data must be a string'
             }), 400
         
         # Create data directory if it doesn't exist
@@ -163,8 +192,8 @@ def analyze_captured_image():
         image_path = os.path.join(data_dir, filename)
         
         try:
-            # Decode and save the base64 image
-            image_bytes = base64.b64decode(image_data)
+            # Decode and save the base64 image using our cleaned base64 data
+            image_bytes = base64.b64decode(clean_base64)
             with open(image_path, 'wb') as f:
                 f.write(image_bytes)
             current_app.logger.info(f"Image saved to {image_path}")
@@ -179,20 +208,21 @@ def analyze_captured_image():
             # Generate explanation using OpenAI
             current_app.logger.info("Calling OpenAI for explanation")
             
-            # Log information about the image data (length only, not the actual content)
+            # We'll pass the original image_data (data URI format) to OpenAI
+            # This is compatible with our updated OpenAI helper
             current_app.logger.info(f"Image data length being sent to OpenAI: {len(image_data) if image_data else 'EMPTY'}")
             
             # Validate the image data before sending to OpenAI
-            if not image_data or len(image_data) < 100:  # Arbitrary minimum length for valid base64 data
+            if not image_data or len(image_data) < 100:  # Arbitrary minimum length for valid data
                 current_app.logger.error("Image data appears to be too short or empty")
                 return jsonify({
                     'success': False,
                     'message': 'The captured image data is invalid or too small. Please try again with a clearer picture.'
                 }), 400
             
-            # Call OpenAI with the validated image data
+            # Call OpenAI with the validated image data (using the full data URI format)
             explanation_text = generate_explanation(
-                image_data,
+                image_data,  # Send the complete data URI
                 subject
             )
             current_app.logger.info("Received explanation from OpenAI")
@@ -247,13 +277,16 @@ def explain_question(question_id):
     # If requesting a new explanation via POST or no saved explanation exists
     if request.method == 'POST' or not existing_explanation:
         try:
-            # Read the image and encode it to base64
+            # Read the image and encode it to base64 with data URI format
             with open(question.image_path, "rb") as image_file:
-                image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+                image_bytes = image_file.read()
+                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                # Create a data URI with proper mime type
+                data_uri = f"data:image/png;base64,{image_base64}"
             
-            # Generate explanation using OpenAI
+            # Generate explanation using OpenAI with data URI format
             explanation_text = generate_explanation(
-                image_base64,
+                data_uri,
                 paper.subject
             )
             

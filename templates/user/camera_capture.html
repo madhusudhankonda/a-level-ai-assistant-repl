@@ -323,18 +323,13 @@
             explanationPlaceholder.style.display = 'none';
             explanationError.style.display = 'none';
             
-            // Get the image data as base64 in JPEG format (more compatible with AI models)
-            let imageData = canvas.toDataURL('image/jpeg', 0.9);
+            // Get the image data as base64 in JPEG format with lower quality for smaller size
+            let imageData = canvas.toDataURL('image/jpeg', 0.7);
             console.log('Image format:', imageData.substring(0, 30) + '...');
             
-            // Remove the data URI prefix to send only the base64 data
-            // This is important as our backend expects only the base64 string without the prefix
-            if (imageData.startsWith('data:image/jpeg;base64,')) {
-                imageData = imageData.replace('data:image/jpeg;base64,', '');
-                console.log('Removed data URI prefix, sending pure base64 data');
-            } else {
-                console.log('Warning: Image data doesn\'t have the expected prefix format');
-            }
+            // Keep the data URI format for compatibility with OpenAI API
+            // The API will handle this format properly
+            console.log('Using full data URI format for better compatibility')
             
             // Send to server for analysis
             fetch('/api/analyze-captured-image', {
