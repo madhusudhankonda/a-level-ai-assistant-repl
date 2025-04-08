@@ -1,90 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}Study Materials - A-Level AI Assistant{% endblock %}
+{% block title %}A-Level AI Assistant{% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
-        <h1>A-Level Study Materials</h1>
-        <p class="lead">Select a question paper to study and get AI-powered answers and explanations</p>
-    </div>
-</div>
-
-<hr>
-
-<!-- Subject Filters -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="btn-group" role="group" aria-label="Subject filters">
-            <button type="button" class="btn btn-outline-primary active" data-filter="all">All Subjects</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Mathematics">Mathematics</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Physics">Physics</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Chemistry">Chemistry</button>
-            <button type="button" class="btn btn-outline-primary" data-filter="Biology">Biology</button>
+    <div class="col-12 mb-4">
+        <h1>A-Level AI Assistant</h1>
+        <p class="lead">Choose a question paper to begin studying with AI-powered explanations.</p>
+        <div class="mb-3">
+            <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-cog"></i> Admin Dashboard
+            </a>
         </div>
     </div>
 </div>
 
-<!-- Papers List -->
-<div class="row mt-4">
-    {% if papers %}
-        {% for paper in papers %}
-        <div class="col-md-6 col-lg-4 mb-4 paper-card" data-subject="{{ paper.subject }}">
-            <div class="card h-100 paper-list-item">
-                <div class="card-body">
-                    <div class="d-flex align-items-center mb-3">
-                        <span class="badge bg-subject-{{ paper.subject.lower() }} me-2">{{ paper.subject }}</span>
-                        <small class="text-muted">{{ paper.created_at.strftime('%Y-%m-%d') }}</small>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Available Question Papers</h5>
+            </div>
+            <div class="card-body">
+                {% if papers %}
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    {% for paper in papers %}
+                    <div class="col">
+                        <div class="card h-100 paper-card paper-{{ paper.subject|lower }}">
+                            <div class="card-header">
+                                <span class="badge bg-subject-{{ paper.subject|lower }}">
+                                    {{ paper.subject }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">{{ paper.title }}</h5>
+                                <p class="card-text">
+                                    {% if paper.description %}
+                                    {{ paper.description }}
+                                    {% else %}
+                                    This paper contains {{ paper.questions|length }} questions.
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-primary">
+                                    <i class="fas fa-book-open"></i> View Questions
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    <h5 class="card-title">{{ paper.title }}</h5>
-                    <p class="card-text small">Contains {{ paper.questions|length }} questions with AI-powered answers and explanations.</p>
+                    {% endfor %}
                 </div>
-                <div class="card-footer bg-transparent">
-                    <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-book-open me-1"></i> Start Studying
-                    </a>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No question papers are available yet.
+                    <a href="{{ url_for('admin.create_paper') }}" class="alert-link">Add a paper in the admin dashboard</a>.
                 </div>
+                {% endif %}
             </div>
         </div>
-        {% endfor %}
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i> No processed question papers available yet. Please check back later.
-        </div>
     </div>
-    {% endif %}
 </div>
-
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Subject filtering functionality
-        const filterButtons = document.querySelectorAll('[data-filter]');
-        const paperCards = document.querySelectorAll('.paper-card');
-        
-        filterButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                // Remove active class from all buttons
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                
-                // Add active class to clicked button
-                this.classList.add('active');
-                
-                const filter = this.getAttribute('data-filter');
-                
-                // Show/hide papers based on filter
-                paperCards.forEach(card => {
-                    if (filter === 'all' || card.getAttribute('data-subject') === filter) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
-    });
-</script>
 {% endblock %}

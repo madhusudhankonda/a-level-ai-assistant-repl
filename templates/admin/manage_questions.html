@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Questions - {{ paper.title }} - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1>Manage Questions</h1>
+        <h4 class="text-muted">{{ paper.title }} ({{ paper.subject }})</h4>
+        <p>{{ paper.description }}</p>
+        <div class="mb-3">
+            <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Admin Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Existing Questions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Questions in this Paper</h5>
+            </div>
+            <div class="card-body">
+                {% if questions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Question Number</th>
+                                <th>Image</th>
+                                <th>Added On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for question in questions %}
+                            <tr>
+                                <td>{{ question.question_number }}</td>
+                                <td>
+                                    <a href="{{ url_for('user.get_question_image', question_id=question.id) }}" target="_blank">
+                                        <img src="{{ url_for('user.get_question_image', question_id=question.id) }}" 
+                                             class="img-thumbnail" style="max-height: 100px;" alt="Question {{ question.question_number }}">
+                                    </a>
+                                </td>
+                                <td>{{ question.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('admin.delete_question', question_id=question.id) }}" 
+                                          onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No questions have been added to this paper yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Add New Question -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Add New Question</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.add_question', paper_id=paper.id) }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="question_number" class="form-label">Question Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="question_number" name="question_number" required 
+                               placeholder="e.g., 1, 2a, 3.1">
+                        <div class="form-text">Enter the question number as it appears on the paper.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="question_image" class="form-label">Question Image <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="question_image" name="question_image" required accept="image/*">
+                        <div class="form-text">Upload an image of the question (PNG, JPG, etc.)</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus-circle"></i> Add Question
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Delete Paper -->
+        <div class="card mt-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Danger Zone</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.delete_paper', paper_id=paper.id) }}"
+                      onsubmit="return confirm('Are you sure you want to delete this entire paper and all its questions? This action cannot be undone.');">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash"></i> Delete Entire Paper
+                        </button>
+                    </div>
+                    <div class="form-text text-danger">
+                        Warning: This will permanently delete this paper and all of its questions.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

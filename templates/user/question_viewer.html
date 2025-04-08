@@ -4,92 +4,202 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-12 mb-4">
         <h1>{{ paper.title }}</h1>
-        <p class="lead">
-            <span class="badge bg-subject-{{ paper.subject.lower() }}">{{ paper.subject }}</span>
-            <small class="text-muted ms-2">{{ questions|length }} questions</small>
-        </p>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back to Papers
-        </a>
-    </div>
-</div>
-
-<hr>
-
-<!-- Instructions -->
-<div class="alert alert-info mb-4">
-    <div class="d-flex">
-        <div class="me-3">
-            <i class="fas fa-lightbulb fa-2x"></i>
-        </div>
-        <div>
-            <h5 class="alert-heading">How to use this study aid</h5>
-            <p class="mb-0">Attempt each question on your own first. When ready, click "Show Answer" to see the correct solution, or "Explain Answer" to get a detailed explanation of concepts and methodology.</p>
+        <h5 class="text-muted">{{ paper.subject }}</h5>
+        <p>{{ paper.description }}</p>
+        <div class="mb-3">
+            <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Papers
+            </a>
         </div>
     </div>
 </div>
 
-<!-- Questions List -->
+{% if questions %}
 <div class="row">
-    <div class="col-12">
-        {% for question in questions %}
-        <div class="card question-card mb-4">
+    <div class="col-md-4 mb-4">
+        <!-- Question List -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Questions</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for question in questions %}
+                <button type="button" class="list-group-item list-group-item-action question-selector" 
+                        data-question-id="{{ question.id }}">
+                    Question {{ question.question_number }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Question Viewer -->
+        <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Question {{ question.question_number }}</h5>
+                <h5 class="mb-0">
+                    <span id="current-question-title">Select a question</span>
+                </h5>
             </div>
             <div class="card-body">
-                <!-- Question Image -->
-                <div class="text-center mb-3">
-                    <img src="{{ url_for('user.get_question_image', question_id=question.id) }}" 
-                         alt="Question {{ question.question_number }}" 
-                         class="question-image img-fluid">
-                </div>
-                
-                <!-- Controls -->
-                <div class="question-controls">
-                    <button class="btn btn-primary" onclick="viewAnswer({{ question.id }})" data-bs-toggle="collapse" data-bs-target="#answerCollapse{{ question.id }}">
-                        <i class="fas fa-eye me-1"></i> Show Answer
-                    </button>
-                    <button class="btn btn-info" onclick="explainAnswer({{ question.id }})" data-bs-toggle="collapse" data-bs-target="#explanationCollapse{{ question.id }}">
-                        <i class="fas fa-chalkboard-teacher me-1"></i> Explain Answer
-                    </button>
-                </div>
-                
-                <!-- Answer Section (Collapsed) -->
-                <div class="collapse mt-3" id="answerCollapse{{ question.id }}">
-                    <div class="answer-section">
-                        <h5><i class="fas fa-check-circle text-success"></i> Answer</h5>
-                        <div id="answer-{{ question.id }}">
-                            <div class="d-flex justify-content-center my-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Explanation Section (Collapsed) -->
-                <div class="collapse mt-3" id="explanationCollapse{{ question.id }}">
-                    <div class="explanation-section">
-                        <h5><i class="fas fa-lightbulb text-warning"></i> Explanation</h5>
-                        <div id="explanation-{{ question.id }}">
-                            <div class="d-flex justify-content-center my-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="question-display" class="text-center mb-4">
+                    <p class="text-muted">Please select a question from the list on the left.</p>
                 </div>
             </div>
         </div>
-        {% endfor %}
+        
+        <!-- Explanation Card -->
+        <div class="card" id="explanation-card" style="display: none;">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">AI Explanation</h5>
+                <button class="btn btn-sm btn-light" id="refresh-explanation">
+                    <i class="fas fa-sync-alt"></i> Regenerate
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="explanation-loading" style="display: none;">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <p class="text-center text-muted">Generating explanation with AI... This may take a few moments.</p>
+                </div>
+                <div id="explanation-content">
+                    <!-- Explanation will be loaded here -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> No questions have been added to this paper yet.
+    <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="alert-link">Add questions in the admin dashboard</a>.
+</div>
+{% endif %}
+{% endblock %}
 
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Store the current question ID
+        let currentQuestionId = null;
+        
+        // Handle question selection
+        document.querySelectorAll('.question-selector').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const questionId = this.getAttribute('data-question-id');
+                loadQuestion(questionId);
+                
+                // Update active state
+                document.querySelectorAll('.question-selector').forEach(q => q.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // Handle refresh explanation button
+        document.getElementById('refresh-explanation').addEventListener('click', function() {
+            if (currentQuestionId) {
+                fetchExplanation(currentQuestionId, true);
+            }
+        });
+        
+        // Function to load a question
+        function loadQuestion(questionId) {
+            currentQuestionId = questionId;
+            const displayEl = document.getElementById('question-display');
+            const titleEl = document.getElementById('current-question-title');
+            
+            // Show the question image
+            const imgUrl = `/question-image/${questionId}`;
+            const imgEl = document.createElement('img');
+            imgEl.src = imgUrl;
+            imgEl.className = 'img-fluid question-image mb-3';
+            imgEl.alt = 'Question image';
+            
+            // Clear previous content and add the image
+            displayEl.innerHTML = '';
+            displayEl.appendChild(imgEl);
+            
+            // Add "Explain" button
+            const explainBtn = document.createElement('button');
+            explainBtn.className = 'btn btn-primary';
+            explainBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Explain this question';
+            explainBtn.addEventListener('click', function() {
+                fetchExplanation(questionId);
+            });
+            displayEl.appendChild(explainBtn);
+            
+            // Update the question title
+            // Find the question selector text
+            const selectorEl = document.querySelector(`.question-selector[data-question-id="${questionId}"]`);
+            if (selectorEl) {
+                titleEl.textContent = selectorEl.textContent.trim();
+            } else {
+                titleEl.textContent = 'Question';
+            }
+            
+            // Hide explanation if visible
+            document.getElementById('explanation-card').style.display = 'none';
+        }
+        
+        // Function to fetch explanation from API
+        function fetchExplanation(questionId, forceRefresh = false) {
+            const explanationCard = document.getElementById('explanation-card');
+            const explanationLoading = document.getElementById('explanation-loading');
+            const explanationContent = document.getElementById('explanation-content');
+            
+            // Show explanation card and loading state
+            explanationCard.style.display = 'block';
+            explanationLoading.style.display = 'block';
+            explanationContent.innerHTML = '';
+            
+            const method = forceRefresh ? 'POST' : 'GET';
+            
+            // Fetch explanation from API
+            fetch(`/api/explain/${questionId}`, { method: method })
+                .then(response => response.json())
+                .then(data => {
+                    explanationLoading.style.display = 'none';
+                    
+                    if (data.success) {
+                        // Format the explanation text with line breaks and math
+                        explanationContent.innerHTML = formatExplanation(data.explanation);
+                    } else {
+                        explanationContent.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle"></i> Error: ${data.message || 'Failed to generate explanation'}
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    explanationLoading.style.display = 'none';
+                    explanationContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle"></i> Error: ${error.message || 'Failed to connect to server'}
+                        </div>
+                    `;
+                });
+        }
+        
+        // Function to format explanation text
+        function formatExplanation(text) {
+            // Replace line breaks with paragraphs
+            let formatted = text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+            formatted = '<p>' + formatted + '</p>';
+            
+            return formatted;
+        }
+        
+        // If there's at least one question, select the first one by default
+        const firstQuestion = document.querySelector('.question-selector');
+        if (firstQuestion) {
+            firstQuestion.click();
+        }
+    });
+</script>
 {% endblock %}
