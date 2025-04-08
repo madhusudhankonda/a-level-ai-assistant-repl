@@ -192,6 +192,13 @@
             let formatted = text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
             formatted = '<p>' + formatted + '</p>';
             
+            // Process the content for MathJax rendering after adding to DOM
+            setTimeout(function() {
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise && MathJax.typesetPromise();
+                }
+            }, 100);
+            
             return formatted;
         }
         

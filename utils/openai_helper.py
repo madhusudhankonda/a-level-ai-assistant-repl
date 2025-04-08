@@ -39,7 +39,16 @@ def generate_explanation(base64_image, subject):
             5. Provide the final answer in the format requested in the question
             6. Include a brief explanation of any key concepts that students often struggle with
             
-            Use proper mathematical notation. Your solution should be accessible to A-Level students while demonstrating the rigor expected at this level.
+            IMPORTANT FORMATTING INSTRUCTIONS:
+            - Use proper LaTeX formatting for mathematical equations and expressions
+            - For inline equations, use $...$ syntax (e.g., $x^2 + 5x + 6$)
+            - For display equations (on their own line), use $$...$$ syntax (e.g., $$\\frac{1}{3-2\\sqrt{x}} + \\frac{1}{3+2\\sqrt{x}}$$)
+            - Use \\frac{numerator}{denominator} for fractions
+            - Use proper LaTeX notation for all mathematical symbols
+            - Format your explanation with clear section headings using markdown (### for section titles)
+            - Use numbered steps with clear explanations
+            
+            Your solution should be accessible to A-Level students while demonstrating the rigor expected at this level.
             """
         elif subject.lower() in ["physics"]:
             prompt = """
@@ -53,7 +62,16 @@ def generate_explanation(base64_image, subject):
             5. Provide the final answer with appropriate units and significant figures
             6. Include any key theoretical insights that would earn extra marks
             
-            Use proper scientific notation and ensure units are correctly applied throughout. Your solution should demonstrate understanding of both the mathematical and conceptual aspects of physics.
+            IMPORTANT FORMATTING INSTRUCTIONS:
+            - Use proper LaTeX formatting for mathematical equations and physics formulas
+            - For inline equations, use $...$ syntax (e.g., $F = ma$)
+            - For display equations (on their own line), use $$...$$ syntax (e.g., $$E = mc^2$$)
+            - Use \\frac{numerator}{denominator} for fractions
+            - Use proper LaTeX notation for all mathematical and physical symbols
+            - Format your explanation with clear section headings using markdown (### for section titles)
+            - Use numbered steps with clear explanations
+            
+            Your solution should demonstrate understanding of both the mathematical and conceptual aspects of physics with proper scientific notation and units.
             """
         elif subject.lower() in ["chemistry"]:
             prompt = """
@@ -66,6 +84,15 @@ def generate_explanation(base64_image, subject):
             4. Explain key chemical principles and theory underlying the solution
             5. Include relevant structural diagrams or representations where helpful
             6. Provide complete, accurate answers addressing all parts of the question
+            
+            IMPORTANT FORMATTING INSTRUCTIONS:
+            - Use proper LaTeX formatting for chemical equations and mathematical formulas
+            - For inline equations, use $...$ syntax (e.g., $H_2O$)
+            - For display equations (on their own line), use $$...$$ syntax (e.g., $$CH_4 + 2O_2 \\rightarrow CO_2 + 2H_2O$$)
+            - Use subscripts and superscripts properly (e.g., $H_2SO_4$, $Ca^{2+}$)
+            - Use proper LaTeX notation for all chemical and mathematical symbols
+            - Format your explanation with clear section headings using markdown (### for section titles)
+            - Use numbered steps with clear explanations
             
             Pay particular attention to chemical accuracy, proper terminology, and appropriate use of chemical symbols and conventions. Your answer should demonstrate depth of chemical understanding.
             """
@@ -81,6 +108,15 @@ def generate_explanation(base64_image, subject):
             5. Make connections between different biological systems or concepts where relevant
             6. Address all components of the question comprehensively
             
+            IMPORTANT FORMATTING INSTRUCTIONS:
+            - Use proper LaTeX formatting for biological equations and mathematical formulas where needed
+            - For inline equations or scientific notation, use $...$ syntax (e.g., $CO_2$ or $H^+$)
+            - For display equations (on their own line), use $$...$$ syntax
+            - Use proper LaTeX notation for all biological symbols and chemical formulas
+            - Format your explanation with clear section headings using markdown (### for section titles)
+            - Use bulleted or numbered lists for multi-step processes
+            - Use proper notation for genetics (e.g., genotypes like $Aa$ vs $aa$)
+            
             Your answer should demonstrate both breadth and depth of biological knowledge, including molecular, cellular, and systemic understanding where appropriate.
             """
         else:
@@ -94,6 +130,14 @@ def generate_explanation(base64_image, subject):
             4. Explain your reasoning and approach throughout
             5. Provide a complete answer addressing all parts of the question
             6. Include any important insights that demonstrate A-Level understanding
+            
+            IMPORTANT FORMATTING INSTRUCTIONS:
+            - Use proper LaTeX formatting for any equations or specialized notation
+            - For inline equations, use $...$ syntax
+            - For display equations (on their own line), use $$...$$ syntax
+            - Use proper LaTeX notation for all mathematical symbols
+            - Format your explanation with clear section headings using markdown (### for section titles)
+            - Use numbered steps with clear explanations
             
             Use appropriate technical language and conventions for {subject}. Your solution should be thorough and demonstrate expert subject knowledge.
             """
