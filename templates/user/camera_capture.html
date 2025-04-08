@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Camera Capture - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="mb-4">Camera Capture</h1>
+        <p class="lead">Take a picture of a question to get an instant explanation</p>
+        <div class="mb-3">
+            <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Papers
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Step 1: Subject Selection</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Select Subject</label>
+                    <select class="form-select" id="subject">
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Biology">Biology</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Step 2: Camera Capture</h5>
+            </div>
+            <div class="card-body">
+                <!-- Video stream from camera -->
+                <div class="mb-3">
+                    <div id="camera-container" class="mb-3 text-center">
+                        <video id="video" width="100%" autoplay playsinline style="background-color: #000;"></video>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button id="capture-btn" class="btn btn-primary">
+                            <i class="fas fa-camera me-1"></i> Capture Image
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Captured image display -->
+                <div id="capture-result" style="display: none;">
+                    <h6 class="mb-2">Captured Image:</h6>
+                    <div class="mb-3 text-center">
+                        <canvas id="canvas" width="640" height="480" class="img-fluid border"></canvas>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <button id="retake-btn" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-1"></i> Retake
+                        </button>
+                        <button id="analyze-btn" class="btn btn-success">
+                            <i class="fas fa-lightbulb me-1"></i> Analyze
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Step 3: AI Explanation</h5>
+            </div>
+            <div class="card-body">
+                <div id="explanation-loading" style="display: none;">
+                    <div class="d-flex justify-content-center my-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                    <p class="text-center text-muted">Generating explanation with AI... This may take a few moments.</p>
+                </div>
+                
+                <div id="explanation-result" style="display: none;">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <span class="badge bg-secondary" id="explanation-subject">Subject</span>
+                        <small class="text-muted" id="explanation-timestamp">Timestamp</small>
+                    </div>
+                    <div id="explanation-content" class="mb-3">
+                        <!-- Explanation content will be loaded here -->
+                    </div>
+                </div>
+                
+                <div id="explanation-placeholder">
+                    <div class="text-center my-5 py-5">
+                        <i class="fas fa-camera text-muted" style="font-size: 3rem;"></i>
+                        <p class="mt-3 text-muted">Capture an image of a question and click "Analyze" to get an AI-powered explanation</p>
+                    </div>
+                </div>
+                
+                <div id="explanation-error" class="alert alert-danger" style="display: none;">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span id="error-message">Error message will appear here</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('capture-btn');
+        const retakeBtn = document.getElementById('retake-btn');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const cameraContainer = document.getElementById('camera-container');
+        const captureResult = document.getElementById('capture-result');
+        const subjectSelect = document.getElementById('subject');
+        
+        // Explanation elements
+        const explanationLoading = document.getElementById('explanation-loading');
+        const explanationResult = document.getElementById('explanation-result');
+        const explanationPlaceholder = document.getElementById('explanation-placeholder');
+        const explanationError = document.getElementById('explanation-error');
+        const explanationContent = document.getElementById('explanation-content');
+        const explanationSubject = document.getElementById('explanation-subject');
+        const explanationTimestamp = document.getElementById('explanation-timestamp');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Start camera
+        let stream;
+        
+        async function startCamera() {
+            try {
+                // Try to access the camera
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment', // Use the back camera on mobile devices if available
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                
+                // Show the video stream
+                video.srcObject = stream;
+                
+                // Show camera UI
+                cameraContainer.style.display = 'block';
+                captureBtn.disabled = false;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                cameraContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Unable to access camera: ${err.message}
+                    </div>
+                    <p class="mt-3">Make sure your browser has permission to access the camera and try again.</p>
+                `;
+                captureBtn.disabled = true;
+            }
+        }
+        
+        // Start the camera when the page loads
+        startCamera();
+        
+        // Capture image from camera
+        captureBtn.addEventListener('click', function() {
+            // Get the canvas context
+            const context = canvas.getContext('2d');
+            
+            // Set canvas dimensions to match video dimensions
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw the current video frame on the canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Show the captured image and hide the camera
+            cameraContainer.style.display = 'none';
+            captureResult.style.display = 'block';
+        });
+        
+        // Retake photo
+        retakeBtn.addEventListener('click', function() {
+            // Show camera again
+            cameraContainer.style.display = 'block';
+            captureResult.style.display = 'none';
+        });
+        
+        // Analyze the captured image
+        analyzeBtn.addEventListener('click', function() {
+            // Disable the analyze button during processing
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+            
+            // Get the subject
+            const subject = subjectSelect.value;
+            
+            // Show loading
+            explanationLoading.style.display = 'block';
+            explanationResult.style.display = 'none';
+            explanationPlaceholder.style.display = 'none';
+            explanationError.style.display = 'none';
+            
+            // Get the image data as base64
+            const imageData = canvas.toDataURL('image/png');
+            
+            // Send to server for analysis
+            fetch('/api/analyze-captured-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image_data: imageData,
+                    subject: subject
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading
+                explanationLoading.style.display = 'none';
+                
+                if (data.success) {
+                    // Show the explanation
+                    explanationResult.style.display = 'block';
+                    explanationContent.innerHTML = data.explanation;
+                    explanationSubject.textContent = data.subject;
+                    explanationTimestamp.textContent = data.timestamp;
+                    
+                    // Trigger MathJax typesetting
+                    if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
+                        MathJax.typesetPromise([explanationContent])
+                            .then(() => console.log('MathJax typesetting complete'))
+                            .catch(err => console.error('MathJax typesetting failed:', err));
+                    }
+                } else {
+                    // Show error
+                    explanationError.style.display = 'block';
+                    errorMessage.textContent = data.message || 'An error occurred';
+                }
+                
+                // Re-enable the analyze button
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> Analyze';
+            })
+            .catch(error => {
+                // Hide loading
+                explanationLoading.style.display = 'none';
+                
+                // Show error
+                explanationError.style.display = 'block';
+                errorMessage.textContent = 'Network error: ' + error.message;
+                
+                // Re-enable the analyze button
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> Analyze';
+            });
+        });
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    });
+</script>
+{% endblock %}

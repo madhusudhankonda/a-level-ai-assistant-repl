@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 import os
 import base64
 import re
+import uuid
+from datetime import datetime
 from models import db, QuestionPaper, Question, Explanation
 from utils.openai_helper import generate_explanation
 
@@ -14,6 +16,15 @@ def index():
     # Get all papers with at least one question
     papers = QuestionPaper.query.join(QuestionPaper.questions).group_by(QuestionPaper.id).order_by(QuestionPaper.created_at.desc()).all()
     return render_template('user/index.html', papers=papers)
+
+@user_bp.route('/camera-capture')
+def camera_capture():
+    """Page for capturing questions with camera"""
+    # Get list of subjects for the dropdown
+    subjects = db.session.query(QuestionPaper.subject).distinct().all()
+    subjects = [s[0] for s in subjects]
+    
+    return render_template('user/camera_capture.html', subjects=subjects)
 
 @user_bp.route('/paper/<int:paper_id>')
 def view_paper(paper_id):
@@ -77,6 +88,61 @@ def process_math_notation(text):
     text = f'<div class="markdown-content">{text}</div>'
     
     return text
+
+@user_bp.route('/api/analyze-captured-image', methods=['POST'])
+def analyze_captured_image():
+    """API endpoint to analyze a question image captured with the camera"""
+    try:
+        # Get the image data and subject from the request
+        image_data = request.json.get('image_data', '')
+        subject = request.json.get('subject', 'Mathematics')
+        
+        if not image_data:
+            return jsonify({
+                'success': False,
+                'message': 'No image data provided'
+            }), 400
+        
+        # Strip the data URI prefix if present
+        if image_data.startswith('data:image'):
+            image_data = image_data.split(',')[1]
+        
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(os.getcwd(), 'data', 'captured_images')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+        
+        # Generate a unique filename and save the image
+        filename = f"captured_{uuid.uuid4().hex}.png"
+        image_path = os.path.join(data_dir, filename)
+        
+        # Decode and save the base64 image
+        image_bytes = base64.b64decode(image_data)
+        with open(image_path, 'wb') as f:
+            f.write(image_bytes)
+        
+        # Generate explanation using OpenAI
+        explanation_text = generate_explanation(
+            image_data,
+            subject
+        )
+        
+        # Process the mathematical notation for display
+        processed_text = process_math_notation(explanation_text)
+        
+        return jsonify({
+            'success': True,
+            'explanation': processed_text,
+            'subject': subject,
+            'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error analyzing captured image: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error analyzing image: {str(e)}'
+        }), 500
 
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
 def explain_question(question_id):

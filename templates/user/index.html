@@ -3,7 +3,26 @@
 {% block title %}Available Papers - A-Level AI Assistant{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Available Question Papers</h1>
+<div class="row mb-4 py-3">
+    <div class="col-md-8">
+        <h1 class="display-5 mb-3">A-Level AI Assistant</h1>
+        <p class="lead">Get instant explanations for A-Level questions in Mathematics, Physics, Chemistry, and Biology</p>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-camera fa-3x mb-3 text-primary"></i>
+                <h5 class="card-title">Analyze with Camera</h5>
+                <p class="card-text">Take a photo of any question for an instant AI-powered explanation</p>
+                <a href="{{ url_for('user.camera_capture') }}" class="btn btn-primary">
+                    <i class="fas fa-camera me-1"></i> Capture Now
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="mb-4">Available Question Papers</h2>
 
 <div class="row">
     <!-- Mathematics -->
