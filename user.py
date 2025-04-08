@@ -166,16 +166,43 @@ def analyze_captured_image():
         try:
             # Generate explanation using OpenAI
             current_app.logger.info("Calling OpenAI for explanation")
+            
+            # Log information about the image data (length only, not the actual content)
+            current_app.logger.info(f"Image data length being sent to OpenAI: {len(image_data) if image_data else 'EMPTY'}")
+            
+            # Validate the image data before sending to OpenAI
+            if not image_data or len(image_data) < 100:  # Arbitrary minimum length for valid base64 data
+                current_app.logger.error("Image data appears to be too short or empty")
+                return jsonify({
+                    'success': False,
+                    'message': 'The captured image data is invalid or too small. Please try again with a clearer picture.'
+                }), 400
+            
+            # Call OpenAI with the validated image data
             explanation_text = generate_explanation(
                 image_data,
                 subject
             )
             current_app.logger.info("Received explanation from OpenAI")
+            
+            # Log the length of the explanation received
+            current_app.logger.info(f"Received explanation of length: {len(explanation_text)}")
+            
         except Exception as ai_error:
-            current_app.logger.error(f"OpenAI API error: {str(ai_error)}")
+            error_message = str(ai_error)
+            current_app.logger.error(f"OpenAI API error: {error_message}")
+            
+            # Provide user-friendly error messages
+            if "pattern" in error_message.lower():
+                message = "Image format error: There was an issue with the captured image. Please try again with a clearer picture."
+            elif "api key" in error_message.lower():
+                message = "API configuration error. Please contact support."
+            else:
+                message = f"Error generating explanation: {error_message}"
+                
             return jsonify({
                 'success': False,
-                'message': f'Error generating explanation: {str(ai_error)}'
+                'message': message
             }), 500
         
         # Process the mathematical notation for display

@@ -116,10 +116,14 @@
                     </div>
                 </div>
                 
-                <!-- Error state -->
+                <!-- Error state with improved styling -->
                 <div id="explanation-error" class="alert alert-danger" style="display: none;">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    <span id="error-message">Error message will appear here</span>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-exclamation-triangle me-2 fs-4"></i>
+                        <strong>There was a problem</strong>
+                    </div>
+                    <p id="error-message" class="mb-0">Error message will appear here</p>
+                    <!-- Retry button will be added here dynamically -->
                 </div>
             </div>
         </div>
@@ -225,12 +229,18 @@
             explanationPlaceholder.style.display = 'none';
             explanationError.style.display = 'none';
             
-            // Get the image data as base64 and ensure proper format
+            // Get the image data as base64 in JPEG format (more compatible with AI models)
             let imageData = canvas.toDataURL('image/jpeg', 0.9);
             console.log('Image format:', imageData.substring(0, 30) + '...');
             
             // Remove the data URI prefix to send only the base64 data
-            imageData = imageData.replace(/^data:image\/jpeg;base64,/, '');
+            // This is important as our backend expects only the base64 string without the prefix
+            if (imageData.startsWith('data:image/jpeg;base64,')) {
+                imageData = imageData.replace('data:image/jpeg;base64,', '');
+                console.log('Removed data URI prefix, sending pure base64 data');
+            } else {
+                console.log('Warning: Image data doesn\'t have the expected prefix format');
+            }
             
             // Send to server for analysis
             fetch('/api/analyze-captured-image', {
@@ -280,13 +290,32 @@
                 // Show error
                 explanationError.style.display = 'block';
                 
-                // Try to provide more helpful error messages
-                let errorMsg = 'Network error: ' + error.message;
+                // Provide helpful error messages
+                let errorMsg;
+                
                 if (error.message && error.message.includes('pattern')) {
                     errorMsg = 'Image format error: There was an issue with the captured image. Please try again with a clearer picture.';
+                } else if (error.message && error.message.includes('Failed to fetch')) {
+                    errorMsg = 'Connection error: Please check your internet connection and try again.';
+                } else {
+                    errorMsg = 'Error: ' + (error.message || 'Something went wrong. Please try again.');
                 }
                 
                 errorMessage.textContent = errorMsg;
+                
+                // Add retry button to error message
+                const retryButton = document.createElement('button');
+                retryButton.className = 'btn btn-outline-primary mt-3';
+                retryButton.innerHTML = '<i class="fas fa-redo me-1"></i> Try Again';
+                retryButton.onclick = function() {
+                    errorMessage.parentNode.removeChild(retryButton);
+                    explanationError.style.display = 'none';
+                    retakeBtn.click();
+                };
+                
+                if (!errorMessage.nextElementSibling || !errorMessage.nextElementSibling.classList.contains('btn')) {
+                    errorMessage.parentNode.appendChild(retryButton);
+                }
                 
                 // Re-enable the analyze button
                 analyzeBtn.disabled = false;

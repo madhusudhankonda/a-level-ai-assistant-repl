@@ -109,18 +109,28 @@ Follow these guidelines:
 """
 
     try:
-        # Clean up the base64 data - ensure it doesn't have data URI prefix
-        if isinstance(base64_image, str) and 'base64' in base64_image and ',' in base64_image:
-            base64_image = base64_image.split(',')[1]
-        
         logger.info(f"Processing image for {subject} explanation")
+        
+        # Clean up the base64 data - ensure it doesn't have data URI prefix
+        if isinstance(base64_image, str):
+            # First check if it's already a data URI and extract just the base64 part
+            if 'base64' in base64_image and ',' in base64_image:
+                logger.info("Image data contains data URI prefix, extracting base64 portion")
+                base64_image = base64_image.split(',')[1]
         
         # Make sure the image data is not empty
         if not base64_image or not isinstance(base64_image, str) or not base64_image.strip():
             raise ValueError("Empty or invalid base64 image data provided")
         
+        # Log the length of the base64 data for debugging
+        logger.info(f"Base64 image data length: {len(base64_image)}")
+        
         # Prepare the image URL with proper data URI format for OpenAI API
+        # Always use image/jpeg format for consistency
         image_url = f"data:image/jpeg;base64,{base64_image}"
+        
+        # Log that we've prepared the image URL
+        logger.info("Image URL prepared for OpenAI API")
         
         logger.info("Calling OpenAI API with multimodal request")
         
