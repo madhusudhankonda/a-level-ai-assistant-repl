@@ -4,52 +4,50 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Base(DeclarativeBase):
     pass
 
-# Initialize SQLAlchemy with the Base class
+# Create the SQLAlchemy extension
 db = SQLAlchemy(model_class=Base)
 
-# Create Flask application
+# Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "devSecretKeyForTesting")
 
-# Configure proxy middleware for proper URL generation in Replit
-from werkzeug.middleware.proxy_fix import ProxyFix
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+# Setup a secret key, required by sessions
+app.secret_key = os.environ.get("SESSION_SECRET", "a-level-ai-assistant-secret-key")
 
-# Configure the PostgreSQL database
+# Configure the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 
-# Make sure data directory exists
-data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
-os.makedirs(data_dir, exist_ok=True)
-
-# Initialize the database with the app
+# Initialize the app with the extension
 db.init_app(app)
+
+# Create database tables
+with app.app_context():
+    # Import models to ensure they're registered with SQLAlchemy
+    import models  # noqa: F401
+    
+    # Create all tables
+    db.create_all()
+    logger.info("Database tables created")
 
 # Register blueprints
 from admin import admin_bp
 from user import user_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
-app.register_blueprint(user_bp)  # No prefix for user routes to make them the main interface
+app.register_blueprint(user_bp, url_prefix='/')
 
-# Redirect root to user interface
+# Root route redirect to user dashboard
 @app.route('/')
 def index():
     from flask import redirect, url_for
     return redirect(url_for('user.index'))
-
-# Create database tables
-with app.app_context():
-    db.create_all()
-    app.logger.info("Database tables created")

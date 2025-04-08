@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Add Question - {{ paper.title }} - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1>Add Question</h1>
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="me-3 mb-0">{{ paper.title }}</h5>
+            <span class="badge 
+                {% if paper.subject == 'Mathematics' %}bg-primary
+                {% elif paper.subject == 'Physics' %}bg-info
+                {% elif paper.subject == 'Chemistry' %}bg-success
+                {% elif paper.subject == 'Biology' %}bg-secondary
+                {% else %}bg-dark{% endif %}">
+                {{ paper.subject }}
+            </span>
+        </div>
+        <div class="mb-3">
+            <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Questions
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin.add_question', paper_id=paper.id) }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="question_number" class="form-label">Question Number</label>
+                        <input type="text" class="form-control" id="question_number" name="question_number" required 
+                               placeholder="e.g., 1, 2a, 3.1">
+                        <div class="form-text">Enter the question number or identifier as it appears in the paper.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="question_image" class="form-label">Question Image</label>
+                        <input type="file" class="form-control" id="question_image" name="question_image" required accept="image/png,image/jpeg">
+                        <div class="form-text">Upload an image of the question (PNG or JPEG format)</div>
+                    </div>
+                    <div id="image_preview" class="mb-3 d-none">
+                        <label class="form-label">Preview</label>
+                        <div class="border p-2 rounded">
+                            <img id="preview_img" src="#" alt="Question preview" class="img-fluid">
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-outline-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Add Question</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Tips for Good Question Images</h5>
+            </div>
+            <div class="card-body">
+                <ul class="ps-3">
+                    <li class="mb-2">Crop the image to include only the question</li>
+                    <li class="mb-2">Ensure the text is clearly readable</li>
+                    <li class="mb-2">Include any relevant diagrams or figures</li>
+                    <li class="mb-2">Make sure mathematical notation is clear</li>
+                    <li class="mb-2">If possible, use PNG format for better quality</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionImage = document.getElementById('question_image');
+        const imagePreview = document.getElementById('image_preview');
+        const previewImg = document.getElementById('preview_img');
+        
+        if (questionImage) {
+            questionImage.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                        imagePreview.classList.remove('d-none');
+                    }
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

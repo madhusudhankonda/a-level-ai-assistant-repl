@@ -51,12 +51,24 @@ def process_math_notation(text):
     text = re.sub(r'### (.*?)(\n|$)', r'<h3>\1</h3>\n', text)
     text = re.sub(r'#### (.*?)(\n|$)', r'<h4>\1</h4>\n', text)
     
+    # Replace bold markdown with HTML bold
+    text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', text)
+    
+    # Replace italic markdown with HTML italic
+    text = re.sub(r'\*(.*?)\*', r'<em>\1</em>', text)
+    
     # Wrap display math ($$..$$) in special containers for better styling
     text = re.sub(r'\$\$(.*?)\$\$', r'<div class="math-container display-math">\n$$\1$$\n</div>', text, flags=re.DOTALL)
     
     # Ensure inline math ($...$) is properly spaced
     text = re.sub(r'([^\$])\$([^\$])', r'\1 $\2', text)
     text = re.sub(r'([^\$])\$([^\$])', r'\1$ \2', text)
+    
+    # Format numbered lists
+    text = re.sub(r'(\n|\A)(\d+)\.\s+(.*?)(\n|\Z)', r'\1<ol start="\2"><li>\3</li></ol>\4', text)
+    
+    # Format bullet lists
+    text = re.sub(r'(\n|\A)- (.*?)(\n|\Z)', r'\1<ul><li>\2</li></ul>\3', text)
     
     # Wrap code blocks
     text = re.sub(r'```(.*?)```', r'<pre><code>\1</code></pre>', text, flags=re.DOTALL)

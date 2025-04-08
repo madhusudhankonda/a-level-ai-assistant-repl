@@ -1,5 +1,5 @@
-from app import db
 from datetime import datetime
+from app import db
 
 class QuestionPaper(db.Model):
     """Model representing a question paper"""
@@ -13,7 +13,7 @@ class QuestionPaper(db.Model):
     questions = db.relationship('Question', backref='paper', lazy=True, order_by='Question.question_number')
     
     def __repr__(self):
-        return f"<QuestionPaper {self.title}>"
+        return f'<QuestionPaper {self.title}>'
 
 class Question(db.Model):
     """Model representing an individual question from a paper"""
@@ -24,7 +24,7 @@ class Question(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __repr__(self):
-        return f"<Question {self.question_number} from paper {self.paper_id}>"
+        return f'<Question {self.question_number} - Paper {self.paper_id}>'
 
 class Explanation(db.Model):
     """Model representing a generated explanation for a question"""
@@ -33,8 +33,8 @@ class Explanation(db.Model):
     explanation_text = db.Column(db.Text, nullable=False)
     generated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship with question
+    # Relationship with questions
     question = db.relationship('Question', backref='explanations')
     
     def __repr__(self):
-        return f"<Explanation for question {self.question_id}>"
+        return f'<Explanation for Question {self.question_id}>'

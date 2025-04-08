@@ -5,67 +5,117 @@
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
-        <h1>Admin Dashboard</h1>
-        <p class="lead">Manage question papers and view student activity.</p>
-        <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>Admin Dashboard</h1>
             <a href="{{ url_for('admin.create_paper') }}" class="btn btn-primary">
-                <i class="fas fa-plus-circle"></i> Create New Paper
-            </a>
-            <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-user"></i> Go to Student View
+                <i class="fas fa-plus me-1"></i> Create New Paper
             </a>
         </div>
     </div>
 </div>
 
+{% if papers %}
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">Question Papers</h5>
             </div>
-            <div class="card-body">
-                {% if papers %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Subject</th>
-                                <th>Questions</th>
-                                <th>Created On</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for paper in papers %}
-                            <tr>
-                                <td>{{ paper.title }}</td>
-                                <td>
-                                    <span class="badge bg-subject-{{ paper.subject|lower }}">
-                                        {{ paper.subject }}
-                                    </span>
-                                </td>
-                                <td>{{ paper.questions|length }}</td>
-                                <td>{{ paper.created_at.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i> Manage Questions
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> No question papers have been created yet.
-                    <a href="{{ url_for('admin.create_paper') }}" class="alert-link">Create your first paper</a>.
-                </div>
-                {% endif %}
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Subject</th>
+                            <th>Questions</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for paper in papers %}
+                        <tr>
+                            <td>{{ paper.title }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if paper.subject == 'Mathematics' %}bg-primary
+                                    {% elif paper.subject == 'Physics' %}bg-info
+                                    {% elif paper.subject == 'Chemistry' %}bg-success
+                                    {% elif paper.subject == 'Biology' %}bg-secondary
+                                    {% else %}bg-dark{% endif %}">
+                                    {{ paper.subject }}
+                                </span>
+                            </td>
+                            <td>{{ paper.questions|length }}</td>
+                            <td>{{ paper.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+                                    <i class="fas fa-tasks"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deletePaperModal"
+                                        data-paper-id="{{ paper.id }}"
+                                        data-paper-title="{{ paper.title }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i> No papers have been created yet. 
+    <a href="{{ url_for('admin.create_paper') }}" class="alert-link">Create your first question paper</a>.
+</div>
+{% endif %}
+
+<!-- Delete Paper Modal -->
+<div class="modal fade" id="deletePaperModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the paper "<span id="paperTitleToDelete"></span>"?</p>
+                <p class="text-danger">This will permanently delete the paper and all its questions. This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deletePaperForm" method="POST" action="">
+                    <button type="submit" class="btn btn-danger">Delete Paper</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deletePaperModal = document.getElementById('deletePaperModal');
+        
+        if (deletePaperModal) {
+            deletePaperModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const paperId = button.getAttribute('data-paper-id');
+                const paperTitle = button.getAttribute('data-paper-title');
+                
+                document.getElementById('paperTitleToDelete').textContent = paperTitle;
+                document.getElementById('deletePaperForm').action = `/paper/${paperId}/delete`;
+            });
+        }
+    });
+</script>
 {% endblock %}

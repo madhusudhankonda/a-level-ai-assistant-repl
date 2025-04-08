@@ -1,16 +1,15 @@
 import os
 import json
-import base64
-import logging
 from openai import OpenAI
+import logging
 
-# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-# do not change this unless explicitly requested by the user
-MODEL = "gpt-4o"
-
-# Initialize OpenAI client with API key from environment
+# Get your API key from the environment variable
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+openai = OpenAI(api_key=OPENAI_API_KEY)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def generate_explanation(base64_image, subject):
     """
@@ -23,151 +22,111 @@ def generate_explanation(base64_image, subject):
     Returns:
         Generated explanation text
     """
-    logging.info(f"Generating explanation for {subject} question")
+    subject = subject.lower().strip()
     
+    # Specific prompts per subject for better quality responses
+    if subject == 'mathematics':
+        system_content = """
+You are an expert A-Level Mathematics tutor. Provide step-by-step explanations for mathematical problems.
+Follow these guidelines:
+1. Always use proper LaTeX notation for mathematical expressions, formulas and equations (e.g., $x^2$ for inline, $$E = mc^2$$ for display).
+2. Identify the core mathematical concepts being tested.
+3. Provide a step-by-step solution with clear explanations for each step.
+4. Include any relevant formulas, theorems, or definitions.
+5. Explain common mistakes students might make on this problem.
+6. Format your response with clear headings: "Question Analysis", then parts with titles like "Part (a)" if applicable, then "Steps and Calculations" etc.
+7. Number each major step and label each part of a multi-part question.
+8. Ensure all variables, symbols, and notation are properly defined.
+9. Use proper formatting: Markdown for text structure and LaTeX for all math expressions.
+10. Keep explanations concise but thorough, aiming for clarity above all.
+11. Show the final answer clearly, ensuring it properly addresses what the question is asking for.
+12. Where applicable, explain the conceptual significance of the result.
+"""
+    
+    elif subject == 'physics':
+        system_content = """
+You are an expert A-Level Physics tutor. Provide step-by-step explanations for physics problems.
+Follow these guidelines:
+1. Always use proper LaTeX notation for mathematical expressions, formulas and equations (e.g., $v = d/t$ for inline, $$F = ma$$ for display).
+2. Identify the physical principles and concepts being tested.
+3. Always state the relevant laws, principles, or equations before applying them.
+4. Include diagrams if they would help explain the solution (described in text).
+5. Provide a step-by-step solution with clear explanations for each step.
+6. Use proper SI units and include unit analysis throughout.
+7. Format your response with clear headings: "Question Analysis", then parts with titles like "Part (a)" if applicable, then "Physical Principles", "Steps and Calculations" etc.
+8. Number each major step and label each part of a multi-part question.
+9. Show all calculations explicitly, converting units when necessary.
+10. Explain the physical significance of the result.
+11. Use proper formatting: Markdown for text structure and LaTeX for all math expressions and equations.
+"""
+    
+    elif subject == 'chemistry':
+        system_content = """
+You are an expert A-Level Chemistry tutor. Provide step-by-step explanations for chemistry problems.
+Follow these guidelines:
+1. Always use proper LaTeX notation for mathematical expressions, chemical equations, and formulas.
+2. Identify the key chemical concepts, reactions, or principles being tested.
+3. For reactions, clearly write balanced chemical equations with states of matter.
+4. For calculations, clearly state the formulas or relationships being used.
+5. Format your response with clear headings: "Question Analysis", then parts with titles like "Part (a)" if applicable, then "Chemical Principles", "Steps and Calculations" etc.
+6. Number each major step and label each part of a multi-part question.
+7. For organic chemistry, explain any mechanisms step-by-step with proper arrow notation (described in text).
+8. Pay special attention to explaining trends, patterns, and conceptual understanding.
+9. Identify common misconceptions that students might have.
+10. For calculations, show all working in a logical, step-by-step manner.
+11. Use proper formatting: Markdown for text structure and LaTeX for all chemical formulas, equations and mathematical expressions.
+"""
+    
+    elif subject == 'biology':
+        system_content = """
+You are an expert A-Level Biology tutor. Provide step-by-step explanations for biology problems.
+Follow these guidelines:
+1. Use proper LaTeX notation for any mathematical expressions or chemical formulas.
+2. Identify the biological concepts, processes, or principles being tested.
+3. Explain biological terminology and processes in clear, precise language.
+4. Format your response with clear headings: "Question Analysis", then parts with titles like "Part (a)" if applicable, then "Biological Principles", "Explanation" etc.
+5. Number each major point and label each part of a multi-part question.
+6. For diagrams or processes, describe the steps, components, or sequences clearly.
+7. Connect the biological concepts to broader themes or real-world applications.
+8. For genetic problems, show the genetic crosses and explain the principles involved.
+9. For physiological processes, explain both structure and function.
+10. For ecological questions, explain interactions and relationships.
+11. Use proper formatting: Markdown for text structure and LaTeX for any mathematical or chemical expressions.
+"""
+    
+    else:
+        # Default for other subjects
+        system_content = """
+You are an expert A-Level tutor. Provide step-by-step explanations for the question in the image.
+Follow these guidelines:
+1. Always use proper LaTeX notation for mathematical expressions, formulas and equations (e.g., $x^2$ for inline, $$E = mc^2$$ for display).
+2. Identify the core concepts being tested.
+3. Provide a step-by-step solution with clear explanations.
+4. Format your response with clear headings: "Question Analysis", then parts with titles like "Part (a)" if applicable, then "Steps and Explanation" etc.
+5. Number each major step and label each part of a multi-part question.
+6. Ensure all terms and concepts are properly defined.
+7. Use proper formatting: Markdown for text structure and LaTeX for math expressions.
+"""
+
     try:
-        # Prepare the prompt for GPT-4o based on the subject
-        if subject.lower() in ["mathematics", "maths", "math"]:
-            prompt = """
-            You are an A-Level Mathematics tutor expert. Analyze this mathematics question and provide a comprehensive solution that would receive full marks on an A-Level exam.
-            
-            Your response should:
-            1. First identify the exact type of question and the mathematical concepts being tested
-            2. Break down the problem into clear, manageable steps 
-            3. Show all calculations and working in detail
-            4. Explain the mathematical reasoning behind each step
-            5. Provide the final answer in the format requested in the question
-            6. Include a brief explanation of any key concepts that students often struggle with
-            
-            IMPORTANT FORMATTING INSTRUCTIONS:
-            - Use proper LaTeX formatting for mathematical equations and expressions
-            - For inline equations, use $...$ syntax (e.g., $x^2 + 5x + 6$)
-            - For display equations (on their own line), use $$...$$ syntax (e.g., $$\\frac{1}{3-2\\sqrt{x}} + \\frac{1}{3+2\\sqrt{x}}$$)
-            - Use \\frac{numerator}{denominator} for fractions
-            - Use proper LaTeX notation for all mathematical symbols
-            - Format your explanation with clear section headings using markdown (### for section titles)
-            - Use numbered steps with clear explanations
-            
-            Your solution should be accessible to A-Level students while demonstrating the rigor expected at this level.
-            """
-        elif subject.lower() in ["physics"]:
-            prompt = """
-            You are an A-Level Physics tutor expert. Analyze this physics question and provide a comprehensive solution that would receive full marks on an A-Level exam.
-            
-            Your response should:
-            1. First identify the physical principles and concepts being tested
-            2. Break down the problem into clear steps, identifying any key equations needed
-            3. Show all calculations with correct units and precision
-            4. Explain the physical significance of each step
-            5. Provide the final answer with appropriate units and significant figures
-            6. Include any key theoretical insights that would earn extra marks
-            
-            IMPORTANT FORMATTING INSTRUCTIONS:
-            - Use proper LaTeX formatting for mathematical equations and physics formulas
-            - For inline equations, use $...$ syntax (e.g., $F = ma$)
-            - For display equations (on their own line), use $$...$$ syntax (e.g., $$E = mc^2$$)
-            - Use \\frac{numerator}{denominator} for fractions
-            - Use proper LaTeX notation for all mathematical and physical symbols
-            - Format your explanation with clear section headings using markdown (### for section titles)
-            - Use numbered steps with clear explanations
-            
-            Your solution should demonstrate understanding of both the mathematical and conceptual aspects of physics with proper scientific notation and units.
-            """
-        elif subject.lower() in ["chemistry"]:
-            prompt = """
-            You are an A-Level Chemistry tutor expert. Analyze this chemistry question and provide a comprehensive solution that would receive full marks on an A-Level exam.
-            
-            Your response should:
-            1. First identify the chemical concepts and principles being tested
-            2. For reaction questions, include balanced equations and mechanisms where relevant
-            3. For calculation questions, show all working clearly with appropriate units
-            4. Explain key chemical principles and theory underlying the solution
-            5. Include relevant structural diagrams or representations where helpful
-            6. Provide complete, accurate answers addressing all parts of the question
-            
-            IMPORTANT FORMATTING INSTRUCTIONS:
-            - Use proper LaTeX formatting for chemical equations and mathematical formulas
-            - For inline equations, use $...$ syntax (e.g., $H_2O$)
-            - For display equations (on their own line), use $$...$$ syntax (e.g., $$CH_4 + 2O_2 \\rightarrow CO_2 + 2H_2O$$)
-            - Use subscripts and superscripts properly (e.g., $H_2SO_4$, $Ca^{2+}$)
-            - Use proper LaTeX notation for all chemical and mathematical symbols
-            - Format your explanation with clear section headings using markdown (### for section titles)
-            - Use numbered steps with clear explanations
-            
-            Pay particular attention to chemical accuracy, proper terminology, and appropriate use of chemical symbols and conventions. Your answer should demonstrate depth of chemical understanding.
-            """
-        elif subject.lower() in ["biology"]:
-            prompt = """
-            You are an A-Level Biology tutor expert. Analyze this biology question and provide a comprehensive solution that would receive full marks on an A-Level exam.
-            
-            Your response should:
-            1. First identify the biological concepts and principles being tested
-            2. Provide detailed explanations using correct biological terminology
-            3. For processes, explain each step and its significance clearly
-            4. Include any relevant diagrams or representations that would be helpful
-            5. Make connections between different biological systems or concepts where relevant
-            6. Address all components of the question comprehensively
-            
-            IMPORTANT FORMATTING INSTRUCTIONS:
-            - Use proper LaTeX formatting for biological equations and mathematical formulas where needed
-            - For inline equations or scientific notation, use $...$ syntax (e.g., $CO_2$ or $H^+$)
-            - For display equations (on their own line), use $$...$$ syntax
-            - Use proper LaTeX notation for all biological symbols and chemical formulas
-            - Format your explanation with clear section headings using markdown (### for section titles)
-            - Use bulleted or numbered lists for multi-step processes
-            - Use proper notation for genetics (e.g., genotypes like $Aa$ vs $aa$)
-            
-            Your answer should demonstrate both breadth and depth of biological knowledge, including molecular, cellular, and systemic understanding where appropriate.
-            """
-        else:
-            prompt = f"""
-            You are an A-Level {subject} expert tutor. Analyze this question and provide a comprehensive solution that would receive full marks on an A-Level exam.
-            
-            Your response should:
-            1. First identify the key concepts being tested in this question
-            2. Break down the problem into clear, manageable steps
-            3. Show all necessary working and calculations
-            4. Explain your reasoning and approach throughout
-            5. Provide a complete answer addressing all parts of the question
-            6. Include any important insights that demonstrate A-Level understanding
-            
-            IMPORTANT FORMATTING INSTRUCTIONS:
-            - Use proper LaTeX formatting for any equations or specialized notation
-            - For inline equations, use $...$ syntax
-            - For display equations (on their own line), use $$...$$ syntax
-            - Use proper LaTeX notation for all mathematical symbols
-            - Format your explanation with clear section headings using markdown (### for section titles)
-            - Use numbered steps with clear explanations
-            
-            Use appropriate technical language and conventions for {subject}. Your solution should be thorough and demonstrate expert subject knowledge.
-            """
-        
-        # Make the API request
-        response = openai_client.chat.completions.create(
-            model=MODEL,
+        # Make the API call to OpenAI
+        response = openai.chat.completions.create(
+            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
             messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{base64_image}"}
-                        }
-                    ]
-                }
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": [
+                    {"type": "text", "text": f"Please explain this {subject} question in detail with step-by-step working:"},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                ]}
             ],
-            max_tokens=2500
+            max_tokens=1500
         )
         
-        # Extract the explanation text from the response
-        explanation_text = response.choices[0].message.content
+        # Extract the explanation from the response
+        explanation = response.choices[0].message.content
         
-        return explanation_text
-    
+        return explanation
+        
     except Exception as e:
-        logging.error(f"Error generating explanation: {str(e)}")
-        raise Exception(f"Failed to generate explanation: {str(e)}")
+        logger.error(f"Error generating explanation: {e}")
+        raise Exception(f"OpenAI API error: {str(e)}")
