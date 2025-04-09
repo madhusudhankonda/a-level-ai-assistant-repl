@@ -5,7 +5,7 @@ import re
 import uuid
 from datetime import datetime
 from models import db, QuestionPaper, Question, Explanation
-from utils.openai_helper import generate_explanation, test_openai_connection
+from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
 # Create user blueprint
 user_bp = Blueprint('user', __name__, template_folder='templates/user')
@@ -118,8 +118,9 @@ def analyze_captured_image():
         # Get the image data and subject from the request
         image_data = request.json.get('image_data', '')
         subject = request.json.get('subject', 'Mathematics')
+        mode = request.json.get('mode', 'question-only')  # Default to question-only
         
-        current_app.logger.info(f"Processing image for subject: {subject}")
+        current_app.logger.info(f"Processing image for subject: {subject}, mode: {mode}")
         
         if not image_data:
             current_app.logger.error("No image data provided")
@@ -263,6 +264,106 @@ def analyze_captured_image():
         return jsonify({
             'success': False,
             'message': f'Error analyzing image: {str(e)}'
+        }), 500
+
+@user_bp.route('/api/analyze-answer', methods=['POST'])
+def analyze_answer():
+    """API endpoint to analyze both question and student answer images"""
+    try:
+        current_app.logger.info("Received answer analysis request")
+        
+        # Validate request format
+        if not request.json:
+            current_app.logger.error("Invalid request format: No JSON data")
+            return jsonify({
+                'success': False,
+                'message': 'Invalid request format: No JSON data'
+            }), 400
+            
+        # Get the image data and subject from the request
+        question_image = request.json.get('question_image', '')
+        answer_image = request.json.get('answer_image', '')
+        subject = request.json.get('subject', 'Mathematics')
+        
+        current_app.logger.info(f"Processing answer for subject: {subject}")
+        
+        # Validate both images
+        if not question_image or not answer_image:
+            current_app.logger.error("Missing question or answer image")
+            return jsonify({
+                'success': False,
+                'message': 'Both question and answer images are required'
+            }), 400
+            
+        # Validate image formats (both should be data URIs)
+        if not isinstance(question_image, str) or not isinstance(answer_image, str):
+            current_app.logger.error("Invalid image data types")
+            return jsonify({
+                'success': False,
+                'message': 'Image data must be strings'
+            }), 400
+        
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(os.getcwd(), 'data', 'student_answers')
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+            current_app.logger.info(f"Created directory: {data_dir}")
+        
+        # Generate unique IDs for this analysis
+        analysis_id = uuid.uuid4().hex
+        
+        try:
+            # Call OpenAI to analyze the student's answer
+            current_app.logger.info("Calling OpenAI to analyze student answer")
+            
+            # Create the prompt with both images
+            response = generate_answer_feedback(
+                question_image,  # Question image (data URI)
+                answer_image,    # Answer image (data URI)
+                subject
+            )
+            
+            current_app.logger.info("Received answer analysis from OpenAI")
+            
+            # Extract the different components from the response
+            feedback = process_math_notation(response.get('feedback', 'No feedback available'))
+            explanation = process_math_notation(response.get('explanation', 'No explanation available'))
+            tips = process_math_notation(response.get('tips', 'No tips available'))
+            score = response.get('score', 'N/A')
+            
+            # Create the response
+            return jsonify({
+                'success': True,
+                'feedback': feedback,
+                'explanation': explanation,
+                'tips': tips,
+                'score': score,
+                'subject': subject,
+                'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            })
+            
+        except Exception as ai_error:
+            error_message = str(ai_error)
+            current_app.logger.error(f"OpenAI API error: {error_message}")
+            
+            # Provide user-friendly error messages
+            if "pattern" in error_message.lower():
+                message = "Image format error: There was an issue with the captured images. Please try again with clearer pictures."
+            elif "api key" in error_message.lower():
+                message = "API configuration error. Please contact support."
+            else:
+                message = f"Error analyzing answer: {error_message}"
+                
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 500
+            
+    except Exception as e:
+        current_app.logger.error(f"Error analyzing student answer: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error analyzing answer: {str(e)}'
         }), 500
 
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
