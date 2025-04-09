@@ -124,9 +124,7 @@
                             <div class="tab-pane fade" id="upload-content" role="tabpanel" aria-labelledby="upload-tab">
                                 <div id="upload-container" class="p-4 text-center">
                                     <div class="upload-area border border-2 rounded p-5 mb-3" 
-                                        id="upload-area" 
-                                        ondragover="event.preventDefault();" 
-                                        ondrop="handleFileDrop(event);"
+                                        id="upload-area"
                                         style="cursor: pointer; transition: all 0.3s ease; min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                                         <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
                                         <p class="mb-3">Drag and drop an image here, or click to browse</p>
@@ -279,9 +277,6 @@
         const instructionText = document.getElementById('instruction-text');
         const captureTitle = document.getElementById('capture-title');
         const resultLabel = document.getElementById('result-label');
-        
-        // Subject selection
-        const subjectSelect = document.getElementById('subject');
         
         // Subject selection
         const subjectSelect = document.getElementById('subject');
@@ -564,6 +559,11 @@
         // Upload area dragover event
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
+        });
+        
+        // Upload area drop event
+        uploadArea.addEventListener('drop', function(e) {
+            handleFileDrop(e);
         });
         
         // File input change event
