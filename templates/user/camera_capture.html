@@ -192,6 +192,19 @@
                                 </div>
                             </div>
                             
+                            <!-- User's image display -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Your submitted work:</h6>
+                                    <button class="btn btn-sm btn-outline-secondary" id="toggle-image-btn">
+                                        <i class="fas fa-expand-alt me-1"></i> <span id="toggle-image-text">Expand Image</span>
+                                    </button>
+                                </div>
+                                <div id="feedback-image-container" class="text-center border rounded p-2" style="max-height: 150px; overflow: hidden; transition: max-height 0.3s ease;">
+                                    <canvas id="feedback-image-canvas" class="img-fluid"></canvas>
+                                </div>
+                            </div>
+                            
                             <!-- Tabbed feedback results -->
                             <ul class="nav nav-tabs mb-3" id="feedbackTabs">
                                 <li class="nav-item">
@@ -715,6 +728,52 @@
             startCamera();
         });
         
+        // Get image display elements
+        const feedbackImageCanvas = document.getElementById('feedback-image-canvas');
+        const feedbackImageContainer = document.getElementById('feedback-image-container');
+        const toggleImageBtn = document.getElementById('toggle-image-btn');
+        const toggleImageText = document.getElementById('toggle-image-text');
+        
+        // Toggle image expand/collapse
+        if (toggleImageBtn) {
+            toggleImageBtn.addEventListener('click', function() {
+                if (feedbackImageContainer.style.maxHeight === '150px') {
+                    // Expand
+                    feedbackImageContainer.style.maxHeight = '100%';
+                    toggleImageText.textContent = 'Collapse Image';
+                    toggleImageBtn.querySelector('i').classList.remove('fa-expand-alt');
+                    toggleImageBtn.querySelector('i').classList.add('fa-compress-alt');
+                } else {
+                    // Collapse
+                    feedbackImageContainer.style.maxHeight = '150px';
+                    toggleImageText.textContent = 'Expand Image';
+                    toggleImageBtn.querySelector('i').classList.remove('fa-compress-alt');
+                    toggleImageBtn.querySelector('i').classList.add('fa-expand-alt');
+                }
+            });
+        }
+        
+        // Copy image to feedback display
+        function displayCapturedImageInFeedback() {
+            if (capturedImageData && feedbackImageCanvas) {
+                const img = new Image();
+                img.onload = function() {
+                    // Get the canvas context
+                    const context = feedbackImageCanvas.getContext('2d');
+                    
+                    // Set canvas dimensions to match image dimensions (preserving aspect ratio)
+                    feedbackImageCanvas.width = img.width;
+                    feedbackImageCanvas.height = img.height;
+                    
+                    // Draw the image on the canvas
+                    context.drawImage(img, 0, 0, img.width, img.height);
+                };
+                
+                // Set the image source to the captured data
+                img.src = capturedImageData;
+            }
+        }
+        
         // Function to handle explanation-only response
         function handleExplanationResponse(data) {
             // Hide loading
@@ -736,6 +795,9 @@
                 
                 // Hide the score in explanation-only mode
                 feedbackScore.style.display = 'none';
+                
+                // Display the captured image
+                displayCapturedImageInFeedback();
                 
                 // Trigger MathJax typesetting for all content tabs
                 if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
@@ -773,6 +835,9 @@
                 feedbackScore.textContent = data.score || 'N/A';
                 feedbackScore.style.display = 'inline-block';
                 feedbackTimestamp.textContent = data.timestamp;
+                
+                // Display the captured image
+                displayCapturedImageInFeedback();
                 
                 // Trigger MathJax typesetting for all content tabs
                 if (typeof MathJax !== 'undefined' && MathJax.typesetPromise) {
