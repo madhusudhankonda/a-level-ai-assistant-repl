@@ -78,37 +78,81 @@
                 <div class="card mb-4">
                     <div class="card-header bg-primary text-white">
                         <h5 class="mb-0" id="capture-header">
-                            <i class="fas fa-camera me-2"></i> <span id="capture-title">Capture Your Work</span>
+                            <i class="fas fa-image me-2"></i> <span id="capture-title">Capture or Upload Your Work</span>
                         </h5>
                     </div>
                     <div class="card-body p-0">
                         <!-- Capture Instructions -->
                         <div class="p-3 bg-light border-bottom" id="capture-instructions">
                             <i class="fas fa-info-circle me-2 text-primary"></i>
-                            <span id="instruction-text">Take a photo that shows both the question and your answer on the same page.</span>
+                            <span id="instruction-text">Take a photo or upload an image that shows both the question and your answer on the same page.</span>
                         </div>
                         
-                        <!-- Video stream -->
-                        <div id="camera-container" class="mb-0 text-center">
-                            <video id="video" width="100%" autoplay playsinline 
-                                style="background-color: #000; display: block; max-height: 70vh;"></video>
-                            <div class="p-3 text-center">
-                                <button id="capture-btn" class="btn btn-lg btn-primary w-100">
-                                    <i class="fas fa-camera me-1"></i> Capture Image
+                        <!-- Capture Method Selection Tabs -->
+                        <ul class="nav nav-tabs" id="captureMethodTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-content" 
+                                    type="button" role="tab" aria-controls="camera-content" aria-selected="true">
+                                    <i class="fas fa-camera me-1"></i> Camera
                                 </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-content" 
+                                    type="button" role="tab" aria-controls="upload-content" aria-selected="false">
+                                    <i class="fas fa-upload me-1"></i> Upload Image
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <!-- Capture Method Content -->
+                        <div class="tab-content" id="captureMethodTabsContent">
+                            <!-- Camera Capture -->
+                            <div class="tab-pane fade show active" id="camera-content" role="tabpanel" aria-labelledby="camera-tab">
+                                <!-- Video stream -->
+                                <div id="camera-container" class="mb-0 text-center">
+                                    <video id="video" width="100%" autoplay playsinline 
+                                        style="background-color: #000; display: block; max-height: 70vh;"></video>
+                                    <div class="p-3 text-center">
+                                        <button id="capture-btn" class="btn btn-lg btn-primary w-100">
+                                            <i class="fas fa-camera me-1"></i> Capture Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- File Upload -->
+                            <div class="tab-pane fade" id="upload-content" role="tabpanel" aria-labelledby="upload-tab">
+                                <div id="upload-container" class="p-4 text-center">
+                                    <div class="upload-area border border-2 rounded p-5 mb-3" 
+                                        id="upload-area" 
+                                        ondragover="event.preventDefault();" 
+                                        ondrop="handleFileDrop(event);"
+                                        style="cursor: pointer; transition: all 0.3s ease; min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                        <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                                        <p class="mb-3">Drag and drop an image here, or click to browse</p>
+                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                        <button id="browse-btn" class="btn btn-outline-primary">
+                                            <i class="fas fa-folder-open me-1"></i> Browse Files
+                                        </button>
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-info-circle me-1"></i> 
+                                        Supported formats: JPG, PNG, GIF (max 10MB)
+                                    </p>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Captured image display -->
+                        <!-- Captured image display (shown for both camera and upload) -->
                         <div id="capture-result" class="p-3" style="display: none;">
-                            <h6 class="mb-2" id="result-label">Captured Image:</h6>
+                            <h6 class="mb-2" id="result-label">Image:</h6>
                             <div class="mb-3 text-center">
                                 <canvas id="canvas" width="640" height="480" class="img-fluid border rounded"></canvas>
                             </div>
                             
                             <div class="d-grid gap-2 d-md-flex justify-content-md-between">
                                 <button id="retake-btn" class="btn btn-outline-secondary flex-grow-1">
-                                    <i class="fas fa-undo me-1"></i> Retake
+                                    <i class="fas fa-undo me-1"></i> <span id="retake-btn-text">Try Again</span>
                                 </button>
                                 <button id="analyze-btn" class="btn btn-success flex-grow-1">
                                     <i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze</span>
@@ -266,14 +310,20 @@
         // Global variable to store captured image
         let capturedImageData;
         
+        // Upload file elements
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const uploadArea = document.getElementById('upload-area');
+        const retakeBtnText = document.getElementById('retake-btn-text');
+        
         // Function to update UI based on selected mode
         function updateModeUI() {
             const mode = analysisMode.value;
             
             if (mode === 'explanation-only') {
                 // Update instructions for question-only mode
-                instructionText.textContent = 'Take a clear photo of just the question to get an explanation.';
-                captureTitle.textContent = 'Capture Question';
+                instructionText.textContent = 'Upload or take a clear photo of just the question to get an explanation.';
+                captureTitle.textContent = 'Capture or Upload Question';
                 resultLabel.textContent = 'Question Image:';
                 analyzeBtnText.textContent = 'Get Explanation';
                 // Hide the score badge in explanation-only mode
@@ -282,8 +332,8 @@
                 }
             } else {
                 // Update instructions for answer feedback mode
-                instructionText.textContent = 'Take a photo that shows both the question and your answer on the same page.';
-                captureTitle.textContent = 'Capture Your Work';
+                instructionText.textContent = 'Upload or take a photo that shows both the question and your answer on the same page.';
+                captureTitle.textContent = 'Capture or Upload Your Work';
                 resultLabel.textContent = 'Captured Image:';
                 analyzeBtnText.textContent = 'Get Feedback';
                 // Show the score badge in answer feedback mode
@@ -291,6 +341,84 @@
                     feedbackScore.style.display = 'inline-block';
                 }
             }
+        }
+        
+        // Handle file drop event
+        function handleFileDrop(event) {
+            event.preventDefault();
+            uploadArea.classList.remove('border-primary');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
+        }
+        
+        // Process the selected or dropped file
+        function processFile(file) {
+            // Validate file type
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file (JPG, PNG, or GIF).');
+                return;
+            }
+            
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit. Please select a smaller file.');
+                return;
+            }
+            
+            // Create a FileReader to read the image
+            const reader = new FileReader();
+            
+            // Set up the FileReader onload event
+            reader.onload = function(e) {
+                // Create an image element to get dimensions
+                const img = new Image();
+                img.onload = function() {
+                    // Get the canvas context
+                    const context = canvas.getContext('2d');
+                    
+                    // Set canvas dimensions to match image dimensions (preserving aspect ratio)
+                    const maxWidth = 640;
+                    const maxHeight = 480;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Scale down if necessary
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw the image on the canvas
+                    context.drawImage(img, 0, 0, width, height);
+                    
+                    // Save the image data
+                    capturedImageData = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // Show the result and hide the upload interface
+                    captureResult.style.display = 'block';
+                    document.getElementById('upload-container').style.display = 'none';
+                    document.getElementById('camera-container').style.display = 'none';
+                    
+                    // Update the retake button text for uploads
+                    retakeBtnText.textContent = 'Upload Different Image';
+                };
+                
+                // Set the image source to the FileReader result
+                img.src = e.target.result;
+                
+                // Also store the full data URL for sending to the server
+                capturedImageData = e.target.result;
+            };
+            
+            // Read the file as a data URL
+            reader.readAsDataURL(file);
         }
         
         // Function to start the camera
@@ -421,6 +549,40 @@
             updateModeUI();
         });
         
+        // Upload area drag enter event
+        uploadArea.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('border-primary');
+        });
+        
+        // Upload area drag leave event
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary');
+        });
+        
+        // Upload area dragover event
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+        
+        // File input change event
+        fileInput.addEventListener('change', function() {
+            if (fileInput.files.length > 0) {
+                processFile(fileInput.files[0]);
+            }
+        });
+        
+        // Browse button click event
+        browseBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Upload area click event (also triggers file browser)
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
         // Capture image
         captureBtn.addEventListener('click', function() {
             // Get the canvas context
@@ -441,11 +603,26 @@
             captureResult.style.display = 'block';
         });
         
-        // Retake photo
+        // Retake photo or upload different image
         retakeBtn.addEventListener('click', function() {
-            // Show camera again
-            cameraContainer.style.display = 'block';
+            // Get the current active tab
+            const cameraTabActive = document.querySelector('#camera-tab').classList.contains('active');
+            const uploadTabActive = document.querySelector('#upload-tab').classList.contains('active');
+            
+            // Hide the result display
             captureResult.style.display = 'none';
+            
+            if (cameraTabActive) {
+                // Show camera again if that's the active tab
+                cameraContainer.style.display = 'block';
+                // Update button text
+                retakeBtnText.textContent = 'Try Again';
+            } else if (uploadTabActive) {
+                // Show upload interface again if that's the active tab
+                document.getElementById('upload-container').style.display = 'block';
+                // Update button text
+                retakeBtnText.textContent = 'Upload Different Image';
+            }
         });
         
         // Analyze button (after capturing image)
@@ -515,12 +692,24 @@
             feedbackResult.style.display = 'none';
             feedbackPlaceholder.style.display = 'block';
             
+            // Reset the upload container display
+            document.getElementById('upload-container').style.display = 'block';
+            
             // Reset the analyze button
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = `<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">${analysisMode.value === 'explanation-only' ? 'Get Explanation' : 'Get Feedback'}</span>`;
             
+            // Reset the capture result display
+            captureResult.style.display = 'none';
+            
             // Go back to capture step
             captureTab.click();
+            
+            // Navigate to camera tab (default)
+            document.getElementById('camera-tab').click();
+            
+            // Reset the retake button text
+            retakeBtnText.textContent = 'Try Again';
             
             // Start the camera again
             startCamera();
