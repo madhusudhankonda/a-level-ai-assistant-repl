@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Buy Credits - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-gradient-purple text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Purchase Credits
+                    <span class="badge bg-dark ms-2">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                    </span>
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-info-circle fa-2x me-3"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="alert-heading">How credits work</h5>
+                            <p class="mb-0">Each AI explanation or answer analysis costs <strong>10 credits</strong>. Purchase more credits to continue learning with our AI assistant.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <h5 class="mb-4">Select a credit package:</h5>
+                
+                <div class="row">
+                    {% for package in packages %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 position-relative package-card">
+                            <div class="ribbon ribbon-top-right">
+                                {% if package.id == 'credits_500' %}
+                                <span>Best Value</span>
+                                {% endif %}
+                            </div>
+                            <div class="card-body text-center py-4">
+                                <h5 class="card-title">{{ package.credits }} Credits</h5>
+                                <p class="display-6 text-primary mb-3">£{{ "%.2f"|format(package.price/100) }}</p>
+                                
+                                <p class="text-muted mb-3">
+                                    {% if package.id == 'credits_100' %}
+                                    Good for 10 AI explanations
+                                    {% elif package.id == 'credits_200' %}
+                                    Good for 20 AI explanations
+                                    {% elif package.id == 'credits_500' %}
+                                    Good for 50 AI explanations
+                                    {% endif %}
+                                </p>
+                                
+                                <form method="POST" action="{{ url_for('auth.create_checkout_session') }}">
+                                    <input type="hidden" name="package_id" value="{{ package.id }}">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-credit-card me-2"></i> Purchase
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer text-center py-3">
+                <p class="mb-0">
+                    <i class="fas fa-lock me-2"></i>
+                    Secure payment powered by Stripe
+                </p>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Profile
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.package-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 2px solid #eee;
+}
+.package-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-color: var(--bs-primary);
+}
+/* Ribbon styles */
+.ribbon {
+    position: absolute;
+    z-index: 1;
+    overflow: hidden;
+    width: 135px;
+    height: 135px;
+    text-align: right;
+}
+.ribbon-top-right {
+    top: -10px;
+    right: -10px;
+}
+.ribbon-top-right span {
+    left: -25px;
+    top: 30px;
+    transform: rotate(45deg);
+    position: absolute;
+    display: block;
+    width: 175px;
+    padding: 5px 0;
+    background-color: #f39c12;
+    box-shadow: 0 5px 10px rgba(0,0,0,.1);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+}
+</style>
+{% endblock %}

@@ -2,6 +2,7 @@ import os
 import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 from sqlalchemy.orm import DeclarativeBase
 
 # Set up logging
@@ -30,6 +31,16 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 # Initialize the app with the extension
 db.init_app(app)
 
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
+
 # Create database tables
 with app.app_context():
     # Import models to ensure they're registered with SQLAlchemy
@@ -42,9 +53,11 @@ with app.app_context():
 # Register blueprints
 from admin import admin_bp
 from user import user_bp
+from auth import auth_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(user_bp, url_prefix='/')
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 # Root route redirect to user dashboard
 @app.route('/')

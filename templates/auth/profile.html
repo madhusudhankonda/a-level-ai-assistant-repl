@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-lg border-0 mb-4">
+            <div class="card-header bg-gradient-purple text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-user-circle me-2"></i>
+                    Profile
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar-circle bg-primary mx-auto mb-3">
+                        <span class="initials">{{ user.username[0] | upper }}</span>
+                    </div>
+                    <h4>{{ user.username }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                </div>
+                
+                <div class="credit-display bg-light p-3 rounded text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-coins text-warning me-2"></i>
+                        <span class="credit-count">{{ user.credits }}</span>
+                    </h3>
+                    <p class="text-muted mb-0">Available Credits</p>
+                </div>
+                
+                <div class="d-grid gap-2 mt-4">
+                    <a href="{{ url_for('auth.buy_credits') }}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        Buy More Credits
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-gradient-purple text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Credit History
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    {% if transaction.transaction_type == 'purchase' %}
+                                    <span class="badge bg-success">Purchase</span>
+                                    {% elif transaction.transaction_type == 'usage' %}
+                                    <span class="badge bg-warning">Usage</span>
+                                    {% elif transaction.transaction_type == 'bonus' %}
+                                    <span class="badge bg-info">Bonus</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaction.amount > 0 %}
+                                    <span class="text-success">+{{ transaction.amount }}</span>
+                                    {% else %}
+                                    <span class="text-danger">{{ transaction.amount }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center p-4">
+                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                    <p>No transaction history yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.initials {
+    font-size: 32px;
+    color: white;
+    font-weight: bold;
+}
+.credit-count {
+    font-size: 28px;
+    font-weight: bold;
+}
+</style>
+{% endblock %}
