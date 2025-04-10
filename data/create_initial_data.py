@@ -75,6 +75,7 @@ def create_initial_data():
                 QuestionPaper(
                     title="AQA Pure Mathematics June 2023", 
                     category_id=pure_aqa.id,
+                    subject="Mathematics",
                     exam_period="June 2023",
                     paper_type="QP",
                     description="AQA A-Level Pure Mathematics Paper (June 2023)"
@@ -82,6 +83,7 @@ def create_initial_data():
                 QuestionPaper(
                     title="AQA Pure Mathematics June 2022", 
                     category_id=pure_aqa.id,
+                    subject="Mathematics",
                     exam_period="June 2022",
                     paper_type="QP",
                     description="AQA A-Level Pure Mathematics Paper (June 2022)"
@@ -89,6 +91,7 @@ def create_initial_data():
                 QuestionPaper(
                     title="AQA Pure Mathematics November 2022", 
                     category_id=pure_aqa.id,
+                    subject="Mathematics",
                     exam_period="November 2022",
                     paper_type="QP",
                     description="AQA A-Level Pure Mathematics Paper (November 2022)"
@@ -96,6 +99,7 @@ def create_initial_data():
                 QuestionPaper(
                     title="AQA Pure and Statistics June 2023", 
                     category_id=stats_aqa.id,
+                    subject="Mathematics",
                     exam_period="June 2023",
                     paper_type="QP",
                     description="AQA A-Level Pure Mathematics and Statistics Paper (June 2023)"
@@ -103,6 +107,7 @@ def create_initial_data():
                 QuestionPaper(
                     title="AQA Pure and Statistics June 2022", 
                     category_id=stats_aqa.id,
+                    subject="Mathematics",
                     exam_period="June 2022",
                     paper_type="QP",
                     description="AQA A-Level Pure Mathematics and Statistics Paper (June 2022)"
