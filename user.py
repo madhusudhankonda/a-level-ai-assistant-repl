@@ -331,10 +331,16 @@ def analyze_captured_image():
         processed_text = process_math_notation(explanation_text)
         current_app.logger.info("Math notation processed")
         
+        # Deduct 10 credits for successful AI explanation
+        current_user.use_credits(10)
+        db.session.commit()
+        current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
+        
         return jsonify({
             'success': True,
             'explanation': processed_text,
             'subject': subject,
+            'credits_remaining': current_user.credits,
             'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         })
         
@@ -420,6 +426,11 @@ def analyze_answer():
             tips = process_math_notation(response.get('tips', 'No tips available'))
             score = response.get('score', 'N/A')
             
+            # Deduct 10 credits for successful AI answer analysis
+            current_user.use_credits(10)
+            db.session.commit()
+            current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
+            
             # Create the response
             return jsonify({
                 'success': True,
@@ -428,6 +439,7 @@ def analyze_answer():
                 'tips': tips,
                 'score': score,
                 'subject': subject,
+                'credits_remaining': current_user.credits,
                 'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
             })
             
@@ -498,13 +510,19 @@ def explain_question(question_id):
                 explanation_text=explanation_text
             )
             
+            # Deduct 10 credits for successful AI explanation
+            current_user.use_credits(10)
+            
+            # Add explanation and save both explanation and credit transaction
             db.session.add(explanation)
             db.session.commit()
+            current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
             
             return jsonify({
                 'success': True,
                 'question_id': question_id,
                 'explanation': processed_text,
+                'credits_remaining': current_user.credits,
                 'is_new': True
             })
             
