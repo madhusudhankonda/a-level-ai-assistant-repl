@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.name }} - Exam Boards{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb navigation -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.index') }}">Subjects</a></li>
+                    <li class="breadcrumb-item active">{{ subject.name }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="mb-0">{{ subject.name }} Exam Boards</h1>
+                <div>
+                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-primary">
+                        <i class="fas fa-camera me-1"></i> Capture Question
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Exam boards -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Select an Exam Board</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for board in boards %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">{{ board.name }}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{ board.description }}</p>
+                                </div>
+                                <div class="card-footer bg-light">
+                                    <a href="{{ url_for('user.view_board', board_id=board.id) }}" class="btn btn-outline-primary btn-sm d-block">
+                                        Browse Categories
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+
+                        {% if not boards %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> No exam boards available for this subject yet. Check back later!
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

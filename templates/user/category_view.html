@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ category.name }} - {{ category.board.name }} Past Papers{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Breadcrumb navigation -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.index') }}">Subjects</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.view_subject', subject_id=category.board.subject.id) }}">{{ category.board.subject.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('user.view_board', board_id=category.board.id) }}">{{ category.board.name }}</a></li>
+                    <li class="breadcrumb-item active">{{ category.name }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="mb-0">{{ category.name }} Past Papers</h1>
+                <div>
+                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-primary">
+                        <i class="fas fa-camera me-1"></i> Capture Question
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Papers list -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Select a Past Paper</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Exam Period</th>
+                                    <th>Paper Title</th>
+                                    <th>Paper Type</th>
+                                    <th>Questions</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for paper in papers %}
+                                <tr>
+                                    <td>{{ paper.exam_period }}</td>
+                                    <td>{{ paper.title }}</td>
+                                    <td>
+                                        <span class="badge {% if paper.paper_type == 'QP' %}bg-info{% elif paper.paper_type == 'MS' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ paper.paper_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ paper.questions|length }}</td>
+                                    <td>
+                                        <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                
+                                {% if not papers %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-3">
+                                        <div class="alert alert-info mb-0">
+                                            <i class="fas fa-info-circle me-2"></i> No past papers available for this category yet. Check back later!
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

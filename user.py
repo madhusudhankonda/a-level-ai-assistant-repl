@@ -4,7 +4,10 @@ import base64
 import re
 import uuid
 from datetime import datetime
-from models import db, QuestionPaper, Question, Explanation
+from models import (
+    db, Subject, ExamBoard, PaperCategory, QuestionPaper, 
+    Question, Explanation
+)
 from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
 # Create user blueprint
@@ -12,10 +15,24 @@ user_bp = Blueprint('user', __name__, template_folder='templates/user')
 
 @user_bp.route('/')
 def index():
-    """User dashboard showing available papers"""
-    # Get all papers with at least one question
-    papers = QuestionPaper.query.join(QuestionPaper.questions).group_by(QuestionPaper.id).order_by(QuestionPaper.created_at.desc()).all()
-    return render_template('user/index.html', papers=papers)
+    """User dashboard showing available papers through hierarchical navigation"""
+    # Get all subjects with related data
+    subjects = Subject.query.all()
+    
+    # Check if we have hierarchical data
+    if subjects:
+        # We have subjects, use the new hierarchical interface
+        return render_template('user/index_hierarchical.html', subjects=subjects)
+    else:
+        # Fall back to the old interface if no subjects are found
+        try:
+            # Get all papers with at least one question
+            papers = QuestionPaper.query.all()
+            return render_template('user/index.html', papers=papers)
+        except Exception as e:
+            # If there's an error, just show an empty list
+            current_app.logger.error(f"Error fetching papers: {str(e)}")
+            return render_template('user/index.html', papers=[])
 
 @user_bp.route('/camera-capture')
 def camera_capture():
@@ -38,6 +55,42 @@ def test_openai_api():
         'message': message
     })
 
+@user_bp.route('/subject/<int:subject_id>')
+def view_subject(subject_id):
+    """View a specific subject and its exam boards"""
+    subject = Subject.query.get_or_404(subject_id)
+    boards = ExamBoard.query.filter_by(subject_id=subject_id).all()
+    
+    return render_template(
+        'user/subject_view.html',
+        subject=subject,
+        boards=boards
+    )
+
+@user_bp.route('/board/<int:board_id>')
+def view_board(board_id):
+    """View a specific exam board and its paper categories"""
+    board = ExamBoard.query.get_or_404(board_id)
+    categories = PaperCategory.query.filter_by(board_id=board_id).all()
+    
+    return render_template(
+        'user/board_view.html',
+        board=board,
+        categories=categories
+    )
+
+@user_bp.route('/category/<int:category_id>')
+def view_category(category_id):
+    """View a specific paper category and its papers"""
+    category = PaperCategory.query.get_or_404(category_id)
+    papers = QuestionPaper.query.filter_by(category_id=category_id).all()
+    
+    return render_template(
+        'user/category_view.html',
+        category=category,
+        papers=papers
+    )
+
 @user_bp.route('/paper/<int:paper_id>')
 def view_paper(paper_id):
     """View a specific paper and its questions"""
@@ -46,10 +99,25 @@ def view_paper(paper_id):
     # Get all questions for this paper
     questions = Question.query.filter_by(paper_id=paper_id).order_by(Question.question_number).all()
     
+    # Get category information if available
+    category = None
+    board = None
+    subject = None
+    
+    if paper.category_id:
+        category = PaperCategory.query.get(paper.category_id)
+        if category:
+            board = ExamBoard.query.get(category.board_id)
+            if board:
+                subject = Subject.query.get(board.subject_id)
+    
     return render_template(
         'user/question_viewer.html', 
         paper=paper, 
-        questions=questions
+        questions=questions,
+        category=category,
+        board=board,
+        subject=subject
     )
 
 @user_bp.route('/question-image/<int:question_id>')
