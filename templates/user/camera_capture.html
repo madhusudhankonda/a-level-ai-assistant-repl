@@ -5,8 +5,13 @@
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
-        <h1 class="mb-4">Student Answer Feedback</h1>
-        <p class="lead">Capture your work to get instant feedback and explanations</p>
+        <h1 class="mb-4">
+            AI-Powered Student Answer Feedback
+            <span class="badge bg-info ms-2">
+                <i class="fas fa-robot me-1"></i> AI Assistant
+            </span>
+        </h1>
+        <p class="lead">Capture your work to get instant AI feedback and detailed explanations</p>
         <div class="mb-3">
             <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i> Back to Papers
@@ -153,7 +158,7 @@
                                     <i class="fas fa-undo me-1"></i> <span id="retake-btn-text">Try Again</span>
                                 </button>
                                 <button id="analyze-btn" class="btn btn-success flex-grow-1">
-                                    <i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze</span>
+                                    <i class="fas fa-robot me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>
                                 </button>
                             </div>
                         </div>
@@ -333,7 +338,7 @@
                 instructionText.textContent = 'Upload or take a clear photo of just the question to get an explanation.';
                 captureTitle.textContent = 'Capture or Upload Question';
                 resultLabel.textContent = 'Question Image:';
-                analyzeBtnText.textContent = 'Get Explanation';
+                analyzeBtnText.textContent = 'Get AI Explanation';
                 // Hide the score badge in explanation-only mode
                 if (feedbackScore) {
                     feedbackScore.style.display = 'none';
@@ -343,7 +348,7 @@
                 instructionText.textContent = 'Upload or take a photo that shows both the question and your answer on the same page.';
                 captureTitle.textContent = 'Capture or Upload Your Work';
                 resultLabel.textContent = 'Captured Image:';
-                analyzeBtnText.textContent = 'Get Feedback';
+                analyzeBtnText.textContent = 'Get AI Feedback & Marking';
                 // Show the score badge in answer feedback mode
                 if (feedbackScore) {
                     feedbackScore.style.display = 'inline-block';
