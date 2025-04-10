@@ -1,12 +1,13 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app, send_file
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app, send_file, flash
 import os
 import base64
 import re
 import uuid
 from datetime import datetime
+from flask_login import login_required, current_user
 from models import (
     db, Subject, ExamBoard, PaperCategory, QuestionPaper, 
-    Question, Explanation
+    Question, Explanation, User
 )
 from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
@@ -170,10 +171,20 @@ def process_math_notation(text):
     return text
 
 @user_bp.route('/api/analyze-captured-image', methods=['POST'])
+@login_required
 def analyze_captured_image():
     """API endpoint to analyze a question image captured with the camera"""
     try:
         current_app.logger.info("Received image analysis request")
+        
+        # Credit verification - require 10 credits per analysis
+        if not current_user.has_sufficient_credits(10):
+            current_app.logger.warning(f"User {current_user.id} attempted analysis without sufficient credits")
+            return jsonify({
+                'success': False,
+                'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                'credits_required': True
+            }), 403
         
         # Validate request format
         if not request.json:
@@ -335,10 +346,20 @@ def analyze_captured_image():
         }), 500
 
 @user_bp.route('/api/analyze-answer', methods=['POST'])
+@login_required
 def analyze_answer():
     """API endpoint to analyze both question and student answer images"""
     try:
         current_app.logger.info("Received answer analysis request")
+        
+        # Credit verification - require 10 credits per analysis
+        if not current_user.has_sufficient_credits(10):
+            current_app.logger.warning(f"User {current_user.id} attempted answer analysis without sufficient credits")
+            return jsonify({
+                'success': False,
+                'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                'credits_required': True
+            }), 403
         
         # Validate request format
         if not request.json:
@@ -435,6 +456,7 @@ def analyze_answer():
         }), 500
 
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
+@login_required
 def explain_question(question_id):
     """API endpoint to get an explanation for a question"""
     question = Question.query.get_or_404(question_id)
@@ -445,6 +467,14 @@ def explain_question(question_id):
     
     # If requesting a new explanation via POST or no saved explanation exists
     if request.method == 'POST' or not existing_explanation:
+        # Credit verification - require 10 credits for new explanations
+        if not current_user.has_sufficient_credits(10):
+            current_app.logger.warning(f"User {current_user.id} attempted to get new explanation without sufficient credits")
+            return jsonify({
+                'success': False,
+                'message': 'You need at least 10 credits to generate a new explanation. Please purchase more credits.',
+                'credits_required': True
+            }), 403
         try:
             # Read the image and encode it to base64 with data URI format
             with open(question.image_path, "rb") as image_file:
