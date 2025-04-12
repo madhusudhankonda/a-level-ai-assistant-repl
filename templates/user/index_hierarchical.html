@@ -18,6 +18,52 @@
                 </div>
             </div>
             
+            <!-- Quick Navigation with Dropdowns -->
+            <div class="card mb-4">
+                <div class="card-header bg-gradient-purple text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        Quick Paper Search
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="paperBrowserForm" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="subjectSelect" class="form-label">Subject</label>
+                            <select id="subjectSelect" class="form-select">
+                                <option value="">Select a subject...</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="boardSelect" class="form-label">Exam Board</label>
+                            <select id="boardSelect" class="form-select" disabled>
+                                <option value="">Select an exam board...</option>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label for="categorySelect" class="form-label">Paper Category</label>
+                            <select id="categorySelect" class="form-select" disabled>
+                                <option value="">Select a paper category...</option>
+                                <!-- Will be populated dynamically -->
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 mt-4 text-center">
+                            <button type="button" id="browseButton" class="btn btn-primary" disabled>
+                                <i class="fas fa-search me-2"></i> Browse Papers
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Classic Selection with Cards -->
             <div class="card mb-4">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Select a Subject</h5>
@@ -99,4 +145,116 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const subjectSelect = document.getElementById('subjectSelect');
+        const boardSelect = document.getElementById('boardSelect');
+        const categorySelect = document.getElementById('categorySelect');
+        const browseButton = document.getElementById('browseButton');
+        
+        // Data for dropdowns (populated from server)
+        const boardsData = [
+            {% for board in boards %}
+            {
+                id: {{ board.id }},
+                name: "{{ board.name }}",
+                subjectId: {{ board.subject_id }}
+            },
+            {% endfor %}
+        ];
+        
+        const categoriesData = [
+            {% for category in categories %}
+            {
+                id: {{ category.id }},
+                name: "{{ category.name }}",
+                boardId: {{ category.board_id }}
+            },
+            {% endfor %}
+        ];
+        
+        // Event Listeners
+        subjectSelect.addEventListener('change', function() {
+            const selectedSubjectId = parseInt(this.value);
+            
+            // Clear and disable subsequent dropdowns
+            clearDropdown(boardSelect, 'Select an exam board...');
+            clearDropdown(categorySelect, 'Select a paper category...');
+            browseButton.disabled = true;
+            
+            if (selectedSubjectId) {
+                // Enable board dropdown and populate with filtered options
+                boardSelect.disabled = false;
+                
+                // Filter boards by selected subject
+                const filteredBoards = boardsData.filter(board => board.subjectId === selectedSubjectId);
+                
+                // Add options to board dropdown
+                filteredBoards.forEach(board => {
+                    const option = document.createElement('option');
+                    option.value = board.id;
+                    option.textContent = board.name;
+                    boardSelect.appendChild(option);
+                });
+            } else {
+                // Disable all downstream selects
+                boardSelect.disabled = true;
+                categorySelect.disabled = true;
+            }
+        });
+        
+        boardSelect.addEventListener('change', function() {
+            const selectedBoardId = parseInt(this.value);
+            
+            // Clear and disable category dropdown
+            clearDropdown(categorySelect, 'Select a paper category...');
+            browseButton.disabled = true;
+            
+            if (selectedBoardId) {
+                // Enable category dropdown and populate with filtered options
+                categorySelect.disabled = false;
+                
+                // Filter categories by selected board
+                const filteredCategories = categoriesData.filter(category => category.boardId === selectedBoardId);
+                
+                // Add options to category dropdown
+                filteredCategories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+            } else {
+                // Disable category select
+                categorySelect.disabled = true;
+            }
+        });
+        
+        categorySelect.addEventListener('change', function() {
+            // Enable browse button if a category is selected
+            browseButton.disabled = !this.value;
+        });
+        
+        browseButton.addEventListener('click', function() {
+            const categoryId = categorySelect.value;
+            if (categoryId) {
+                // Navigate to the selected category
+                window.location.href = `/category/${categoryId}`;
+            }
+        });
+        
+        // Helper function to clear a dropdown and add a default option
+        function clearDropdown(selectElement, defaultText) {
+            selectElement.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = defaultText;
+            selectElement.appendChild(defaultOption);
+        }
+    });
+</script>
 {% endblock %}

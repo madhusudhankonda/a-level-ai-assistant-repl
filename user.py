@@ -20,10 +20,19 @@ def index():
     # Get all subjects with related data
     subjects = Subject.query.all()
     
+    # Get all boards (with subject information) for dropdown navigation
+    all_boards = ExamBoard.query.all()
+    
+    # Get all paper categories for dropdown navigation
+    all_categories = PaperCategory.query.all()
+    
     # Check if we have hierarchical data
     if subjects:
-        # We have subjects, use the new hierarchical interface
-        return render_template('user/index_hierarchical.html', subjects=subjects)
+        # We have subjects, use the new hierarchical interface with dropdown navigation
+        return render_template('user/index_hierarchical.html', 
+                             subjects=subjects,
+                             boards=all_boards,
+                             categories=all_categories)
     else:
         # Fall back to the old interface if no subjects are found
         try:
