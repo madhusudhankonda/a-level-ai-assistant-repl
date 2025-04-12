@@ -401,8 +401,8 @@
                     const context = canvas.getContext('2d');
                     
                     // Set canvas dimensions to match image dimensions (preserving aspect ratio)
-                    const maxWidth = 640;
-                    const maxHeight = 480;
+                    const maxWidth = 600; // Reduced from 640 to ensure smaller image size
+                    const maxHeight = 450; // Reduced from 480 to ensure smaller image size
                     let width = img.width;
                     let height = img.height;
                     
@@ -419,8 +419,11 @@
                     // Draw the image on the canvas
                     context.drawImage(img, 0, 0, width, height);
                     
-                    // Save the image data
-                    capturedImageData = canvas.toDataURL('image/jpeg', 0.7);
+                    // Save the image data - use lower quality (0.6) to ensure smaller size
+                    capturedImageData = canvas.toDataURL('image/jpeg', 0.6);
+                    
+                    // Log image data size for debugging
+                    console.log('Image data size:', Math.round(capturedImageData.length / 1024), 'KB');
                     
                     // Show the result and hide the upload interface
                     captureResult.style.display = 'block';
@@ -614,15 +617,30 @@
             // Get the canvas context
             const context = canvas.getContext('2d');
             
-            // Set canvas dimensions to match video dimensions
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Set canvas dimensions to match video dimensions but scaled down if too large
+            const maxWidth = 600;
+            const maxHeight = 450;
+            let width = video.videoWidth;
+            let height = video.videoHeight;
             
-            // Draw the current video frame on the canvas
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Scale down if necessary
+            if (width > maxWidth || height > maxHeight) {
+                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                width = Math.floor(width * ratio);
+                height = Math.floor(height * ratio);
+            }
             
-            // Save the image data
-            capturedImageData = canvas.toDataURL('image/jpeg', 0.7);
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw the current video frame on the canvas (scaled down if needed)
+            context.drawImage(video, 0, 0, width, height);
+            
+            // Save the image data with reduced quality to ensure smaller size
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.6);
+            
+            // Log size for debugging
+            console.log('Captured image size:', Math.round(capturedImageData.length / 1024), 'KB');
             
             // Show the captured image and hide the camera
             cameraContainer.style.display = 'none';
@@ -886,6 +904,8 @@
                 errorMsg = 'Image format error: There was an issue with the captured image. Please try again with a clearer picture.';
             } else if (error.message && error.message.includes('Failed to fetch')) {
                 errorMsg = 'Connection error: Please check your internet connection and try again.';
+            } else if (error.message && error.message.includes('Unexpected token')) {
+                errorMsg = 'Invalid response received. Please try again with a smaller or clearer image.';
             } else {
                 errorMsg = 'Error: ' + (error.message || 'Something went wrong. Please try again.');
             }
