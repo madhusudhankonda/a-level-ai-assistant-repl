@@ -33,7 +33,11 @@
                             <select id="subjectSelect" class="form-select">
                                 <option value="">Select a subject...</option>
                                 {% for subject in subjects %}
-                                <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                    {% if subject.name == 'Mathematics' %}
+                                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                    {% else %}
+                                        <option value="" disabled title="Coming soon!">{{ subject.name }} (Coming Soon)</option>
+                                    {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
@@ -63,31 +67,7 @@
                 </div>
             </div>
             
-            <!-- Classic Selection with Cards -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Select a Subject</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for subject in subjects %}
-                        <div class="col-md-6 col-lg-3 mb-3">
-                            <div class="card h-100 border-primary">
-                                <div class="card-body text-center">
-                                    <h5 class="card-title">{{ subject.name }}</h5>
-                                    <p class="card-text text-muted small">{{ subject.description }}</p>
-                                </div>
-                                <div class="card-footer bg-light">
-                                    <a href="{{ url_for('user.view_subject', subject_id=subject.id) }}" class="btn btn-outline-primary btn-sm d-block">
-                                        Browse Past Papers
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+            <!-- Card selection has been removed as requested -->
             
             <div class="card">
                 <div class="card-header bg-info text-white">
