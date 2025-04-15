@@ -42,17 +42,26 @@ def create_paper():
     
     if request.method == 'POST':
         title = request.form.get('title')
-        subject_name = request.form.get('subject')
+        subject_id = request.form.get('subject')
+        board_id = request.form.get('board_id')
         category_id = request.form.get('category_id')
         exam_period = request.form.get('exam_period', 'Unknown')
         paper_type = request.form.get('paper_type', 'QP')
         description = request.form.get('description', '')
         
-        if not title or not subject_name:
+        if not title or not subject_id:
             flash('Title and subject are required', 'danger')
             return redirect(url_for('admin.create_paper'))
         
-        current_app.logger.info(f"Creating paper: {title}, Subject: {subject_name}, Category ID: {category_id}")
+        # Get subject name from subject_id
+        subject = Subject.query.get(subject_id)
+        if not subject:
+            flash('Invalid subject selected', 'danger')
+            return redirect(url_for('admin.create_paper'))
+            
+        subject_name = subject.name
+        
+        current_app.logger.info(f"Creating paper: {title}, Subject ID: {subject_id}, Subject Name: {subject_name}, Board ID: {board_id}, Category ID: {category_id}")
         
         # Create new paper in the database
         paper = QuestionPaper(

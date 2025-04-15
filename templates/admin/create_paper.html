@@ -33,7 +33,7 @@
                             <select class="form-select" id="subject" name="subject" required>
                                 <option value="" selected disabled>Select a subject</option>
                                 {% for subject in subjects %}
-                                <option value="{{ subject.name }}" data-subject-id="{{ subject.id }}">{{ subject.name }}</option>
+                                <option value="{{ subject.id }}">{{ subject.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -140,8 +140,7 @@
         
         // When subject changes, load exam boards
         subjectSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const subjectId = selectedOption.getAttribute('data-subject-id');
+            const subjectId = this.value;
             
             // Reset category select
             categorySelect.innerHTML = '<option value="" selected disabled>Select an exam board first</option>';
@@ -245,9 +244,8 @@
                 return;
             }
             
-            // Check subject field - using data attribute
-            const selectedSubject = subjectSelect.options[subjectSelect.selectedIndex];
-            if (!selectedSubject || !selectedSubject.getAttribute('data-subject-id')) {
+            // Check subject field
+            if (!subjectSelect.value) {
                 event.preventDefault();
                 errorMessage.textContent = 'Please select a subject';
                 validationErrors.classList.remove('d-none');
