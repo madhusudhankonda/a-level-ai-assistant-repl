@@ -128,6 +128,28 @@ def get_boards(subject_id):
         current_app.logger.error(f"Error getting boards for subject {subject_id}: {str(e)}")
         return jsonify({'error': f'Error loading boards: {str(e)}'}), 500
 
+# Add a non-authenticated endpoint for the admin form (for AJAX usage)
+@admin_bp.route('/get-form-data/boards/<int:subject_id>')
+def get_form_boards(subject_id):
+    """Public API endpoint to get exam boards for the admin form"""
+    current_app.logger.info(f"Getting form boards for subject ID: {subject_id}")
+    
+    # Simple validation to ensure we're dealing with a valid subject ID
+    if not isinstance(subject_id, int) or subject_id <= 0:
+        return jsonify({'error': 'Invalid subject ID'}), 400
+    
+    try:
+        # Fetch boards for this subject
+        boards = ExamBoard.query.filter_by(subject_id=subject_id).all()
+        current_app.logger.info(f"Found {len(boards)} boards for subject ID {subject_id}")
+        
+        # Format the response
+        board_list = [{'id': board.id, 'name': board.name} for board in boards]
+        return jsonify(board_list)
+    except Exception as e:
+        current_app.logger.error(f"Error getting form boards for subject {subject_id}: {str(e)}")
+        return jsonify({'error': f'Error loading boards: {str(e)}'}), 500
+
 @admin_bp.route('/api/get-categories/<int:board_id>')
 @login_required
 def get_categories(board_id):
@@ -145,6 +167,28 @@ def get_categories(board_id):
         return jsonify(category_list)
     except Exception as e:
         current_app.logger.error(f"Error getting categories for board {board_id}: {str(e)}")
+        return jsonify({'error': f'Error loading categories: {str(e)}'}), 500
+
+# Add a non-authenticated endpoint for the admin form (for AJAX usage)
+@admin_bp.route('/get-form-data/categories/<int:board_id>')
+def get_form_categories(board_id):
+    """Public API endpoint to get paper categories for the admin form"""
+    current_app.logger.info(f"Getting form categories for board ID: {board_id}")
+    
+    # Simple validation to ensure we're dealing with a valid board ID
+    if not isinstance(board_id, int) or board_id <= 0:
+        return jsonify({'error': 'Invalid board ID'}), 400
+    
+    try:
+        # Fetch categories for this board
+        categories = PaperCategory.query.filter_by(board_id=board_id).all()
+        current_app.logger.info(f"Found {len(categories)} categories for board ID {board_id}")
+        
+        # Format the response
+        category_list = [{'id': category.id, 'name': category.name} for category in categories]
+        return jsonify(category_list)
+    except Exception as e:
+        current_app.logger.error(f"Error getting form categories for board {board_id}: {str(e)}")
         return jsonify({'error': f'Error loading categories: {str(e)}'}), 500
 
 @admin_bp.route('/paper/<int:paper_id>/questions')
