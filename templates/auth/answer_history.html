@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}My Answer History - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="fas fa-check-circle me-2 text-success"></i>
+            My Answer History
+        </h1>
+        <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Profile
+        </a>
+    </div>
+
+    <div class="card shadow border-0 mb-4">
+        <div class="card-header bg-gradient-success text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Your Answer Submissions</h4>
+                <div class="badge bg-light text-dark rounded-pill px-3 py-2">
+                    <i class="fas fa-file-alt me-1"></i>
+                    {{ answers.total }} Total Submissions
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if answers.items %}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-chart-line text-primary me-2"></i>
+                                    Performance Summary
+                                </h5>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div class="performance-stat text-center">
+                                        <h3 class="mb-0">{{ avg_score|round|int }}%</h3>
+                                        <small class="text-muted">Average Score</small>
+                                    </div>
+                                    <div class="performance-stat text-center">
+                                        <h3 class="mb-0">{{ answers.total }}</h3>
+                                        <small class="text-muted">Answers Submitted</small>
+                                    </div>
+                                    <div class="performance-stat text-center">
+                                        <h3 class="mb-0">{{ high_score|round|int }}%</h3>
+                                        <small class="text-muted">Highest Score</small>
+                                    </div>
+                                </div>
+                                <div class="progress mt-3" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ avg_score }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="fas fa-tags text-primary me-2"></i>
+                                    Subjects
+                                </h5>
+                                <div class="d-flex flex-wrap gap-2 mt-3">
+                                    {% for subject in subjects %}
+                                        <div class="badge bg-primary p-2">
+                                            {{ subject }}
+                                            <span class="badge bg-light text-dark ms-2">{{ subject_counts[subject] }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="list-group answer-list">
+                    {% for answer in answers.items %}
+                        <div class="list-group-item list-group-item-action p-4">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">
+                                    {% if answer.question %}
+                                        Question #{{ answer.question.question_number }}
+                                    {% else %}
+                                        Custom Question
+                                    {% endif %}
+                                    
+                                    {% if answer.score and answer.max_score %}
+                                        <span class="badge {% if answer.get_score_percentage() >= 80 %}bg-success{% elif answer.get_score_percentage() >= 60 %}bg-warning{% else %}bg-danger{% endif %} ms-2">
+                                            {{ answer.score }}/{{ answer.max_score }} ({{ answer.get_score_percentage()|round|int }}%)
+                                        </span>
+                                    {% endif %}
+                                </h5>
+                                <small class="text-muted">{{ answer.created_at.strftime('%B %d, %Y - %H:%M') }}</small>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-5">
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-2">Question:</h6>
+                                        {% if answer.question and answer.question.image_path %}
+                                            <img src="{{ url_for('user.get_question_image', question_id=answer.question_id) }}" 
+                                                 alt="Question Image" class="img-fluid border rounded mb-2" style="max-height: 150px;">
+                                        {% elif answer.user_query and answer.user_query.image_path %}
+                                            <img src="{{ answer.user_query.image_path }}" 
+                                                 alt="Question Image" class="img-fluid border rounded mb-2" style="max-height: 150px;">
+                                        {% else %}
+                                            <p class="text-muted fst-italic">No question image available</p>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div>
+                                        <h6 class="text-muted mb-2">Your Answer:</h6>
+                                        {% if answer.answer_image_path %}
+                                            <img src="{{ answer.answer_image_path }}" 
+                                                 alt="Your Answer" class="img-fluid border rounded mb-2" style="max-height: 150px;">
+                                        {% endif %}
+                                        
+                                        {% if answer.answer_text %}
+                                            <p class="text-muted fst-italic">{{ answer.answer_text|truncate(100) }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-7">
+                                    <h6 class="text-muted mb-2">AI Feedback:</h6>
+                                    <div class="feedback-content p-3 bg-light rounded">
+                                        {{ answer.feedback_text|truncate(200)|safe }}
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#answerModal{{ answer.id }}">View full feedback</a>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <a href="#" class="btn btn-sm btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#answerModal{{ answer.id }}">
+                                            <i class="fas fa-eye me-1"></i>
+                                            View Details
+                                        </a>
+                                        {% if answer.question %}
+                                            <a href="{{ url_for('user.view_paper', paper_id=answer.question.paper_id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-file-alt me-1"></i>
+                                                View Paper
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal for full answer details -->
+                        <div class="modal fade" id="answerModal{{ answer.id }}" tabindex="-1" aria-labelledby="answerModalLabel{{ answer.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-gradient-success text-white">
+                                        <h5 class="modal-title" id="answerModalLabel{{ answer.id }}">
+                                            {% if answer.question %}
+                                                Feedback for Question #{{ answer.question.question_number }}
+                                            {% else %}
+                                                Feedback for Custom Question
+                                            {% endif %}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h5>Question</h5>
+                                                {% if answer.question and answer.question.image_path %}
+                                                    <div class="text-center mb-4">
+                                                        <img src="{{ url_for('user.get_question_image', question_id=answer.question_id) }}" 
+                                                             alt="Question Image" class="img-fluid border rounded">
+                                                    </div>
+                                                {% elif answer.user_query and answer.user_query.image_path %}
+                                                    <div class="text-center mb-4">
+                                                        <img src="{{ answer.user_query.image_path }}" 
+                                                             alt="Question Image" class="img-fluid border rounded">
+                                                    </div>
+                                                {% else %}
+                                                    <p class="text-muted fst-italic">No question image available</p>
+                                                {% endif %}
+                                                
+                                                <h5 class="mt-4">Your Answer</h5>
+                                                {% if answer.answer_image_path %}
+                                                    <div class="text-center mb-4">
+                                                        <img src="{{ answer.answer_image_path }}" 
+                                                             alt="Your Answer" class="img-fluid border rounded">
+                                                    </div>
+                                                {% endif %}
+                                                
+                                                {% if answer.answer_text %}
+                                                    <div class="p-3 bg-light rounded">
+                                                        <h6>Answer Text:</h6>
+                                                        <p>{{ answer.answer_text }}</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <div class="card shadow-sm border-0 mb-4">
+                                                    <div class="card-header bg-gradient-success text-white">
+                                                        <h5 class="mb-0">
+                                                            {% if answer.score and answer.max_score %}
+                                                                <span class="float-end badge bg-light text-dark">
+                                                                    Score: {{ answer.score }}/{{ answer.max_score }}
+                                                                </span>
+                                                            {% endif %}
+                                                            AI Feedback
+                                                        </h5>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="markdown-content">
+                                                            {{ answer.feedback_text|safe }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {% if answer.question and answer.question.topics %}
+                                                    <div class="card shadow-sm border-0">
+                                                        <div class="card-header">
+                                                            <h5 class="mb-0">Related Topics</h5>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="d-flex flex-wrap gap-2">
+                                                                {% for topic in answer.question.get_topic_names() %}
+                                                                    <span class="badge bg-primary">{{ topic }}</span>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        {% if answer.question %}
+                                            <a href="{{ url_for('user.explain_question', question_id=answer.question.id) }}" class="btn btn-primary">
+                                                <i class="fas fa-lightbulb me-1"></i>
+                                                Get Explanation
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if answers.pages > 1 %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if answers.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('auth.answer_history', page=answers.prev_num) }}">Previous</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in answers.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num == answers.page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('auth.answer_history', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if answers.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('auth.answer_history', page=answers.next_num) }}">Next</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                    <h4>No answers submitted yet</h4>
+                    <p class="text-muted">You haven't submitted any answers for AI feedback yet.</p>
+                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-success mt-2">
+                        <i class="fas fa-camera me-2"></i>
+                        Capture Question & Answer
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.feedback-content {
+    font-size: 0.9rem;
+}
+.performance-stat {
+    flex: 1;
+    padding: 0.5rem;
+}
+.answer-list .list-group-item {
+    border-left: 5px solid #dee2e6;
+    transition: all 0.2s ease;
+}
+.answer-list .list-group-item:hover {
+    border-left-color: #20c997;
+}
+.markdown-content {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+}
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+.markdown-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+}
+.markdown-content pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+}
+</style>
+{% endblock %}

@@ -4,8 +4,9 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from models import User, CreditTransaction, UserProfile, UserQuery
+from models import User, CreditTransaction, UserProfile, UserQuery, StudentAnswer
 from forms import LoginForm, SignupForm, ProfileEditForm
+from sqlalchemy import func
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -162,6 +163,50 @@ def query_history():
     return render_template('auth/query_history.html', 
                            queries=queries, 
                            user=current_user)
+
+@auth_bp.route('/answer-history')
+@login_required
+def answer_history():
+    """Display user's submitted answers and feedback history"""
+    page = request.args.get('page', 1, type=int)
+    
+    # Get paginated answers
+    answers = StudentAnswer.query.filter_by(user_id=current_user.id)\
+        .order_by(StudentAnswer.created_at.desc())\
+        .paginate(page=page, per_page=10)
+    
+    # Calculate performance statistics
+    avg_score = db.session.query(func.avg(
+        (StudentAnswer.score * 100) / StudentAnswer.max_score
+    )).filter_by(user_id=current_user.id).scalar() or 0
+    
+    high_score = db.session.query(func.max(
+        (StudentAnswer.score * 100) / StudentAnswer.max_score
+    )).filter_by(user_id=current_user.id).scalar() or 0
+    
+    # Get subject statistics
+    student_answers = StudentAnswer.query.filter_by(user_id=current_user.id).all()
+    subjects = set()
+    subject_counts = {}
+    
+    for answer in student_answers:
+        subject = None
+        if answer.question and answer.question.paper and answer.question.paper.subject:
+            subject = answer.question.paper.subject
+        elif answer.user_query and answer.user_query.subject:
+            subject = answer.user_query.subject
+            
+        if subject:
+            subjects.add(subject)
+            subject_counts[subject] = subject_counts.get(subject, 0) + 1
+    
+    return render_template('auth/answer_history.html',
+                          answers=answers,
+                          avg_score=avg_score,
+                          high_score=high_score,
+                          subjects=subjects,
+                          subject_counts=subject_counts,
+                          user=current_user)
 
 @auth_bp.route('/buy-credits')
 @login_required

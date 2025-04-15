@@ -7,7 +7,7 @@ from datetime import datetime
 from flask_login import login_required, current_user
 from models import (
     db, Subject, ExamBoard, PaperCategory, QuestionPaper, 
-    Question, Explanation, User
+    Question, Explanation, User, UserQuery, StudentAnswer
 )
 from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
@@ -552,3 +552,37 @@ def explain_question(question_id):
         'is_new': False,
         'generated_at': existing_explanation.generated_at.strftime('%Y-%m-%d %H:%M:%S')
     })
+
+@user_bp.route('/favorite-query/<int:query_id>')
+@login_required
+def favorite_query(query_id):
+    """Mark a query as favorite"""
+    query = UserQuery.query.get_or_404(query_id)
+    
+    # Check if the query belongs to the current user
+    if query.user_id != current_user.id:
+        flash('You can only favorite your own queries', 'danger')
+        return redirect(url_for('auth.query_history'))
+    
+    query.is_favorite = True
+    db.session.commit()
+    
+    flash('Query marked as favorite', 'success')
+    return redirect(url_for('auth.query_history'))
+
+@user_bp.route('/unfavorite-query/<int:query_id>')
+@login_required
+def unfavorite_query(query_id):
+    """Remove a query from favorites"""
+    query = UserQuery.query.get_or_404(query_id)
+    
+    # Check if the query belongs to the current user
+    if query.user_id != current_user.id:
+        flash('You can only manage your own queries', 'danger')
+        return redirect(url_for('auth.query_history'))
+    
+    query.is_favorite = False
+    db.session.commit()
+    
+    flash('Query removed from favorites', 'success')
+    return redirect(url_for('auth.query_history'))
