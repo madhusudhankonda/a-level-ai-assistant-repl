@@ -6,45 +6,48 @@ Usage: python make_admin.py <username or email>
 
 import sys
 import os
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-db.init_app(app)
-
-# Import the User model
-from models import User
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
 
 def make_user_admin(identifier):
     """
     Make a user an admin by username or email
     """
-    with app.app_context():
-        # Try to find the user by username or email
-        user = User.query.filter(
-            (User.username == identifier) | (User.email == identifier)
-        ).first()
+    # Connect directly to the database to avoid circular imports
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        print("Error: DATABASE_URL environment variable not set")
+        return False
         
-        if not user:
+    engine = create_engine(database_url)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    try:
+        # Check if user exists
+        query = text("SELECT id, username, email FROM \"user\" WHERE username = :identifier OR email = :identifier")
+        result = session.execute(query, {"identifier": identifier}).fetchone()
+        
+        if not result:
             print(f"Error: No user found with username or email '{identifier}'")
             return False
+            
+        user_id, username, email = result
         
-        # Make user an admin
-        user.is_admin = True
-        db.session.commit()
+        # Update the user to be an admin
+        update_query = text("UPDATE \"user\" SET is_admin = TRUE WHERE id = :user_id")
+        session.execute(update_query, {"user_id": user_id})
+        session.commit()
         
-        print(f"Success: User '{user.username}' (email: {user.email}) is now an admin")
+        print(f"Success: User '{username}' (email: {email}) is now an admin")
         return True
+        
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        session.rollback()
+        return False
+    finally:
+        session.close()
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
