@@ -4,7 +4,8 @@ from flask import Blueprint, render_template, redirect, url_for, request, flash,
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
-from models import User, CreditTransaction
+from models import User, CreditTransaction, UserProfile, UserQuery
+from forms import LoginForm, SignupForm, ProfileEditForm
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -103,7 +104,64 @@ def logout():
 def profile():
     """Display user profile and credit information"""
     transactions = current_user.transactions.order_by(CreditTransaction.transaction_date.desc()).limit(10).all()
-    return render_template('auth/profile.html', user=current_user, transactions=transactions)
+    
+    # Get user queries count
+    query_count = UserQuery.query.filter_by(user_id=current_user.id).count()
+    
+    return render_template('auth/profile.html', 
+                           user=current_user, 
+                           transactions=transactions,
+                           query_count=query_count)
+
+@auth_bp.route('/profile/edit', methods=['GET', 'POST'])
+@login_required
+def profile_edit():
+    """Edit user profile information"""
+    # Get or create user profile
+    user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+    if not user_profile:
+        user_profile = UserProfile(user_id=current_user.id)
+        db.session.add(user_profile)
+        db.session.commit()
+    
+    form = ProfileEditForm()
+    
+    if request.method == 'GET':
+        # Pre-populate form with existing data
+        if user_profile:
+            form.first_name.data = user_profile.first_name
+            form.last_name.data = user_profile.last_name
+            form.school_name.data = user_profile.school_name
+            form.grade_year.data = user_profile.grade_year
+            if user_profile.preferred_subjects:
+                form.preferred_subjects.data = user_profile.get_preferred_subjects_list()
+    
+    if form.validate_on_submit():
+        # Update user profile with form data
+        user_profile.first_name = form.first_name.data
+        user_profile.last_name = form.last_name.data
+        user_profile.school_name = form.school_name.data
+        user_profile.grade_year = form.grade_year.data
+        user_profile.set_preferred_subjects_list(form.preferred_subjects.data)
+        
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('auth.profile'))
+    
+    return render_template('auth/profile_edit.html', form=form, user=current_user)
+
+@auth_bp.route('/history')
+@login_required
+def query_history():
+    """Display user's query history"""
+    page = request.args.get('page', 1, type=int)
+    queries = UserQuery.query.filter_by(user_id=current_user.id)\
+        .order_by(UserQuery.created_at.desc())\
+        .paginate(page=page, per_page=10)
+    
+    return render_template('auth/query_history.html', 
+                           queries=queries, 
+                           user=current_user)
 
 @auth_bp.route('/buy-credits')
 @login_required

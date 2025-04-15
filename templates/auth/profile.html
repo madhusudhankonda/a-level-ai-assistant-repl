@@ -3,92 +3,227 @@
 {% block title %}My Profile - A-Level AI Assistant{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card shadow-lg border-0 mb-4">
-            <div class="card-header bg-gradient-purple text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-user-circle me-2"></i>
-                    Profile
-                </h4>
-            </div>
-            <div class="card-body">
-                <div class="text-center mb-4">
-                    <div class="avatar-circle bg-primary mx-auto mb-3">
-                        <span class="initials">{{ user.username[0] | upper }}</span>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-gradient-purple text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Profile
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar-circle bg-primary mx-auto mb-3">
+                            <span class="initials">{{ user.username[0] | upper }}</span>
+                        </div>
+                        <h4>{{ user.username }}</h4>
+                        <p class="text-muted">{{ user.email }}</p>
+                        
+                        <div class="user-details mt-3 text-start">
+                            {% if user.profile %}
+                                {% if user.profile.first_name or user.profile.last_name %}
+                                    <p class="mb-1">
+                                        <i class="fas fa-id-card me-2 text-primary"></i>
+                                        {{ user.profile.first_name }} {{ user.profile.last_name }}
+                                    </p>
+                                {% endif %}
+                                
+                                {% if user.profile.school_name %}
+                                    <p class="mb-1">
+                                        <i class="fas fa-school me-2 text-primary"></i>
+                                        {{ user.profile.school_name }}
+                                    </p>
+                                {% endif %}
+                                
+                                {% if user.profile.grade_year %}
+                                    <p class="mb-1">
+                                        <i class="fas fa-graduation-cap me-2 text-primary"></i>
+                                        {{ user.profile.grade_year }}
+                                    </p>
+                                {% endif %}
+                                
+                                {% if user.profile.preferred_subjects %}
+                                    <p class="mb-1">
+                                        <i class="fas fa-book me-2 text-primary"></i>
+                                        Subjects: {{ user.profile.preferred_subjects }}
+                                    </p>
+                                {% endif %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Complete your profile to personalize your experience
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <h4>{{ user.username }}</h4>
-                    <p class="text-muted">{{ user.email }}</p>
+                    
+                    <div class="credit-display bg-light p-3 rounded text-center">
+                        <h3 class="mb-0">
+                            <i class="fas fa-coins text-warning me-2"></i>
+                            <span class="credit-count">{{ user.credits }}</span>
+                        </h3>
+                        <p class="text-muted mb-0">Available Credits</p>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{{ url_for('auth.profile_edit') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-user-edit me-2"></i>
+                            Edit Profile
+                        </a>
+                        <a href="{{ url_for('auth.buy_credits') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            Buy More Credits
+                        </a>
+                    </div>
                 </div>
-                
-                <div class="credit-display bg-light p-3 rounded text-center">
-                    <h3 class="mb-0">
-                        <i class="fas fa-coins text-warning me-2"></i>
-                        <span class="credit-count">{{ user.credits }}</span>
-                    </h3>
-                    <p class="text-muted mb-0">Available Credits</p>
+            </div>
+            
+            <!-- AI Activity Summary Card -->
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>
+                        AI Activity
+                    </h4>
                 </div>
-                
-                <div class="d-grid gap-2 mt-4">
-                    <a href="{{ url_for('auth.buy_credits') }}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-2"></i>
-                        Buy More Credits
-                    </a>
+                <div class="card-body">
+                    <div class="activity-stat mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>
+                                <i class="fas fa-question-circle me-2 text-info"></i>
+                                AI Interactions
+                            </span>
+                            <span class="badge bg-info">{{ query_count }}</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 6px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ min(100, query_count * 2) }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-stat mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>
+                                <i class="fas fa-book-open me-2 text-success"></i>
+                                Subjects Explored
+                            </span>
+                            <span class="badge bg-success">
+                                {% if user.profile and user.profile.preferred_subjects %}
+                                    {{ user.profile.get_preferred_subjects_list()|length }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{{ url_for('auth.query_history') }}" class="btn btn-outline-info">
+                            <i class="fas fa-history me-2"></i>
+                            View AI Interaction History
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-8">
-        <div class="card shadow-lg border-0">
-            <div class="card-header bg-gradient-purple text-white">
-                <h4 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    Credit History
-                </h4>
+        
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 mb-4">
+                <div class="card-header bg-gradient-purple text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Credit Activity
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'purchase' %}
+                                        <span class="badge bg-success">Purchase</span>
+                                        {% elif transaction.transaction_type == 'usage' %}
+                                        <span class="badge bg-warning">Usage</span>
+                                        {% elif transaction.transaction_type == 'bonus' %}
+                                        <span class="badge bg-info">Bonus</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.amount > 0 %}
+                                        <span class="text-success">+{{ transaction.amount }}</span>
+                                        {% else %}
+                                        <span class="text-danger">{{ transaction.amount }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                        <p>No transaction history yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body">
-                {% if transactions %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for transaction in transactions %}
-                            <tr>
-                                <td>{{ transaction.transaction_date.strftime('%Y-%m-%d %H:%M') }}</td>
-                                <td>
-                                    {% if transaction.transaction_type == 'purchase' %}
-                                    <span class="badge bg-success">Purchase</span>
-                                    {% elif transaction.transaction_type == 'usage' %}
-                                    <span class="badge bg-warning">Usage</span>
-                                    {% elif transaction.transaction_type == 'bonus' %}
-                                    <span class="badge bg-info">Bonus</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if transaction.amount > 0 %}
-                                    <span class="text-success">+{{ transaction.amount }}</span>
-                                    {% else %}
-                                    <span class="text-danger">{{ transaction.amount }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            
+            <!-- Application Quick Links -->
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-link me-2"></i>
+                        Quick Actions
+                    </h4>
                 </div>
-                {% else %}
-                <div class="text-center p-4">
-                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
-                    <p>No transaction history yet.</p>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-book text-primary me-2"></i>
+                                        Browse Questions
+                                    </h5>
+                                    <p class="card-text">Explore our library of A-Level questions organized by subject and exam board.</p>
+                                    <a href="{{ url_for('user.index') }}" class="btn btn-outline-primary stretched-link">
+                                        <i class="fas fa-arrow-right me-1"></i>
+                                        Browse
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-camera text-success me-2"></i>
+                                        Capture Question
+                                    </h5>
+                                    <p class="card-text">Upload or capture a new question image for instant AI explanation.</p>
+                                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-outline-success stretched-link">
+                                        <i class="fas fa-camera me-1"></i>
+                                        Capture
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>

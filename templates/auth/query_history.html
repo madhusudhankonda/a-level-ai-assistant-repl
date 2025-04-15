@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block title %}My Query History - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="fas fa-history me-2 text-primary"></i>
+            My AI Interactions
+        </h1>
+        <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Back to Profile
+        </a>
+    </div>
+
+    <div class="card shadow border-0 mb-4">
+        <div class="card-header bg-gradient-purple text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">History of Your AI Interactions</h4>
+                <div class="badge bg-light text-dark rounded-pill px-3 py-2">
+                    <i class="fas fa-list me-1"></i>
+                    {{ queries.total }} Total Interactions
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if queries.items %}
+                <div class="list-group">
+                    {% for query in queries.items %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">
+                                    {% if query.query_type == 'explanation' %}
+                                        <span class="badge bg-info me-2">Explanation</span>
+                                    {% elif query.query_type == 'answer_feedback' %}
+                                        <span class="badge bg-success me-2">Answer Feedback</span>
+                                    {% else %}
+                                        <span class="badge bg-primary me-2">Custom</span>
+                                    {% endif %}
+                                    
+                                    {% if query.question_id %}
+                                        Question #{{ query.question.question_number }}
+                                    {% else %}
+                                        Custom Query
+                                    {% endif %}
+                                </h5>
+                                <small class="text-muted">{{ query.created_at.strftime('%B %d, %Y - %H:%M') }}</small>
+                            </div>
+                            
+                            <div class="row mt-2">
+                                <div class="col-md-3">
+                                    <div class="credit-usage-badge">
+                                        <i class="fas fa-coins text-warning me-1"></i>
+                                        <span>{{ query.credits_used }} credits used</span>
+                                    </div>
+                                    
+                                    {% if query.subject %}
+                                        <div class="subject-badge mt-2">
+                                            <i class="fas fa-book text-primary me-1"></i>
+                                            <span>{{ query.subject }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-9">
+                                    {% if query.query_text %}
+                                        <p class="mb-1"><strong>Your query:</strong> {{ query.query_text }}</p>
+                                    {% endif %}
+                                    
+                                    <p class="mb-1 text-muted">
+                                        <i class="fas fa-robot me-1"></i>
+                                        <strong>AI Response:</strong> {{ query.get_truncated_response(100) }}...
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#queryModal{{ query.id }}">View full response</a>
+                                    </p>
+                                    
+                                    {% if query.image_path %}
+                                        <p class="mb-1">
+                                            <i class="fas fa-image me-1"></i>
+                                            <small>Included an image with this query</small>
+                                        </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal for full response -->
+                        <div class="modal fade" id="queryModal{{ query.id }}" tabindex="-1" aria-labelledby="queryModalLabel{{ query.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-gradient-purple text-white">
+                                        <h5 class="modal-title" id="queryModalLabel{{ query.id }}">
+                                            {% if query.query_type == 'explanation' %}
+                                                Explanation for Question #{{ query.question.question_number }}
+                                            {% elif query.query_type == 'answer_feedback' %}
+                                                Feedback on Your Answer
+                                            {% else %}
+                                                Custom Query Response
+                                            {% endif %}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        {% if query.question_id and query.question.image_path %}
+                                            <div class="text-center mb-4">
+                                                <img src="{{ url_for('user.get_question_image', question_id=query.question_id) }}" 
+                                                     alt="Question Image" class="img-fluid border rounded">
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if query.image_path %}
+                                            <div class="text-center mb-4">
+                                                <img src="{{ query.image_path }}" alt="Captured Image" class="img-fluid border rounded">
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="bg-light p-3 rounded">
+                                            <h6>Your Query:</h6>
+                                            <p>{{ query.query_text or 'Requested explanation for this question' }}</p>
+                                        </div>
+                                        
+                                        <hr>
+                                        
+                                        <div class="ai-response">
+                                            <h6><i class="fas fa-robot me-2 text-primary"></i>AI Response:</h6>
+                                            <div class="markdown-content">
+                                                {{ query.response_text|safe }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        {% if not query.is_favorite %}
+                                            <a href="{{ url_for('user.favorite_query', query_id=query.id) }}" class="btn btn-warning">
+                                                <i class="far fa-star me-1"></i> Mark as Favorite
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('user.unfavorite_query', query_id=query.id) }}" class="btn btn-warning">
+                                                <i class="fas fa-star me-1"></i> Remove from Favorites
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination -->
+                {% if queries.pages > 1 %}
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if queries.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('auth.query_history', page=queries.prev_num) }}">Previous</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Previous</span>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page_num in queries.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                                {% if page_num == queries.page %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('auth.query_history', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if queries.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('auth.query_history', page=queries.next_num) }}">Next</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Next</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center p-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h4>No AI interactions yet</h4>
+                    <p class="text-muted">You haven't made any requests to the AI assistant yet.</p>
+                    <a href="{{ url_for('user.index') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-graduation-cap me-2"></i>
+                        Explore Questions
+                    </a>
+                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-success mt-2">
+                        <i class="fas fa-camera me-2"></i>
+                        Capture a Question
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.credit-usage-badge, .subject-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+    font-size: 0.875rem;
+}
+
+.ai-response {
+    position: relative;
+    border-left: 3px solid #7952b3;
+    padding-left: 1rem;
+}
+
+.markdown-content {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown-content code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+}
+
+.markdown-content pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+}
+
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+.markdown-content blockquote {
+    border-left: 3px solid #dee2e6;
+    padding-left: 1rem;
+    color: #6c757d;
+}
+</style>
+{% endblock %}
