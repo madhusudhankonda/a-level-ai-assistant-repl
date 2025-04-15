@@ -116,7 +116,8 @@
                    data-subject-id="{{ subject.id }}">
                     {{ subject.name }}
                     <span class="badge bg-primary rounded-pill">
-                        {{ subject.boards|length }} boards
+                        {% set board_count = subject.boards|default([])|length %}
+                        {{ board_count }} board{{ 's' if board_count != 1 else '' }}
                     </span>
                 </a>
                 {% endfor %}
