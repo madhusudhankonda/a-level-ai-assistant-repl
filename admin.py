@@ -49,6 +49,10 @@ def create_paper():
         paper_type = request.form.get('paper_type', 'QP')
         description = request.form.get('description', '')
         
+        # Debug print to see all form data
+        current_app.logger.info(f"Form data: {request.form}")
+        current_app.logger.info(f"Category ID from form: '{category_id}'")
+        
         if not title or not subject_id:
             flash('Title and subject are required', 'danger')
             return redirect(url_for('admin.create_paper'))
@@ -73,13 +77,15 @@ def create_paper():
         )
         
         # Set category_id if provided
-        if category_id and category_id != 'none':
+        if category_id and category_id != '-1':
             try:
                 paper.category_id = int(category_id)
                 current_app.logger.info(f"Paper assigned to category ID: {category_id}")
             except ValueError:
                 current_app.logger.warning(f"Invalid category_id: {category_id}")
                 # Continue without setting category_id
+        else:
+            current_app.logger.info("No category selected or 'None' option chosen")
         
         db.session.add(paper)
         db.session.commit()

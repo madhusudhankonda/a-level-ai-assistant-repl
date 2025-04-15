@@ -202,7 +202,7 @@
                         console.log("Received categories data:", categories);
                         // Clear current options
                         categorySelect.innerHTML = '<option value="" selected disabled>Select a paper category</option>';
-                        categorySelect.innerHTML += '<option value="none">None (General Paper)</option>';
+                        categorySelect.innerHTML += '<option value="-1">None (General Paper)</option>';
                         
                         // Add new options
                         categories.forEach(category => {
