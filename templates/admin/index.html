@@ -232,7 +232,7 @@
                 const paperTitle = button.getAttribute('data-paper-title');
                 
                 document.getElementById('paperTitleToDelete').textContent = paperTitle;
-                document.getElementById('deletePaperForm').action = `/paper/${paperId}/delete`;
+                document.getElementById('deletePaperForm').action = `/admin/paper/${paperId}/delete`;
             });
         }
     });
