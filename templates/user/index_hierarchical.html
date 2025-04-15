@@ -157,9 +157,14 @@
             {% endfor %}
         ];
         
+        // Debug information
+        console.log('Boards Data:', boardsData);
+        console.log('Categories Data:', categoriesData);
+        
         // Event Listeners
         subjectSelect.addEventListener('change', function() {
             const selectedSubjectId = parseInt(this.value);
+            console.log('Selected Subject ID:', selectedSubjectId);
             
             // Clear and disable subsequent dropdowns
             clearDropdown(boardSelect, 'Select an exam board...');
@@ -172,6 +177,7 @@
                 
                 // Filter boards by selected subject
                 const filteredBoards = boardsData.filter(board => board.subjectId === selectedSubjectId);
+                console.log('Filtered Boards:', filteredBoards);
                 
                 // Add options to board dropdown
                 filteredBoards.forEach(board => {
@@ -189,6 +195,7 @@
         
         boardSelect.addEventListener('change', function() {
             const selectedBoardId = parseInt(this.value);
+            console.log('Selected Board ID:', selectedBoardId);
             
             // Clear and disable category dropdown
             clearDropdown(categorySelect, 'Select a paper category...');
@@ -200,6 +207,7 @@
                 
                 // Filter categories by selected board
                 const filteredCategories = categoriesData.filter(category => category.boardId === selectedBoardId);
+                console.log('Filtered Categories:', filteredCategories);
                 
                 // Add options to category dropdown
                 filteredCategories.forEach(category => {
