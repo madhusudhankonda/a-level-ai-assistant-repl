@@ -44,13 +44,15 @@ def create_paper():
         title = request.form.get('title')
         subject_name = request.form.get('subject')
         category_id = request.form.get('category_id')
-        exam_period = request.form.get('exam_period')
-        paper_type = request.form.get('paper_type')
+        exam_period = request.form.get('exam_period', 'Unknown')
+        paper_type = request.form.get('paper_type', 'QP')
         description = request.form.get('description', '')
         
         if not title or not subject_name:
             flash('Title and subject are required', 'danger')
             return redirect(url_for('admin.create_paper'))
+        
+        current_app.logger.info(f"Creating paper: {title}, Subject: {subject_name}, Category ID: {category_id}")
         
         # Create new paper in the database
         paper = QuestionPaper(
@@ -63,7 +65,12 @@ def create_paper():
         
         # Set category_id if provided
         if category_id and category_id != 'none':
-            paper.category_id = int(category_id)
+            try:
+                paper.category_id = int(category_id)
+                current_app.logger.info(f"Paper assigned to category ID: {category_id}")
+            except ValueError:
+                current_app.logger.warning(f"Invalid category_id: {category_id}")
+                # Continue without setting category_id
         
         db.session.add(paper)
         db.session.commit()
@@ -163,8 +170,14 @@ def add_question(paper_id):
     return render_template('admin/add_question.html', paper=paper)
 
 @admin_bp.route('/question/<int:question_id>/delete', methods=['POST'])
+@login_required
 def delete_question(question_id):
     """Delete a question"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
     question = Question.query.get_or_404(question_id)
     paper_id = question.paper_id
     
@@ -183,8 +196,14 @@ def delete_question(question_id):
     return redirect(url_for('admin.manage_questions', paper_id=paper_id))
 
 @admin_bp.route('/paper/<int:paper_id>/delete', methods=['POST'])
+@login_required
 def delete_paper(paper_id):
     """Delete a paper and all its questions"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
     paper = QuestionPaper.query.get_or_404(paper_id)
     
     # Delete all questions for this paper

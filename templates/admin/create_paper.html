@@ -7,12 +7,18 @@
     <div class="col-12 mb-4">
         <h1>Create Question Paper</h1>
         <p class="text-muted">Create a new question paper for students to explore.</p>
+        <a href="{{ url_for('admin.index') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Admin Dashboard
+        </a>
     </div>
 </div>
 
 <div class="row">
     <div class="col-lg-8">
-        <div class="card">
+        <div class="card shadow">
+            <div class="card-header bg-primary bg-gradient text-white">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i> Paper Details</h5>
+            </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('admin.create_paper') }}">
                     <div class="mb-3">
@@ -20,46 +26,174 @@
                         <input type="text" class="form-control" id="title" name="title" required 
                                placeholder="e.g., June 2023 Mathematics Paper 1">
                     </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="subject" class="form-label">Subject</label>
+                            <select class="form-select" id="subject" name="subject" required>
+                                <option value="" selected disabled>Select a subject</option>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.name }}" data-subject-id="{{ subject.id }}">{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="exam_period" class="form-label">Exam Period</label>
+                            <input type="text" class="form-control" id="exam_period" name="exam_period"
+                                   placeholder="e.g., June 2023, November 2022">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="board_id" class="form-label">Exam Board</label>
+                            <select class="form-select" id="board_id" name="board_id" disabled>
+                                <option value="" selected disabled>Select a subject first</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="category_id" class="form-label">Paper Category</label>
+                            <select class="form-select" id="category_id" name="category_id" disabled>
+                                <option value="" selected disabled>Select an exam board first</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div class="mb-3">
-                        <label for="subject" class="form-label">Subject</label>
-                        <select class="form-select" id="subject" name="subject" required>
-                            <option value="" selected disabled>Select a subject</option>
-                            <option value="Mathematics">Mathematics</option>
-                            <option value="Physics">Physics</option>
-                            <option value="Chemistry">Chemistry</option>
-                            <option value="Biology">Biology</option>
+                        <label for="paper_type" class="form-label">Paper Type</label>
+                        <select class="form-select" id="paper_type" name="paper_type">
+                            <option value="QP" selected>Question Paper (QP)</option>
+                            <option value="MS">Mark Scheme (MS)</option>
+                            <option value="ER">Examiner Report (ER)</option>
+                            <option value="Practice">Practice Paper</option>
                         </select>
                     </div>
+                    
                     <div class="mb-3">
                         <label for="description" class="form-label">Description (Optional)</label>
                         <textarea class="form-control" id="description" name="description" rows="3" 
                                   placeholder="Brief description of the paper, topics covered, etc."></textarea>
                     </div>
+                    
                     <div class="d-flex">
                         <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary me-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary">Create Paper</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Create Paper
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">How it works</h5>
+        <div class="card shadow mb-4">
+            <div class="card-header bg-gradient-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> How it works</h5>
             </div>
             <div class="card-body">
                 <ol class="ps-3">
                     <li class="mb-2">Create a paper with basic information</li>
+                    <li class="mb-2">Categorize it within a subject and exam board (optional)</li>
                     <li class="mb-2">Upload individual question images</li>
                     <li class="mb-2">Students can then view the paper and get AI explanations for each question</li>
                 </ol>
-                <p class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>
                     After creating the paper, you will be able to add questions.
-                </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="ps-3">
+                    <li class="mb-2">Use clear, descriptive titles that include exam period</li>
+                    <li class="mb-2">Selecting a category helps students find papers more easily</li>
+                    <li class="mb-2">Add descriptions to help students understand what's covered</li>
+                </ul>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const subjectSelect = document.getElementById('subject');
+        const boardSelect = document.getElementById('board_id');
+        const categorySelect = document.getElementById('category_id');
+        
+        // When subject changes, load exam boards
+        subjectSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const subjectId = selectedOption.getAttribute('data-subject-id');
+            
+            // Reset category select
+            categorySelect.innerHTML = '<option value="" selected disabled>Select an exam board first</option>';
+            categorySelect.disabled = true;
+            
+            if (subjectId) {
+                // Enable board select
+                boardSelect.disabled = false;
+                
+                // Fetch boards for this subject
+                fetch(`/api/get-boards/${subjectId}`)
+                    .then(response => response.json())
+                    .then(boards => {
+                        // Clear current options
+                        boardSelect.innerHTML = '<option value="" selected disabled>Select an exam board</option>';
+                        
+                        // Add new options
+                        boards.forEach(board => {
+                            const option = document.createElement('option');
+                            option.value = board.id;
+                            option.textContent = board.name;
+                            boardSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching exam boards:', error));
+            } else {
+                // If no subject selected, disable both selects
+                boardSelect.innerHTML = '<option value="" selected disabled>Select a subject first</option>';
+                boardSelect.disabled = true;
+            }
+        });
+        
+        // When board changes, load categories
+        boardSelect.addEventListener('change', function() {
+            const boardId = this.value;
+            
+            if (boardId) {
+                // Enable category select
+                categorySelect.disabled = false;
+                
+                // Fetch categories for this board
+                fetch(`/api/get-categories/${boardId}`)
+                    .then(response => response.json())
+                    .then(categories => {
+                        // Clear current options
+                        categorySelect.innerHTML = '<option value="" selected disabled>Select a paper category</option>';
+                        categorySelect.innerHTML += '<option value="none">None (General Paper)</option>';
+                        
+                        // Add new options
+                        categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching paper categories:', error));
+            } else {
+                // If no board selected, disable category select
+                categorySelect.innerHTML = '<option value="" selected disabled>Select an exam board first</option>';
+                categorySelect.disabled = true;
+            }
+        });
+    });
+</script>
 {% endblock %}

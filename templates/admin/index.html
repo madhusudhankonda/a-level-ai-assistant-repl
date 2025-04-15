@@ -7,19 +7,131 @@
     <div class="col-12 mb-4">
         <div class="d-flex justify-content-between align-items-center">
             <h1>Admin Dashboard</h1>
-            <a href="{{ url_for('admin.create_paper') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i> Create New Paper
-            </a>
+            <div>
+                <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-home me-1"></i> User Dashboard
+                </a>
+                <a href="{{ url_for('admin.create_paper') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Create New Paper
+                </a>
+            </div>
+        </div>
+        <p class="text-muted">
+            Manage question papers and content for the A-Level AI Assistant.
+        </p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="display-4">{{ papers|length }}</h2>
+                        <h6>Total Papers</h6>
+                    </div>
+                    <i class="fas fa-file-alt fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('admin.create_paper') }}" class="text-white text-decoration-none small">
+                    <i class="fas fa-plus me-1"></i> Add New
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="display-4">{{ subjects|length }}</h2>
+                        <h6>Subjects</h6>
+                    </div>
+                    <i class="fas fa-book fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <span class="text-white text-decoration-none small">
+                    <i class="fas fa-check me-1"></i> Available
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% set question_count = 0 %}
+                        {% for paper in papers %}
+                            {% set question_count = question_count + paper.questions|length %}
+                        {% endfor %}
+                        <h2 class="display-4">{{ question_count }}</h2>
+                        <h6>Total Questions</h6>
+                    </div>
+                    <i class="fas fa-question-circle fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <span class="text-white text-decoration-none small">
+                    <i class="fas fa-info-circle me-1"></i> All Papers
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card text-white bg-secondary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="display-4">0</h2>
+                        <h6>Pending Reviews</h6>
+                    </div>
+                    <i class="fas fa-tasks fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <span class="text-white text-decoration-none small">
+                    <i class="fas fa-check-circle me-1"></i> All Reviewed
+                </span>
+            </div>
         </div>
     </div>
 </div>
 
-{% if papers %}
 <div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Question Papers</h5>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-gradient-purple text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-book me-2"></i> Subjects</h5>
+            </div>
+            <div class="list-group list-group-flush">
+                {% for subject in subjects %}
+                <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                   data-subject-id="{{ subject.id }}">
+                    {{ subject.name }}
+                    <span class="badge bg-primary rounded-pill">
+                        {{ subject.boards|length }} boards
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        {% if papers %}
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i> Question Papers</h5>
+                <a href="{{ url_for('admin.create_paper') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus"></i> New Paper
+                </a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle mb-0">
@@ -27,8 +139,8 @@
                         <tr>
                             <th>Title</th>
                             <th>Subject</th>
+                            <th>Period</th>
                             <th>Questions</th>
-                            <th>Created</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
@@ -45,21 +157,27 @@
                                     {% else %}bg-dark{% endif %}">
                                     {{ paper.subject }}
                                 </span>
+                                {% if paper.paper_type %}
+                                <span class="badge bg-dark">{{ paper.paper_type }}</span>
+                                {% endif %}
                             </td>
-                            <td>{{ paper.questions|length }}</td>
-                            <td>{{ paper.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>{{ paper.exam_period }}</td>
+                            <td>
+                                <span class="badge bg-info rounded-pill">{{ paper.questions|length }}</span>
+                            </td>
                             <td class="text-end">
-                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary me-1" title="View Paper">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-sm btn-outline-secondary me-1">
+                                <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-sm btn-outline-secondary me-1" title="Manage Questions">
                                     <i class="fas fa-tasks"></i>
                                 </a>
                                 <button class="btn btn-sm btn-outline-danger" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#deletePaperModal"
                                         data-paper-id="{{ paper.id }}"
-                                        data-paper-title="{{ paper.title }}">
+                                        data-paper-title="{{ paper.title }}"
+                                        title="Delete Paper">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </td>
@@ -69,14 +187,14 @@
                 </table>
             </div>
         </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i> No papers have been created yet. 
+            <a href="{{ url_for('admin.create_paper') }}" class="alert-link">Create your first question paper</a>.
+        </div>
+        {% endif %}
     </div>
 </div>
-{% else %}
-<div class="alert alert-info">
-    <i class="fas fa-info-circle me-2"></i> No papers have been created yet. 
-    <a href="{{ url_for('admin.create_paper') }}" class="alert-link">Create your first question paper</a>.
-</div>
-{% endif %}
 
 <!-- Delete Paper Modal -->
 <div class="modal fade" id="deletePaperModal" tabindex="-1" aria-hidden="true">
