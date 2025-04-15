@@ -77,9 +77,17 @@
                     
                     <div class="d-flex">
                         <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary me-2">Cancel</a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
                             <i class="fas fa-save me-1"></i> Create Paper
                         </button>
+                    </div>
+                    
+                    <!-- Validation error messages -->
+                    <div class="mt-3 d-none" id="validationErrors">
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span id="errorMessage">Please complete all required fields</span>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -126,6 +134,9 @@
         const subjectSelect = document.getElementById('subject');
         const boardSelect = document.getElementById('board_id');
         const categorySelect = document.getElementById('category_id');
+        const form = document.querySelector('form');
+        const validationErrors = document.getElementById('validationErrors');
+        const errorMessage = document.getElementById('errorMessage');
         
         // When subject changes, load exam boards
         subjectSelect.addEventListener('change', function() {
@@ -142,8 +153,14 @@
                 
                 // Fetch boards for this subject
                 fetch(`/api/get-boards/${subjectId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Network response error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(boards => {
+                        console.log("Received boards data:", boards);
                         // Clear current options
                         boardSelect.innerHTML = '<option value="" selected disabled>Select an exam board</option>';
                         
@@ -155,7 +172,10 @@
                             boardSelect.appendChild(option);
                         });
                     })
-                    .catch(error => console.error('Error fetching exam boards:', error));
+                    .catch(error => {
+                        console.error('Error fetching exam boards:', error);
+                        boardSelect.innerHTML = '<option value="" selected disabled>Error loading boards</option>';
+                    });
             } else {
                 // If no subject selected, disable both selects
                 boardSelect.innerHTML = '<option value="" selected disabled>Select a subject first</option>';
@@ -173,8 +193,14 @@
                 
                 // Fetch categories for this board
                 fetch(`/api/get-categories/${boardId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Network response error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(categories => {
+                        console.log("Received categories data:", categories);
                         // Clear current options
                         categorySelect.innerHTML = '<option value="" selected disabled>Select a paper category</option>';
                         categorySelect.innerHTML += '<option value="none">None (General Paper)</option>';
@@ -187,12 +213,57 @@
                             categorySelect.appendChild(option);
                         });
                     })
-                    .catch(error => console.error('Error fetching paper categories:', error));
+                    .catch(error => {
+                        console.error('Error fetching paper categories:', error);
+                        categorySelect.innerHTML = '<option value="" selected disabled>Error loading categories</option>';
+                    });
             } else {
                 // If no board selected, disable category select
                 categorySelect.innerHTML = '<option value="" selected disabled>Select an exam board first</option>';
                 categorySelect.disabled = true;
             }
+        });
+        
+        // Add form validation
+        form.addEventListener('submit', function(event) {
+            // Reset validation state
+            validationErrors.classList.add('d-none');
+            
+            // Check title field
+            if (!document.getElementById('title').value.trim()) {
+                event.preventDefault();
+                errorMessage.textContent = 'Paper title is required';
+                validationErrors.classList.remove('d-none');
+                return;
+            }
+            
+            // Check exam period field
+            if (!document.getElementById('exam_period').value.trim()) {
+                event.preventDefault();
+                errorMessage.textContent = 'Exam period is required';
+                validationErrors.classList.remove('d-none');
+                return;
+            }
+            
+            // Check subject field - using data attribute
+            const selectedSubject = subjectSelect.options[subjectSelect.selectedIndex];
+            if (!selectedSubject || !selectedSubject.getAttribute('data-subject-id')) {
+                event.preventDefault();
+                errorMessage.textContent = 'Please select a subject';
+                validationErrors.classList.remove('d-none');
+                return;
+            }
+            
+            // Check board field - only if not disabled
+            if (!boardSelect.disabled && (boardSelect.selectedIndex <= 0 || !boardSelect.value)) {
+                event.preventDefault();
+                errorMessage.textContent = 'Please select an exam board';
+                validationErrors.classList.remove('d-none');
+                return;
+            }
+            
+            // Form is valid, continue submission
+            console.log('Form validation passed');
         });
     });
 </script>
