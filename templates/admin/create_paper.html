@@ -151,7 +151,7 @@
                 boardSelect.disabled = false;
                 
                 // Fetch boards for this subject
-                fetch(`/api/get-boards/${subjectId}`)
+                fetch(`/admin/api/get-boards/${subjectId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`Network response error: ${response.status}`);
@@ -192,7 +192,7 @@
                 categorySelect.disabled = false;
                 
                 // Fetch categories for this board
-                fetch(`/api/get-categories/${boardId}`)
+                fetch(`/admin/api/get-categories/${boardId}`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error(`Network response error: ${response.status}`);
