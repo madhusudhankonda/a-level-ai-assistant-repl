@@ -92,16 +92,6 @@ def view_board(board_id):
 @user_bp.route('/category/<int:category_id>')
 def view_category(category_id):
     """View a specific paper category and its papers"""
-    
-    # Special case for -1 (uncategorized papers)
-    if category_id == -1:
-        # Get all papers without a category_id
-        papers = QuestionPaper.query.filter(QuestionPaper.category_id.is_(None)).all()
-        return render_template(
-            'user/uncategorized_view.html',
-            papers=papers
-        )
-    
     category = PaperCategory.query.get_or_404(category_id)
     papers = QuestionPaper.query.filter_by(category_id=category_id).all()
     

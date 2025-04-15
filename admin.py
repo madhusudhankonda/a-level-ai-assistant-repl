@@ -104,23 +104,39 @@ def create_paper():
 @login_required
 def get_boards(subject_id):
     """API endpoint to get exam boards for a subject"""
+    current_app.logger.info(f"Getting boards for subject ID: {subject_id}")
+    
     if not current_user.is_admin:
+        current_app.logger.warning(f"Unauthorized access attempt to get_boards by user {current_user.id}")
         return jsonify({'error': 'Not authorized'}), 403
-        
-    boards = ExamBoard.query.filter_by(subject_id=subject_id).all()
-    board_list = [{'id': board.id, 'name': board.name} for board in boards]
-    return jsonify(board_list)
+    
+    try:
+        boards = ExamBoard.query.filter_by(subject_id=subject_id).all()
+        current_app.logger.info(f"Found {len(boards)} boards for subject ID {subject_id}")
+        board_list = [{'id': board.id, 'name': board.name} for board in boards]
+        return jsonify(board_list)
+    except Exception as e:
+        current_app.logger.error(f"Error getting boards for subject {subject_id}: {str(e)}")
+        return jsonify({'error': f'Error loading boards: {str(e)}'}), 500
 
 @admin_bp.route('/api/get-categories/<int:board_id>')
 @login_required
 def get_categories(board_id):
     """API endpoint to get paper categories for an exam board"""
+    current_app.logger.info(f"Getting categories for board ID: {board_id}")
+    
     if not current_user.is_admin:
+        current_app.logger.warning(f"Unauthorized access attempt to get_categories by user {current_user.id}")
         return jsonify({'error': 'Not authorized'}), 403
-        
-    categories = PaperCategory.query.filter_by(board_id=board_id).all()
-    category_list = [{'id': category.id, 'name': category.name} for category in categories]
-    return jsonify(category_list)
+    
+    try:
+        categories = PaperCategory.query.filter_by(board_id=board_id).all()
+        current_app.logger.info(f"Found {len(categories)} categories for board ID {board_id}")
+        category_list = [{'id': category.id, 'name': category.name} for category in categories]
+        return jsonify(category_list)
+    except Exception as e:
+        current_app.logger.error(f"Error getting categories for board {board_id}: {str(e)}")
+        return jsonify({'error': f'Error loading categories: {str(e)}'}), 500
 
 @admin_bp.route('/paper/<int:paper_id>/questions')
 @login_required
