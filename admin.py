@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 import os
 import uuid
 from werkzeug.utils import secure_filename
-from models import db, QuestionPaper, Question
+from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory
+from flask_login import login_required, current_user
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
@@ -15,29 +16,54 @@ def get_data_folder():
     return data_dir
 
 @admin_bp.route('/')
+@login_required
 def index():
     """Admin dashboard showing papers"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
     papers = QuestionPaper.query.order_by(QuestionPaper.created_at.desc()).all()
-    return render_template('admin/index.html', papers=papers)
+    subjects = Subject.query.all()
+    return render_template('admin/index.html', papers=papers, subjects=subjects)
 
 @admin_bp.route('/paper/create', methods=['GET', 'POST'])
+@login_required
 def create_paper():
     """Create a new question paper"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
+    # Get subjects, boards, and categories for form
+    subjects = Subject.query.all()
+    
     if request.method == 'POST':
         title = request.form.get('title')
-        subject = request.form.get('subject')
+        subject_name = request.form.get('subject')
+        category_id = request.form.get('category_id')
+        exam_period = request.form.get('exam_period')
+        paper_type = request.form.get('paper_type')
         description = request.form.get('description', '')
         
-        if not title or not subject:
+        if not title or not subject_name:
             flash('Title and subject are required', 'danger')
             return redirect(url_for('admin.create_paper'))
         
         # Create new paper in the database
         paper = QuestionPaper(
             title=title,
-            subject=subject,
+            subject=subject_name,
+            exam_period=exam_period,
+            paper_type=paper_type,
             description=description
         )
+        
+        # Set category_id if provided
+        if category_id and category_id != 'none':
+            paper.category_id = int(category_id)
         
         db.session.add(paper)
         db.session.commit()
@@ -50,19 +76,53 @@ def create_paper():
         flash(f'Paper "{title}" created successfully', 'success')
         return redirect(url_for('admin.manage_questions', paper_id=paper.id))
     
-    return render_template('admin/create_paper.html')
+    return render_template('admin/create_paper.html', subjects=subjects)
+
+@admin_bp.route('/api/get-boards/<int:subject_id>')
+@login_required
+def get_boards(subject_id):
+    """API endpoint to get exam boards for a subject"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Not authorized'}), 403
+        
+    boards = ExamBoard.query.filter_by(subject_id=subject_id).all()
+    board_list = [{'id': board.id, 'name': board.name} for board in boards]
+    return jsonify(board_list)
+
+@admin_bp.route('/api/get-categories/<int:board_id>')
+@login_required
+def get_categories(board_id):
+    """API endpoint to get paper categories for an exam board"""
+    if not current_user.is_admin:
+        return jsonify({'error': 'Not authorized'}), 403
+        
+    categories = PaperCategory.query.filter_by(board_id=board_id).all()
+    category_list = [{'id': category.id, 'name': category.name} for category in categories]
+    return jsonify(category_list)
 
 @admin_bp.route('/paper/<int:paper_id>/questions')
+@login_required
 def manage_questions(paper_id):
     """Manage questions for a paper"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
     paper = QuestionPaper.query.get_or_404(paper_id)
     questions = Question.query.filter_by(paper_id=paper_id).order_by(Question.question_number).all()
     
     return render_template('admin/manage_questions.html', paper=paper, questions=questions)
 
 @admin_bp.route('/paper/<int:paper_id>/question/add', methods=['GET', 'POST'])
+@login_required
 def add_question(paper_id):
     """Add a question to a paper"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
     paper = QuestionPaper.query.get_or_404(paper_id)
     
     if request.method == 'POST':
