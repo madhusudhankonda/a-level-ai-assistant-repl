@@ -203,7 +203,6 @@
                         console.log("Received categories data:", categories);
                         // Clear current options
                         categorySelect.innerHTML = '<option value="" selected disabled>Select a paper category</option>';
-                        categorySelect.innerHTML += '<option value="">None (General Paper)</option>';
                         
                         // Add new options
                         categories.forEach(category => {
@@ -258,6 +257,14 @@
             if (!boardSelect.disabled && (boardSelect.selectedIndex <= 0 || !boardSelect.value)) {
                 event.preventDefault();
                 errorMessage.textContent = 'Please select an exam board';
+                validationErrors.classList.remove('d-none');
+                return;
+            }
+            
+            // Check category field - only if not disabled
+            if (!categorySelect.disabled && (categorySelect.selectedIndex <= 0 || !categorySelect.value)) {
+                event.preventDefault();
+                errorMessage.textContent = 'Please select a paper category';
                 validationErrors.classList.remove('d-none');
                 return;
             }

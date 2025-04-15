@@ -77,15 +77,24 @@ def create_paper():
         )
         
         # Set category_id if provided
-        if category_id and category_id != '-1':
+        if category_id and category_id.strip():
             try:
-                paper.category_id = int(category_id)
-                current_app.logger.info(f"Paper assigned to category ID: {category_id}")
+                # Convert to integer
+                category_id_int = int(category_id)
+                if category_id_int > 0:  # Ensure it's a positive integer
+                    paper.category_id = category_id_int
+                    current_app.logger.info(f"Paper assigned to category ID: {category_id_int}")
+                else:
+                    flash('Please select a valid category for the paper', 'danger')
+                    return redirect(url_for('admin.create_paper'))
             except ValueError:
-                current_app.logger.warning(f"Invalid category_id: {category_id}")
-                # Continue without setting category_id
+                current_app.logger.warning(f"Invalid category_id format: {category_id}")
+                flash('Invalid category format. Please select a proper category.', 'danger')
+                return redirect(url_for('admin.create_paper'))
         else:
-            current_app.logger.info("No category selected or 'None' option chosen")
+            current_app.logger.warning("No category ID provided")
+            flash('Please select a category for the paper', 'danger')
+            return redirect(url_for('admin.create_paper'))
         
         db.session.add(paper)
         db.session.commit()
