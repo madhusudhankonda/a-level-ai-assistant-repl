@@ -2,6 +2,7 @@ from datetime import datetime
 from app import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+import json
 
 class Subject(db.Model):
     """Model representing a subject (e.g., Maths, Physics)"""
@@ -74,10 +75,19 @@ class Question(db.Model):
     question_number = db.Column(db.String(20), nullable=False)
     image_path = db.Column(db.String(255), nullable=False)
     paper_id = db.Column(db.Integer, db.ForeignKey('question_paper.id'), nullable=False)
+    difficulty_level = db.Column(db.Integer, nullable=True)  # 1-5 scale
+    marks = db.Column(db.Integer, nullable=True)  # Number of marks for the question
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    topics = db.relationship('QuestionTopic', back_populates='question')
     
     def __repr__(self):
         return f'<Question {self.question_number} - Paper {self.paper_id}>'
+        
+    def get_topic_names(self):
+        """Get list of topic names associated with this question"""
+        return [question_topic.topic.name for question_topic in self.topics]
 
 
 class Explanation(db.Model):
@@ -163,3 +173,132 @@ class CreditTransaction(db.Model):
     
     def __repr__(self):
         return f'<CreditTransaction {self.transaction_type} {self.amount} for User {self.user_id}>'
+
+
+class UserProfile(db.Model):
+    """Enhanced user profile information"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
+    first_name = db.Column(db.String(50), nullable=True)
+    last_name = db.Column(db.String(50), nullable=True)
+    school_name = db.Column(db.String(100), nullable=True)
+    grade_year = db.Column(db.String(20), nullable=True)  # e.g., "Year 12", "Year 13"
+    preferred_subjects = db.Column(db.String(255), nullable=True)  # Comma-separated list
+    subscription_tier = db.Column(db.String(20), default="free")  # free, standard, premium
+    profile_image_path = db.Column(db.String(255), nullable=True)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationship with User
+    user = db.relationship('User', backref=db.backref('profile', uselist=False, lazy=True))
+    
+    def __repr__(self):
+        return f'<UserProfile for User {self.user_id}>'
+    
+    def get_preferred_subjects_list(self):
+        """Convert preferred_subjects string to list"""
+        if not self.preferred_subjects:
+            return []
+        return [subject.strip() for subject in self.preferred_subjects.split(',')]
+    
+    def set_preferred_subjects_list(self, subjects_list):
+        """Convert list to preferred_subjects string"""
+        if not subjects_list:
+            self.preferred_subjects = None
+        else:
+            self.preferred_subjects = ','.join(subjects_list)
+
+
+class Topic(db.Model):
+    """Model for academic topics/subtopics within subjects"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
+    parent_topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=True)  # For hierarchical topics
+    description = db.Column(db.Text, nullable=True)
+    difficulty_level = db.Column(db.Integer, nullable=True)  # 1-5 scale
+    
+    # Relationships
+    subject = db.relationship('Subject', backref='topics')
+    subtopics = db.relationship('Topic', 
+                               backref=db.backref('parent_topic', remote_side=[id]),
+                               lazy=True)
+    questions = db.relationship('QuestionTopic', back_populates='topic')
+    
+    # Composite unique constraint
+    __table_args__ = (db.UniqueConstraint('name', 'subject_id', 'parent_topic_id', name='_topic_subject_parent_uc'),)
+    
+    def __repr__(self):
+        return f'<Topic {self.name} - Subject {self.subject_id}>'
+
+
+class QuestionTopic(db.Model):
+    """Junction table for many-to-many relationship between Questions and Topics"""
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('topic.id'), nullable=False)
+    
+    # Relationships
+    question = db.relationship('Question', back_populates='topics')
+    topic = db.relationship('Topic', back_populates='questions')
+    
+    # Composite unique constraint
+    __table_args__ = (db.UniqueConstraint('question_id', 'topic_id', name='_question_topic_uc'),)
+    
+    def __repr__(self):
+        return f'<QuestionTopic {self.question_id}-{self.topic_id}>'
+
+
+class UserQuery(db.Model):
+    """Model for tracking user queries to the AI"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    query_type = db.Column(db.String(20), nullable=False)  # 'explanation', 'answer_feedback', 'custom'
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)  # Optional, if related to a specific question
+    query_text = db.Column(db.Text, nullable=True)  # For custom queries
+    image_path = db.Column(db.String(255), nullable=True)  # For captured images
+    response_text = db.Column(db.Text, nullable=False)  # AI response
+    credits_used = db.Column(db.Integer, nullable=False, default=10)
+    subject = db.Column(db.String(50), nullable=True)
+    is_favorite = db.Column(db.Boolean, default=False)  # User can mark favorite responses
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='queries')
+    question = db.relationship('Question', backref='user_queries')
+    
+    def __repr__(self):
+        return f'<UserQuery {self.query_type} by User {self.user_id}>'
+    
+    def get_truncated_response(self, length=100):
+        """Get a truncated version of the response for display"""
+        if len(self.response_text) <= length:
+            return self.response_text
+        return self.response_text[:length] + '...'
+
+
+class StudentAnswer(db.Model):
+    """Model for tracking student answers and feedback"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=True)  # Optional, if related to a standard question
+    user_query_id = db.Column(db.Integer, db.ForeignKey('user_query.id'), nullable=True)  # If answer is for a custom query
+    answer_image_path = db.Column(db.String(255), nullable=True)  # Path to student's answer image
+    answer_text = db.Column(db.Text, nullable=True)  # Optional typed answer
+    feedback_text = db.Column(db.Text, nullable=False)  # AI feedback on the answer
+    score = db.Column(db.Float, nullable=True)  # Score given by AI (e.g., 8/10)
+    max_score = db.Column(db.Float, nullable=True)  # Maximum possible score
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='answers')
+    question = db.relationship('Question', backref='student_answers')
+    user_query = db.relationship('UserQuery', backref='student_answers')
+    
+    def __repr__(self):
+        return f'<StudentAnswer by User {self.user_id} for Question {self.question_id or self.user_query_id}>'
+    
+    def get_score_percentage(self):
+        """Calculate percentage score"""
+        if self.score is None or self.max_score is None or self.max_score == 0:
+            return None
+        return (self.score / self.max_score) * 100
