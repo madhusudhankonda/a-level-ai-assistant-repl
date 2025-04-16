@@ -151,12 +151,20 @@ def generate_explanation(base64_image, subject):
     """
     subject = subject.lower().strip()
     
-    # Simplified prompt to reduce complexity and potential issues
+    # Enhanced prompt with structured JSON response format
     system_prompt = f"""
 You are an expert A-Level {subject.capitalize()} tutor. Analyze the question in the image and provide a detailed explanation.
 Use proper LaTeX notation for mathematical formulas ($...$ for inline, $$...$$ for display).
 Provide a step-by-step solution with clear explanations for each step.
-Format your response with clear headings and numbered steps.
+
+Return your response in this JSON format:
+{{
+    "title": "Brief description of the question",
+    "explanation": "Your detailed step-by-step explanation with clear reasoning",
+    "key_points": ["3-5 key concepts or formulas used in the solution"]
+}}
+
+Format the explanation with clear headings and numbered steps where appropriate.
 """
 
     try:
@@ -175,8 +183,8 @@ Format your response with clear headings and numbered steps.
         image_url = f"data:image/jpeg;base64,{base64_image}"
         logger.info(f"Image prepared, length: {len(base64_image)}")
         
-        # Simplified API call with fewer parameters and options
-        logger.info("Calling OpenAI API")
+        # API call with JSON response format
+        logger.info("Calling OpenAI API with JSON response format")
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model, released May 13, 2024
             messages=[
@@ -186,11 +194,29 @@ Format your response with clear headings and numbered steps.
                     {"type": "image_url", "image_url": {"url": image_url}}
                 ]}
             ],
-            max_tokens=1000
+            max_tokens=1500,
+            response_format={"type": "json_object"}
         )
         
-        # Extract the explanation from the response
-        explanation = response.choices[0].message.content
+        # Parse the JSON response
+        response_content = response.choices[0].message.content
+        logger.info(f"Received JSON response: {response_content[:100]}...")
+        
+        try:
+            explanation_data = json.loads(response_content)
+            # For backward compatibility with existing UI, convert the JSON structure to formatted text
+            explanation = f"# {explanation_data.get('title', 'Explanation')}\n\n{explanation_data.get('explanation', '')}"
+            
+            # Add key points if available
+            key_points = explanation_data.get('key_points', [])
+            if key_points:
+                explanation += "\n\n## Key Points:\n"
+                for i, point in enumerate(key_points):
+                    explanation += f"\n{i+1}. {point}"
+        except json.JSONDecodeError as e:
+            # Fall back to raw text if JSON parsing fails
+            logger.error(f"Failed to parse JSON response: {e}")
+            explanation = response_content
         
         return explanation
         
