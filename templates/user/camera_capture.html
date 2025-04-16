@@ -5,14 +5,9 @@
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
-        <h1 class="mb-4">
-            AI-Powered Student Answer Feedback
-            <span class="badge bg-info ms-2">
-                <i class="fas fa-robot me-1 text-warning"></i> AI Assistant
-                <i class="fas fa-star text-warning ms-1"></i>
-                <i class="fas fa-star text-warning"></i>
-                <i class="fas fa-star text-warning"></i>
-            </span>
+        <h1 class="mb-4 d-flex align-items-center">
+            <span>AI-Powered Student Answer Feedback</span>
+            <div class="ai-sparkle-icon ms-3" style="width: 38px; height: 38px;"></div>
         </h1>
         <p class="lead">Capture your work to get instant AI feedback and detailed explanations</p>
         <div class="mb-3">
@@ -162,8 +157,7 @@
                                 </button>
                                 <button id="analyze-btn" class="btn btn-success flex-grow-1">
                                     <i class="fas fa-robot me-1 text-warning"></i> <span id="analyze-btn-text">Analyze with AI</span>
-                                    <i class="fas fa-star text-warning ms-1"></i>
-                                    <i class="fas fa-star text-warning"></i>
+                                    <div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-left: 8px;"></div>
                                 </button>
                             </div>
                         </div>
@@ -175,12 +169,11 @@
             <div class="tab-pane fade" id="feedback-step">
                 <div class="card">
                     <div class="card-header bg-success text-white">
-                        <h5 class="mb-0">
-                            <i class="fas fa-robot me-2 text-warning"></i> AI Feedback
-                            <i class="fas fa-star text-warning ms-1"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </h5>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-robot me-2 text-warning"></i>
+                            <h5 class="mb-0">AI Feedback</h5>
+                            <div class="ai-sparkle-icon ms-2"></div>
+                        </div>
                     </div>
                     <div class="card-body">
                         <!-- Loading state -->

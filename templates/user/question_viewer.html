@@ -53,17 +53,20 @@
         <!-- Explanation Card -->
         <div class="card" id="explanation-card" style="display: none;">
             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">AI Explanation</h5>
+                <div class="ai-section-header">
+                    <div class="ai-sparkle-icon"></div>
+                    <h5 class="mb-0">AI Explanation</h5>
+                </div>
                 <button class="btn btn-sm btn-light" id="refresh-explanation">
                     <i class="fas fa-sync-alt"></i> Regenerate
                 </button>
             </div>
             <div class="card-body">
                 <div id="explanation-loading" style="display: none;">
-                    <div class="d-flex justify-content-center mb-3">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
+                    <div class="sparkle-loading mb-3">
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
                     </div>
                     <p class="text-center text-muted">Generating explanation with AI... This may take a few moments.</p>
                 </div>
@@ -124,14 +127,31 @@
             displayEl.innerHTML = '';
             displayEl.appendChild(imgEl);
             
-            // Add "Explain" button
+            // Add "Explain" button with sparkle stars
+            const explainBtnContainer = document.createElement('div');
+            explainBtnContainer.className = 'd-flex flex-column align-items-center';
+            
             const explainBtn = document.createElement('button');
-            explainBtn.className = 'btn btn-primary';
-            explainBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Explain this question';
+            explainBtn.className = 'btn btn-primary mb-2';
+            explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain this question';
             explainBtn.addEventListener('click', function() {
                 fetchExplanation(questionId);
             });
-            displayEl.appendChild(explainBtn);
+            
+            // Create sparkle rating
+            const sparkleRating = document.createElement('div');
+            sparkleRating.className = 'ai-sparkles mt-2';
+            sparkleRating.innerHTML = `
+                <div class="ai-sparkle active"></div>
+                <div class="ai-sparkle active"></div>
+                <div class="ai-sparkle active"></div>
+                <div class="ai-sparkle active"></div>
+                <div class="ai-sparkle active"></div>
+            `;
+            
+            explainBtnContainer.appendChild(explainBtn);
+            explainBtnContainer.appendChild(sparkleRating);
+            displayEl.appendChild(explainBtnContainer);
             
             // Update the question title
             // Find the question selector text
