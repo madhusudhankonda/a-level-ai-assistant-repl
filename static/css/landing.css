@@ -60,13 +60,65 @@
 }
 
 /* Cards */
-.card {
+.card, .hover-lift {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.card:hover {
+.card:hover, .hover-lift:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Step Cards */
+.step-card {
+    transition: all 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Feature Icons */
+.feature-icon {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.feature-block:hover .feature-icon {
+    transform: scale(1.1);
+}
+
+/* Credit Options */
+.credit-option {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.credit-option:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Transparent Backgrounds */
+.bg-opacity-10 {
+    opacity: 0.1;
+}
+
+.bg-opacity-20 {
+    opacity: 0.2;
 }
 
 /* Testimonial */
