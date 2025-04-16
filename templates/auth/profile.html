@@ -98,7 +98,7 @@
                             <span class="badge bg-info">{{ query_count }}</span>
                         </div>
                         <div class="progress mt-2" style="height: 6px;">
-                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ min(100, query_count * 2) }}%"></div>
+                            <div class="progress-bar bg-info" role="progressbar" style="width: {% if query_count * 2 > 100 %}100{% else %}{{ query_count * 2 }}{% endif %}%"></div>
                         </div>
                     </div>
                     
