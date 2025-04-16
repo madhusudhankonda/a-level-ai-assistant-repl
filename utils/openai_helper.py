@@ -151,20 +151,19 @@ def generate_explanation(base64_image, subject):
     """
     subject = subject.lower().strip()
     
-    # Enhanced prompt with structured JSON response format
+    # Simple prompt without requiring JSON to avoid parsing issues
     system_prompt = f"""
 You are an expert A-Level {subject.capitalize()} tutor. Analyze the question in the image and provide a detailed explanation.
 Use proper LaTeX notation for mathematical formulas ($...$ for inline, $$...$$ for display).
 Provide a step-by-step solution with clear explanations for each step.
 
-Return your response in this JSON format:
-{{
-    "title": "Brief description of the question",
-    "explanation": "Your detailed step-by-step explanation with clear reasoning",
-    "key_points": ["3-5 key concepts or formulas used in the solution"]
-}}
+Format your response with:
+1. A brief title or description of the question
+2. A detailed step-by-step explanation with clear reasoning
+3. A summary of 3-5 key concepts or formulas used in the solution
 
-Format the explanation with clear headings and numbered steps where appropriate.
+Use clear headings (e.g., "## Step 1:") and numbered steps where appropriate.
+Your explanation should be comprehensive, explaining both the mathematical concepts and their application.
 """
 
     try:
@@ -183,8 +182,8 @@ Format the explanation with clear headings and numbered steps where appropriate.
         image_url = f"data:image/jpeg;base64,{base64_image}"
         logger.info(f"Image prepared, length: {len(base64_image)}")
         
-        # API call with JSON response format
-        logger.info("Calling OpenAI API with JSON response format")
+        # API call without requiring JSON response format
+        logger.info("Calling OpenAI API for explanation")
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model, released May 13, 2024
             messages=[
@@ -194,29 +193,12 @@ Format the explanation with clear headings and numbered steps where appropriate.
                     {"type": "image_url", "image_url": {"url": image_url}}
                 ]}
             ],
-            max_tokens=1500,
-            response_format={"type": "json_object"}
+            max_tokens=1500
         )
         
-        # Parse the JSON response
-        response_content = response.choices[0].message.content
-        logger.info(f"Received JSON response: {response_content[:100]}...")
-        
-        try:
-            explanation_data = json.loads(response_content)
-            # For backward compatibility with existing UI, convert the JSON structure to formatted text
-            explanation = f"# {explanation_data.get('title', 'Explanation')}\n\n{explanation_data.get('explanation', '')}"
-            
-            # Add key points if available
-            key_points = explanation_data.get('key_points', [])
-            if key_points:
-                explanation += "\n\n## Key Points:\n"
-                for i, point in enumerate(key_points):
-                    explanation += f"\n{i+1}. {point}"
-        except json.JSONDecodeError as e:
-            # Fall back to raw text if JSON parsing fails
-            logger.error(f"Failed to parse JSON response: {e}")
-            explanation = response_content
+        # Get the text response directly - no JSON parsing needed anymore
+        explanation = response.choices[0].message.content
+        logger.info(f"Received explanation: {explanation[:100]}...")
         
         return explanation
         
