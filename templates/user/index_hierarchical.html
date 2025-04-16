@@ -230,8 +230,11 @@
         browseButton.addEventListener('click', function() {
             const categoryId = categorySelect.value;
             if (categoryId) {
+                console.log('Navigating to category ID:', categoryId);
                 // Navigate to the selected category
                 window.location.href = `/category/${categoryId}`;
+            } else {
+                console.error('No category selected');
             }
         });
         
