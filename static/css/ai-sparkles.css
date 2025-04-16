@@ -1,97 +1,102 @@
-/* AI Sparkles CSS */
+/* AI Sparkles CSS - Animation styles for AI features */
 
-.ai-sparkles {
+/* Sparkle Icon - Base styling */
+.ai-sparkle-icon {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url('/static/img/sparkle-stars.svg');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 0, 0.3));
+    animation: sparkle-pulse 2s infinite ease-in-out;
+}
+
+/* Section Header with Sparkle */
+.ai-section-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
+    gap: 10px;
+}
+
+/* Animation for the sparkle icon */
+@keyframes sparkle-pulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 255, 0, 0.3)); }
+    50% { transform: scale(1.1); filter: drop-shadow(0 0 4px rgba(255, 255, 0, 0.5)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 255, 0, 0.3)); }
+}
+
+/* Individual sparkle stars used in ratings */
+.ai-sparkles {
+    display: flex;
+    gap: 5px;
 }
 
 .ai-sparkle {
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     background-image: url('/static/img/sparkle-single.svg');
     background-size: contain;
+    background-position: center;
     background-repeat: no-repeat;
-    animation: sparkle-pulse 3s infinite alternate;
     opacity: 0.3;
-    transition: opacity 0.3s ease;
+    filter: grayscale(100%);
+    transition: all 0.2s ease;
 }
 
 .ai-sparkle.active {
     opacity: 1;
+    filter: grayscale(0%);
+    filter: drop-shadow(0 0 2px rgba(255, 255, 0, 0.3));
+    animation: sparkle-twinkle 1.5s infinite ease-in-out;
+    animation-delay: calc(var(--star-index, 0) * 0.2s);
 }
 
-.ai-sparkle:nth-child(1) { animation-delay: 0s; }
-.ai-sparkle:nth-child(2) { animation-delay: 0.4s; }
-.ai-sparkle:nth-child(3) { animation-delay: 0.8s; }
-.ai-sparkle:nth-child(4) { animation-delay: 1.2s; }
-.ai-sparkle:nth-child(5) { animation-delay: 1.6s; }
-
-@keyframes sparkle-pulse {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-    100% {
-        transform: scale(1);
-    }
+@keyframes sparkle-twinkle {
+    0% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 255, 0, 0.3)); }
+    50% { transform: scale(1.2); filter: drop-shadow(0 0 4px rgba(255, 255, 0, 0.5)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255, 255, 0, 0.3)); }
 }
 
-.ai-section-header {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-
-.ai-sparkle-icon {
-    width: 32px;
-    height: 32px;
-    background-image: url('/static/img/sparkle-stars.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    animation: sparkle-rotate 8s infinite linear;
-}
-
-@keyframes sparkle-rotate {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-/* Animated loading sparkles */
+/* Loading dots for AI processing */
 .sparkle-loading {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
     justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
 }
 
 .sparkle-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #9747FF, #4BB8FF);
+    width: 15px;
+    height: 15px;
+    background-image: url('/static/img/sparkle-single.svg');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
     animation: sparkle-bounce 1.4s infinite ease-in-out both;
 }
 
-.sparkle-dot:nth-child(1) { animation-delay: -0.32s; }
-.sparkle-dot:nth-child(2) { animation-delay: -0.16s; }
+.sparkle-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.sparkle-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
 
 @keyframes sparkle-bounce {
     0%, 80%, 100% { 
-        transform: scale(0);
+        transform: scale(0.6);
+        opacity: 0.6;
     }
     40% { 
-        transform: scale(1);
+        transform: scale(1.2);
+        opacity: 1;
+        filter: drop-shadow(0 0 4px rgba(255, 255, 0, 0.5));
     }
 }
