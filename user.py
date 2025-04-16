@@ -337,34 +337,8 @@ def analyze_captured_image():
                 'message': message
             }), 500
         
-        # Process the explanation - it should be a properly formatted string, 
-        # but may already be JSON formatted from the OpenAI helper
-        try:
-            # First, try to parse as JSON (in case the helper didn't do it)
-            json_data = json.loads(explanation_text)
-            
-            # Extract data assuming our new format
-            if isinstance(json_data, dict):
-                title = json_data.get('title', 'Explanation')
-                explanation_content = json_data.get('explanation', '')
-                key_points = json_data.get('key_points', [])
-                
-                # Format into a single string for backward compatibility
-                formatted_text = f"# {title}\n\n{explanation_content}"
-                
-                # Add key points if available
-                if key_points:
-                    formatted_text += "\n\n## Key Points:\n"
-                    for i, point in enumerate(key_points):
-                        formatted_text += f"\n{i+1}. {point}"
-                        
-                explanation_text = formatted_text
-                current_app.logger.info("Parsed explanation from JSON format")
-        except json.JSONDecodeError:
-            # Not JSON, use the raw text (already formatted by helper)
-            current_app.logger.info("Using raw explanation text (not JSON)")
-        except Exception as json_error:
-            current_app.logger.warning(f"JSON parsing issue: {str(json_error)}")
+        # The explanation is already in text format from OpenAI - no JSON parsing needed
+        current_app.logger.info("Using explanation text directly without JSON parsing")
         
         # Process the mathematical notation for display
         processed_text = process_math_notation(explanation_text)

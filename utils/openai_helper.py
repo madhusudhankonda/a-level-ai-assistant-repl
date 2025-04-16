@@ -74,19 +74,25 @@ Your task is to:
 1. Understand the question and what it's asking for
 2. Evaluate the student's answer for correctness, completeness, and approach
 3. Provide constructive feedback
-4. Score the answer on a scale of 1-5 stars based on:
-   - Correctness (understanding and applying the right concepts)
-   - Completeness (answering all parts of the question)
-   - Method (showing appropriate working and steps)
-   - Clarity (clear presentation and explanation)
+4. Score the answer on a scale of 1-5 stars
 
-Return your response in this JSON format:
-{{
-    "feedback": "Your detailed feedback on the student's answer with specific points on what was done well and what needs improvement. Be encouraging but honest.",
-    "explanation": "A complete, correct solution to the question with all steps clearly shown. Use proper LaTeX notation for mathematical expressions ($...$ for inline, $$....$$ for display).",
-    "tips": "2-3 specific tips for how the student can improve their answer or approach to similar problems in the future.",
-    "score": "X/5" // Rating from 1-5 stars
-}}
+Format your response with these clearly labeled sections:
+
+## Feedback
+Provide detailed feedback on the student's answer with specific points on what was done well and what needs improvement. Be encouraging but honest.
+
+## Explanation
+Provide a complete, correct solution to the question with all steps clearly shown. Use proper LaTeX notation for mathematical expressions ($...$ for inline, $$....$$ for display).
+
+## Tips
+Give 2-3 specific tips for how the student can improve their answer or approach to similar problems in the future.
+
+## Score
+Rate the answer from 1-5 stars based on:
+- Correctness (understanding and applying the right concepts)
+- Completeness (answering all parts of the question)
+- Method (showing appropriate working and steps)
+- Clarity (clear presentation and explanation)
 
 Always use proper LaTeX notation for mathematical expressions, formulas and equations.
 Be encouraging and constructive in your feedback.
@@ -110,29 +116,66 @@ Be encouraging and constructive in your feedback.
         
         logger.info("Calling OpenAI API with both images")
         
-        # Make the API call to OpenAI with JSON response format
+        # Make the API call to OpenAI without requiring JSON format
         response = openai.chat.completions.create(
             model="gpt-4o",  # the newest OpenAI model, released May 13, 2024
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": content}
             ],
-            max_tokens=1500,
-            response_format={"type": "json_object"}
+            max_tokens=1500
         )
         
-        # Parse the JSON response
-        feedback_data = json.loads(response.choices[0].message.content)
+        # Get the text response without JSON parsing
+        response_text = response.choices[0].message.content
+        logger.info(f"Received feedback response: {response_text[:100]}...")
         
-        # Add the score in a standardized format
-        score = feedback_data.get('score', '0/5')
-        if isinstance(score, str) and '/' in score:
-            score_parts = score.split('/')
-            if len(score_parts) == 2 and score_parts[0].isdigit():
-                # Format as "X/5 Stars"
-                feedback_data['score'] = f"{score_parts[0]}/5 Stars"
+        # Extract the different sections from the markdown-formatted text
+        sections = {
+            'feedback': '',
+            'explanation': '',
+            'tips': '',
+            'score': '3/5 Stars'  # Default score
+        }
         
-        return feedback_data
+        # Simple text parsing by section headers
+        current_section = None
+        section_content = []
+        
+        for line in response_text.split('\n'):
+            if line.startswith('## Feedback'):
+                current_section = 'feedback'
+                section_content = []
+            elif line.startswith('## Explanation'):
+                if current_section:
+                    sections[current_section] = '\n'.join(section_content).strip()
+                current_section = 'explanation'
+                section_content = []
+            elif line.startswith('## Tips'):
+                if current_section:
+                    sections[current_section] = '\n'.join(section_content).strip()
+                current_section = 'tips'
+                section_content = []
+            elif line.startswith('## Score'):
+                if current_section:
+                    sections[current_section] = '\n'.join(section_content).strip()
+                current_section = 'score'
+                section_content = []
+            elif current_section:
+                section_content.append(line)
+                
+                # Look for a score pattern in the score section
+                if current_section == 'score' and ('/' in line or 'stars' in line.lower() or 'star' in line.lower()):
+                    # Try to extract X/5 pattern
+                    score_match = re.search(r'(\d+)/(\d+)', line)
+                    if score_match:
+                        sections['score'] = f"{score_match.group(1)}/5 Stars"
+        
+        # Add the last section
+        if current_section:
+            sections[current_section] = '\n'.join(section_content).strip()
+            
+        return sections
         
     except Exception as e:
         logger.error(f"Error generating answer feedback: {e}")
