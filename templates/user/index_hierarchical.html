@@ -67,7 +67,32 @@
                 </div>
             </div>
             
-            <!-- Card selection has been removed as requested -->
+            <!-- Quick direct access to available papers -->
+            <div class="card mb-4">
+                <div class="card-header bg-gradient-purple text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Recently Added Papers
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title">Mathematics - AQA</h5>
+                                    <p class="card-text">Pure Mathematics papers</p>
+                                </div>
+                                <div class="card-footer bg-light">
+                                    <a href="/category/1" class="btn btn-primary btn-sm d-block">
+                                        <i class="fas fa-folder-open me-1"></i> Browse Papers
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="card">
                 <div class="card-header bg-info text-white">
@@ -186,6 +211,16 @@
                     option.textContent = board.name;
                     boardSelect.appendChild(option);
                 });
+                
+                // Auto-select AQA (ID: 1) for Mathematics if it exists
+                if (selectedSubjectId === 1) {
+                    let aqaOption = Array.from(boardSelect.options).find(option => option.value === "1");
+                    if (aqaOption) {
+                        boardSelect.value = "1";
+                        // Trigger the change event to load categories
+                        boardSelect.dispatchEvent(new Event('change'));
+                    }
+                }
             } else {
                 // Disable all downstream selects
                 boardSelect.disabled = true;
@@ -216,6 +251,16 @@
                     option.textContent = category.name;
                     categorySelect.appendChild(option);
                 });
+                
+                // Auto-select Pure Mathematics (ID: 1) for AQA if it exists
+                if (selectedBoardId === 1) {
+                    let pureMathsOption = Array.from(categorySelect.options).find(option => option.value === "1");
+                    if (pureMathsOption) {
+                        categorySelect.value = "1";
+                        // Enable the browse button
+                        browseButton.disabled = false;
+                    }
+                }
             } else {
                 // Disable category select
                 categorySelect.disabled = true;
