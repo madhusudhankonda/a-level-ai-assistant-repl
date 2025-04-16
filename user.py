@@ -371,7 +371,15 @@ def analyze_captured_image():
         current_app.logger.info("Math notation processed")
         
         # Deduct 10 credits for successful AI explanation
-        current_user.use_credits(10)
+        if not current_user.use_credits(10):
+            # This should never happen as we checked credits earlier, but just in case
+            current_app.logger.error(f"Failed to deduct credits from user {current_user.id} - insufficient balance")
+            return jsonify({
+                'success': False,
+                'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                'credits_required': True
+            }), 403
+            
         db.session.commit()
         current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
         
@@ -467,7 +475,15 @@ def analyze_answer():
             score = response.get('score', 'N/A')
             
             # Deduct 10 credits for successful AI answer analysis
-            current_user.use_credits(10)
+            if not current_user.use_credits(10):
+                # This should never happen as we checked credits earlier, but just in case
+                current_app.logger.error(f"Failed to deduct credits from user {current_user.id} - insufficient balance")
+                return jsonify({
+                    'success': False,
+                    'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                    'credits_required': True
+                }), 403
+                
             db.session.commit()
             current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
             
@@ -551,7 +567,14 @@ def explain_question(question_id):
             )
             
             # Deduct 10 credits for successful AI explanation
-            current_user.use_credits(10)
+            if not current_user.use_credits(10):
+                # This should never happen as we checked credits earlier, but just in case
+                current_app.logger.error(f"Failed to deduct credits from user {current_user.id} - insufficient balance")
+                return jsonify({
+                    'success': False,
+                    'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                    'credits_required': True
+                }), 403
             
             # Add explanation and save both explanation and credit transaction
             db.session.add(explanation)
