@@ -3,6 +3,7 @@ import json
 import time
 import logging
 import requests  # For HTTP operations
+import re  # For regex pattern matching
 from openai import OpenAI
 import base64
 
