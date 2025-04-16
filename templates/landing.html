@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+
+{% block title %}A-Level AI Assistant | Your A-Level Study Companion{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section pt-5 pb-6 bg-gradient-dark" style="min-height: 85vh;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0">
+                <h1 class="display-3 fw-bold mb-3">
+                    Master A-Level Subjects with <span class="text-warning">AI</span> <div class="ai-sparkle-icon d-inline-block mb-2"></div>
+                </h1>
+                <p class="lead fs-4 mb-4">Get instant help, personalized explanations, and feedback on your work with our AI-powered learning assistant.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-warning btn-lg fw-bold px-5 py-3">
+                        <i class="fas fa-user-plus me-2"></i> Get Started Free
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-info-circle me-2"></i> Learn More
+                    </a>
+                </div>
+                <div class="mt-4">
+                    <span class="badge bg-light text-dark me-2 p-2">
+                        <i class="fas fa-robot text-warning me-1"></i> Powered by GPT-4o
+                    </span>
+                    <span class="badge bg-light text-dark me-2 p-2">
+                        <i class="fas fa-bolt text-warning me-1"></i> Instant Responses
+                    </span>
+                    <span class="badge bg-light text-dark p-2">
+                        <i class="fas fa-check-circle text-warning me-1"></i> 50 Free Credits
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="position-relative">
+                    <div class="sparkle-animation position-absolute" style="top: -20px; right: 30px;">
+                        <div class="ai-sparkle-icon" style="width: 50px; height: 50px;"></div>
+                    </div>
+                    <div class="sparkle-animation position-absolute" style="bottom: 30px; left: -10px;">
+                        <div class="ai-sparkle-icon" style="width: 40px; height: 40px;"></div>
+                    </div>
+                    <img src="{{ url_for('static', filename='img/ai-hero-image.svg') }}" alt="AI Learning Assistant" class="img-fluid rounded-4 shadow-lg" style="max-height: 500px;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="py-6 bg-dark">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">How It <span class="text-warning">Works</span></h2>
+            <p class="lead">Three simple steps to get instant A-Level help</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-warning p-3 mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <i class="fas fa-camera text-dark" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">Capture or Upload</h3>
+                        <p class="card-text">Take a photo of your question or upload an image file. Our system works with handwritten questions too!</p>
+                    </div>
+                    <div class="card-footer bg-dark-subtle border-0 text-center">
+                        <span class="badge rounded-pill bg-dark px-3 py-2">Step 1</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-warning p-3 mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <i class="fas fa-robot text-dark" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">AI Analysis</h3>
+                        <p class="card-text">Our advanced AI analyzes your question or checks your work, understanding the context and requirements.</p>
+                    </div>
+                    <div class="card-footer bg-dark-subtle border-0 text-center">
+                        <span class="badge rounded-pill bg-dark px-3 py-2">Step 2</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-warning p-3 mx-auto mb-4" style="width: 80px; height: 80px;">
+                            <i class="fas fa-graduation-cap text-dark" style="font-size: 2rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">Instant Results</h3>
+                        <p class="card-text">Get detailed explanations, step-by-step solutions, or personalized feedback on your answers.</p>
+                    </div>
+                    <div class="card-footer bg-dark-subtle border-0 text-center">
+                        <span class="badge rounded-pill bg-dark px-3 py-2">Step 3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-6 bg-gradient-purple">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold text-white">Powerful <span class="text-warning">Features</span></h2>
+            <p class="lead text-white-50">Tools designed specifically for A-Level students</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded bg-warning p-2 me-3">
+                                <i class="fas fa-lightbulb text-dark"></i>
+                            </div>
+                            <h3 class="card-title h5 mb-0">Step-by-Step Explanations</h3>
+                        </div>
+                        <p class="card-text">Get detailed solutions with thorough explanations for any A-Level question. See exactly how to approach each problem.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded bg-warning p-2 me-3">
+                                <i class="fas fa-check-circle text-dark"></i>
+                            </div>
+                            <h3 class="card-title h5 mb-0">Answer Feedback</h3>
+                        </div>
+                        <p class="card-text">Upload your answers and receive personalized feedback, with suggestions for improvement and error identification.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded bg-warning p-2 me-3">
+                                <i class="fas fa-book-open text-dark"></i>
+                            </div>
+                            <h3 class="card-title h5 mb-0">Past Paper Access</h3>
+                        </div>
+                        <p class="card-text">Browse through our library of past papers organized by subject, exam board, and topic. Practice with real exam questions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded bg-warning p-2 me-3">
+                                <i class="fas fa-camera text-dark"></i>
+                            </div>
+                            <h3 class="card-title h5 mb-0">Camera Integration</h3>
+                        </div>
+                        <p class="card-text">Quickly capture questions or your work using your device's camera. No need to type out complex equations.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded bg-warning p-2 me-3">
+                                <i class="fas fa-chart-line text-dark"></i>
+                            </div>
+                            <h3 class="card-title h5 mb-0">Progress Tracking</h3>
+                        </div>
+                        <p class="card-text">Keep track of your questions and answers. Review previous explanations and feedback to see your improvement.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded bg-warning p-2 me-3">
+                                <i class="fas fa-brain text-dark"></i>
+                            </div>
+                            <h3 class="card-title h5 mb-0">Advanced AI Technology</h3>
+                        </div>
+                        <p class="card-text">Powered by GPT-4o, our system understands complex A-Level concepts across Mathematics, Physics, Chemistry, and Biology.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Subjects Section -->
+<section id="subjects" class="py-6 bg-dark">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">Supported <span class="text-warning">Subjects</span></h2>
+            <p class="lead">Comprehensive assistance across key A-Level disciplines</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="subject-icon mb-3">
+                            <i class="fas fa-square-root-alt text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">Mathematics</h3>
+                        <p class="card-text">Pure Math, Statistics, Mechanics, and Decision Mathematics. From calculus to probability.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-success">Available Now</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="subject-icon mb-3">
+                            <i class="fas fa-atom text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">Physics</h3>
+                        <p class="card-text">Mechanics, Electricity, Waves, Nuclear Physics, and more. Solving complex physical problems.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-secondary">Coming Soon</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="subject-icon mb-3">
+                            <i class="fas fa-flask text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">Chemistry</h3>
+                        <p class="card-text">Organic, Inorganic, Physical Chemistry. From reaction mechanisms to thermodynamics.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-secondary">Coming Soon</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="card h-100 border-0 bg-dark-subtle shadow">
+                    <div class="card-body text-center p-4">
+                        <div class="subject-icon mb-3">
+                            <i class="fas fa-dna text-warning" style="font-size: 3rem;"></i>
+                        </div>
+                        <h3 class="card-title h4 mb-3">Biology</h3>
+                        <p class="card-text">Cells, Genetics, Ecology, Human Physiology. Understanding biological concepts and processes.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-secondary">Coming Soon</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section (Placeholder) -->
+<section id="testimonials" class="py-6 bg-gradient-dark">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold">What <span class="text-warning">Students</span> Say</h2>
+            <p class="lead">Success stories from A-Level students using our AI assistant</p>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 bg-dark-subtle shadow-lg">
+                    <div class="card-body p-5">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="rounded-circle bg-dark text-white p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                <span class="fw-bold fs-4">S</span>
+                            </div>
+                            <div>
+                                <h5 class="mb-0">Sarah T.</h5>
+                                <p class="text-muted mb-0">Year 13 Student, A-Level Mathematics</p>
+                            </div>
+                            <div class="ms-auto">
+                                <div class="ai-sparkles">
+                                    <div class="ai-sparkle active"></div>
+                                    <div class="ai-sparkle active"></div>
+                                    <div class="ai-sparkle active"></div>
+                                    <div class="ai-sparkle active"></div>
+                                    <div class="ai-sparkle active"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <blockquote class="blockquote mb-0">
+                            <p>"This AI assistant has been a game-changer for my A-Level Mathematics revision. The step-by-step explanations are clear and easy to follow, and I love being able to get immediate feedback on my work. It's like having a personal tutor available 24/7!"</p>
+                        </blockquote>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section id="cta" class="py-6 bg-warning text-dark">
+    <div class="container text-center">
+        <h2 class="display-4 fw-bold mb-4">Ready to Transform Your A-Level Studies?</h2>
+        <p class="lead fs-3 mb-5">Join thousands of students already improving their grades with our AI assistant</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="{{ url_for('auth.signup') }}" class="btn btn-dark btn-lg px-5 py-3 fw-bold">
+                <i class="fas fa-user-plus me-2"></i> Sign Up Free
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-dark btn-lg px-5 py-3">
+                <i class="fas fa-sign-in-alt me-2"></i> Log In
+            </a>
+        </div>
+        <p class="mt-4 small">No credit card required. Get started with 50 free credits.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                
+                if (targetId !== '#') {
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80, // Offset for fixed header
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

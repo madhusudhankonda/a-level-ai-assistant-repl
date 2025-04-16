@@ -59,8 +59,15 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(user_bp, url_prefix='/')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 
-# Root route redirect to user dashboard
+# Root route for the landing page
 @app.route('/')
 def index():
-    from flask import redirect, url_for
-    return redirect(url_for('user.index'))
+    from flask import render_template, redirect, url_for
+    from flask_login import current_user
+    
+    # If user is already logged in, redirect to the dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('user.index'))
+    
+    # Otherwise show the landing page
+    return render_template('landing.html')

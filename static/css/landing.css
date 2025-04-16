@@ -1,0 +1,101 @@
+/* Landing Page Specific Styles */
+
+/* Background Utilities */
+.bg-gradient-dark {
+    background: linear-gradient(135deg, #1e1e2f 0%, #2c2c44 100%);
+}
+
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #4b367c 0%, #2c3e50 100%);
+}
+
+.bg-dark-subtle {
+    background-color: #2a2a3a;
+}
+
+/* Text Utilities */
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Section Spacing */
+.py-6 {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
+
+@media (min-width: 992px) {
+    .py-6 {
+        padding-top: 6rem;
+        padding-bottom: 6rem;
+    }
+}
+
+/* Hero Section */
+.hero-section {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 20% 50%, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0) 75%);
+    pointer-events: none;
+}
+
+/* Sparkle Animation */
+.sparkle-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Cards */
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Testimonial */
+.blockquote {
+    position: relative;
+    font-size: 1.1rem;
+}
+
+.blockquote::before {
+    content: '"';
+    font-size: 4rem;
+    font-family: Georgia, serif;
+    position: absolute;
+    top: -2rem;
+    left: -1rem;
+    opacity: 0.1;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .display-4, .display-5 {
+        font-size: 2rem;
+    }
+    
+    .lead {
+        font-size: 1rem;
+    }
+}

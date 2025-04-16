@@ -17,6 +17,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ai-sparkles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
     
     <!-- Mobile-specific styles -->
     <style>
@@ -159,20 +160,20 @@
         </div>
     </nav>
 
-    <div class="container py-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        {% block content %}{% endblock %}
-    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="container py-4">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+    
+    {% block content %}{% endblock %}
     
     <!-- Toast container for notifications -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
