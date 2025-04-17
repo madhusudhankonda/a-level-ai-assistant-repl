@@ -99,23 +99,23 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/home">
+                        <a class="nav-link text-white" href="/home">
                             <i class="fas fa-home me-1"></i> Home
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('user.index') }}">
+                        <a class="nav-link text-white" href="{{ url_for('user.index') }}">
                             <i class="fas fa-book me-1"></i> Papers
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('user.camera_capture') }}">
+                        <a class="nav-link text-white" href="{{ url_for('user.camera_capture') }}">
                             <i class="fas fa-robot me-1 text-warning"></i> AI Analysis
                         </a>
                     </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-user-circle me-1"></i> 
                             {{ current_user.username }}
                             <span class="badge bg-warning text-dark ms-1">
@@ -143,19 +143,19 @@
                     </li>
                     {% if current_user.is_admin %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('admin.index') }}">
+                        <a class="nav-link text-white" href="{{ url_for('admin.index') }}">
                             <i class="fas fa-cog me-1"></i> Admin
                         </a>
                     </li>
                     {% endif %}
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        <a class="nav-link text-white" href="{{ url_for('auth.login') }}">
                             <i class="fas fa-sign-in-alt me-1"></i> Login
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth.signup') }}">
+                        <a class="nav-link text-white" href="{{ url_for('auth.signup') }}">
                             <i class="fas fa-user-plus me-1"></i> Sign Up
                         </a>
                     </li>
