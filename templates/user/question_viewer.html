@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12 mb-4">
+    <div class="col-md-9 mb-4">
         <h1>{{ paper.title }}</h1>
         <h5 class="text-muted">{{ paper.subject }}</h5>
         <p>{{ paper.description }}</p>
@@ -12,6 +12,23 @@
             <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Papers
             </a>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card border-info bg-light">
+            <div class="card-body text-center">
+                <h5 class="card-title">Your Credits</h5>
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-coins text-warning me-2 fa-2x"></i> 
+                    <h3 id="credit-balance" class="mb-0 text-primary">{{ current_user.credits }}</h3>
+                </div>
+                <p class="card-text mt-2 small">Each explanation costs 10 credits</p>
+                {% if current_user.credits < 10 %}
+                <a href="{{ url_for('auth.buy_credits') }}" class="btn btn-warning btn-sm mt-2">
+                    <i class="fas fa-plus-circle"></i> Buy More Credits
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
@@ -188,6 +205,38 @@
                     if (data.success) {
                         // The explanation is already pre-processed on the server
                         explanationContent.innerHTML = data.explanation;
+                        
+                        // Update credit display if returned from server
+                        if (data.credits_remaining !== undefined) {
+                            const creditBalanceElement = document.getElementById('credit-balance');
+                            if (creditBalanceElement) {
+                                // Animate the credit deduction
+                                const oldCredit = parseInt(creditBalanceElement.textContent);
+                                const newCredit = data.credits_remaining;
+                                
+                                // Add warning class if credits are running low
+                                if (newCredit < 20) {
+                                    creditBalanceElement.classList.add('text-warning');
+                                }
+                                if (newCredit < 10) {
+                                    creditBalanceElement.classList.remove('text-warning');
+                                    creditBalanceElement.classList.add('text-danger');
+                                    
+                                    // Show a warning message
+                                    const lowCreditAlert = document.createElement('div');
+                                    lowCreditAlert.className = 'alert alert-warning mt-3 mb-0';
+                                    lowCreditAlert.innerHTML = `
+                                        <i class="fas fa-exclamation-triangle"></i> 
+                                        You're running low on credits! 
+                                        <a href="/auth/buy-credits" class="alert-link">Purchase more</a>
+                                    `;
+                                    explanationContent.appendChild(lowCreditAlert);
+                                }
+                                
+                                // Update the credit display
+                                creditBalanceElement.textContent = newCredit;
+                            }
+                        }
                         
                         // Trigger MathJax typesetting
                         setTimeout(function() {
