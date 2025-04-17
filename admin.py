@@ -309,7 +309,27 @@ def delete_paper(paper_id):
         current_app.logger.error(f"Error deleting paper directory: {str(e)}")
     
     # Delete from database
+    # First, get all question IDs for this paper
+    question_ids = [q.id for q in db.session.query(Question.id).filter_by(paper_id=paper_id).all()]
+    
+    if question_ids:
+        # Delete any explanations related to these questions first
+        from models import Explanation
+        db.session.query(Explanation).filter(Explanation.question_id.in_(question_ids)).delete(synchronize_session=False)
+        
+        # Delete UserQuery and StudentAnswer records related to these questions
+        from models import UserQuery, StudentAnswer
+        db.session.query(UserQuery).filter(UserQuery.question_id.in_(question_ids)).delete(synchronize_session=False)
+        db.session.query(StudentAnswer).filter(StudentAnswer.question_id.in_(question_ids)).delete(synchronize_session=False)
+        
+        # Delete question-topic relationships
+        from models import QuestionTopic
+        db.session.query(QuestionTopic).filter(QuestionTopic.question_id.in_(question_ids)).delete(synchronize_session=False)
+    
+    # Now it's safe to delete the questions
     db.session.query(Question).filter_by(paper_id=paper_id).delete()
+    
+    # Delete the paper
     db.session.delete(paper)
     db.session.commit()
     
