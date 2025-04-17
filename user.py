@@ -108,7 +108,21 @@ def view_paper(paper_id):
     paper = QuestionPaper.query.get_or_404(paper_id)
     
     # Get all questions for this paper
-    questions = Question.query.filter_by(paper_id=paper_id).order_by(Question.question_number).all()
+    questions = Question.query.filter_by(paper_id=paper_id).all()
+    
+    # Sort questions numerically by question number
+    # This handles question numbers like '1', '2', '10' properly
+    def question_number_key(q):
+        # Extract the numeric part from the question number
+        # This handles formats like 'q1', '1a', 'question 1', etc.
+        import re
+        num_match = re.search(r'(\d+)', q.question_number)
+        if num_match:
+            return int(num_match.group(1))
+        return 0  # Default to 0 if no number found
+    
+    # Sort the questions using the custom sorting function
+    questions = sorted(questions, key=question_number_key)
     
     # Get category information if available
     category = None
