@@ -18,6 +18,26 @@
     color: rgba(255, 255, 255, 0.5);
 }
 
+/* Improve contrast for text */
+.text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Special case for white background sections */
+.bg-white .text-muted {
+    color: #505050 !important;
+    font-weight: 500;
+}
+
+/* Make section headings more visible */
+.display-5, .h5 {
+    font-weight: 600;
+}
+
+#features h2 span.text-primary {
+    color: #6a5acd !important; /* Slateblue - darker purple for better contrast */
+}
+
 /* Section Spacing */
 .py-6 {
     padding-top: 4rem;
@@ -95,6 +115,21 @@
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    color: #ffffff;
+}
+
+/* Feature blocks */
+.feature-block {
+    margin-bottom: 1.5rem;
+}
+
+.feature-block .h5 {
+    color: #333;
+    font-weight: 600;
+}
+
+.bg-white .feature-icon {
+    color: #ffffff;
 }
 
 .feature-block:hover .feature-icon {
