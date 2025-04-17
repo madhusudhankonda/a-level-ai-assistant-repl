@@ -557,6 +557,16 @@ def explain_question(question_id):
                 explanation_text=explanation_text
             )
             
+            # Create a user query record for tracking
+            user_query = UserQuery(
+                user_id=current_user.id,
+                query_type='explanation',
+                question_id=question_id,
+                response_text=explanation_text,
+                credits_used=10,
+                subject=paper.subject
+            )
+            
             # Deduct 10 credits for successful AI explanation
             if not current_user.use_credits(10):
                 # This should never happen as we checked credits earlier, but just in case
@@ -569,6 +579,7 @@ def explain_question(question_id):
             
             # Add explanation and save both explanation and credit transaction
             db.session.add(explanation)
+            db.session.add(user_query)
             db.session.commit()
             current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
             
@@ -590,11 +601,37 @@ def explain_question(question_id):
     # Return existing explanation for GET requests when one exists
     processed_text = process_math_notation(existing_explanation.explanation_text)
     
+    # Track this query in the user's history and deduct credits
+    # This ensures credits are deducted even for viewing existing explanations
+    user_query = UserQuery(
+        user_id=current_user.id,
+        query_type='explanation',
+        question_id=question_id,
+        response_text=existing_explanation.explanation_text,
+        credits_used=10,
+        subject=paper.subject
+    )
+    
+    # Deduct 10 credits for explanation (existing or new)
+    if not current_user.use_credits(10):
+        current_app.logger.warning(f"User {current_user.id} has insufficient credits to view explanation")
+        return jsonify({
+            'success': False,
+            'message': 'You need at least 10 credits to view explanations. Please purchase more credits.',
+            'credits_required': True
+        }), 403
+        
+    # Add the query record and save
+    db.session.add(user_query)
+    db.session.commit()
+    current_app.logger.info(f"Deducted 10 credits from user {current_user.id} for viewing explanation, new balance: {current_user.credits}")
+    
     return jsonify({
         'success': True,
         'question_id': question_id,
         'explanation': processed_text,
         'is_new': False,
+        'credits_remaining': current_user.credits,
         'generated_at': existing_explanation.generated_at.strftime('%Y-%m-%d %H:%M:%S')
     })
 
