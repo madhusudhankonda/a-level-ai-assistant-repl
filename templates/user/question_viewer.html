@@ -266,7 +266,13 @@
             
             // Fetch explanation from API
             fetch(`/api/explain/${questionId}`, { method: method })
-                .then(response => response.json())
+                .then(response => {
+                    // Check if the response is ok before trying to parse JSON
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     explanationLoading.style.display = 'none';
                     

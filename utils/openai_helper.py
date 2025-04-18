@@ -216,36 +216,58 @@ Your explanation should be comprehensive, explaining both the mathematical conce
         # Clean the base64 string if it has a data URI prefix
         if isinstance(base64_image, str) and 'base64' in base64_image and ',' in base64_image:
             logger.info("Removing data URI prefix from image")
-            base64_image = base64_image.split(',')[1]
+            image_parts = base64_image.split(',')
+            if len(image_parts) > 1:
+                base64_image = image_parts[1]
+            else:
+                logger.warning("Data URI format detected but couldn't extract base64 part")
         
         # Validate the base64 string
         if not base64_image or not isinstance(base64_image, str):
             raise ValueError("Invalid base64 image data")
-            
+        
         # Prepare the image URL
         image_url = f"data:image/jpeg;base64,{base64_image}"
         logger.info(f"Image prepared, length: {len(base64_image)}")
         
         # API call without requiring JSON response format
         logger.info("Calling OpenAI API for explanation")
-        response = openai.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model, released May 13, 2024
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": [
-                    {"type": "text", "text": f"Please explain this {subject} question:"},
-                    {"type": "image_url", "image_url": {"url": image_url}}
-                ]}
-            ],
-            max_tokens=1500
-        )
-        
-        # Get the text response directly - no JSON parsing needed anymore
-        explanation = response.choices[0].message.content
-        logger.info(f"Received explanation: {explanation[:100]}...")
-        
-        return explanation
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o",  # the newest OpenAI model, released May 13, 2024
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": f"Please explain this {subject} question:"},
+                        {"type": "image_url", "image_url": {"url": image_url}}
+                    ]}
+                ],
+                max_tokens=1500,
+                timeout=90.0  # Increase timeout for longer processing
+            )
+            
+            # Get the text response directly - no JSON parsing needed anymore
+            explanation = response.choices[0].message.content
+            logger.info(f"Received explanation: {explanation[:100]}...")
+            
+            return explanation
+        except Exception as api_error:
+            logger.error(f"OpenAI API call failed: {api_error}")
+            # Provide a more detailed error message
+            if "API key" in str(api_error).lower():
+                raise Exception("OpenAI API key issue. Please check your API key configuration.")
+            elif "timeout" in str(api_error).lower():
+                raise Exception("The request timed out. The question might be too complex or the server is busy. Please try again.")
+            elif "rate limit" in str(api_error).lower():
+                raise Exception("OpenAI rate limit reached. Please try again in a few moments.")
+            else:
+                raise Exception(f"OpenAI API error: {str(api_error)}")
         
     except Exception as e:
         logger.error(f"Error generating explanation: {e}")
-        raise Exception(f"OpenAI API error: {str(e)}")
+        if "OpenAI API error" in str(e):
+            # Pass through already formatted OpenAI errors
+            raise e
+        else:
+            # Format other errors
+            raise Exception(f"Error processing request: {str(e)}")

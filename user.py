@@ -535,99 +535,122 @@ def analyze_answer():
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
 def explain_question(question_id):
     """API endpoint to get an explanation for a question"""
-    question = Question.query.get_or_404(question_id)
-    paper = QuestionPaper.query.get(question.paper_id)
-    
-    # Check if we already have a saved explanation
-    existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
-    
-    # Check if user is authenticated
-    if not current_user.is_authenticated:
-        return jsonify({
-            'success': False,
-            'message': 'You need to be logged in to view explanations.',
-            'requires_login': True
-        }), 403
-    
-    # If requesting a new explanation via POST or no saved explanation exists
-    if request.method == 'POST' or not existing_explanation:
-        # Credit verification - require 10 credits for new explanations
-        if not current_user.has_sufficient_credits(10):
-            current_app.logger.warning(f"User {current_user.id} attempted to get new explanation without sufficient credits")
+    try:
+        question = Question.query.get_or_404(question_id)
+        paper = QuestionPaper.query.get(question.paper_id)
+        
+        # Check if we already have a saved explanation
+        existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
+        
+        # Check if user is authenticated
+        if not current_user.is_authenticated:
             return jsonify({
                 'success': False,
-                'message': 'You need at least 10 credits to generate a new explanation. Please purchase more credits.',
-                'credits_required': True
+                'message': 'You need to be logged in to view explanations.',
+                'requires_login': True
             }), 403
-        try:
-            # Read the image and encode it to base64 with data URI format
-            with open(question.image_path, "rb") as image_file:
-                image_bytes = image_file.read()
-                image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-                # Create a data URI with proper mime type
-                data_uri = f"data:image/png;base64,{image_base64}"
-            
-            # Generate explanation using OpenAI with data URI format
-            explanation_text = generate_explanation(
-                data_uri,
-                paper.subject
-            )
-            
-            # The explanation from OpenAI is already in text format, no JSON parsing needed
-            current_app.logger.info("Using explanation text directly without JSON parsing")
-            
-            # Process the mathematical notation
-            processed_text = process_math_notation(explanation_text)
-            
-            # Save the original explanation
-            explanation = Explanation(
-                question_id=question_id,
-                explanation_text=explanation_text
-            )
-            
-            # Create a user query record for tracking
-            user_query = UserQuery(
-                user_id=current_user.id,
-                query_type='explanation',
-                question_id=question_id,
-                response_text=explanation_text,
-                credits_used=10,
-                subject=paper.subject
-            )
-            
-            # Deduct 10 credits for successful AI explanation
-            if not current_user.use_credits(10):
-                # This should never happen as we checked credits earlier, but just in case
-                current_app.logger.error(f"Failed to deduct credits from user {current_user.id} - insufficient balance")
+        
+        # If requesting a new explanation via POST or no saved explanation exists
+        if request.method == 'POST' or not existing_explanation:
+            # Credit verification - require 10 credits for new explanations
+            if not current_user.has_sufficient_credits(10):
+                current_app.logger.warning(f"User {current_user.id} attempted to get new explanation without sufficient credits")
                 return jsonify({
                     'success': False,
-                    'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                    'message': 'You need at least 10 credits to generate a new explanation. Please purchase more credits.',
                     'credits_required': True
                 }), 403
-            
-            # Add explanation and save both explanation and credit transaction
-            db.session.add(explanation)
-            db.session.add(user_query)
-            db.session.commit()
-            current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
-            
-            return jsonify({
-                'success': True,
-                'question_id': question_id,
-                'explanation': processed_text,
-                'credits_remaining': current_user.credits,
-                'is_new': True
-            })
-            
-        except Exception as e:
-            current_app.logger.error(f"Error generating explanation: {str(e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Error generating explanation: {str(e)}'
-            }), 500
-    
-    # Return existing explanation for GET requests when one exists
-    processed_text = process_math_notation(existing_explanation.explanation_text)
+            try:
+                # Verify the image path exists
+                if not os.path.isfile(question.image_path):
+                    relative_path = question.image_path.replace('/home/runner/workspace/', './')
+                    if os.path.isfile(relative_path):
+                        current_app.logger.info(f"Using relative image path: {relative_path}")
+                        image_path = relative_path
+                    else:
+                        current_app.logger.error(f"Image file not found at either path: {question.image_path} or {relative_path}")
+                        return jsonify({
+                            'success': False,
+                            'message': 'Question image not found. Please contact support.'
+                        }), 404
+                else:
+                    image_path = question.image_path
+                
+                # Read the image and encode it to base64 with data URI format
+                with open(image_path, "rb") as image_file:
+                    image_bytes = image_file.read()
+                    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                    # Create a data URI with proper mime type
+                    data_uri = f"data:image/png;base64,{image_base64}"
+                
+                # Generate explanation using OpenAI with data URI format
+                current_app.logger.info(f"Generating explanation for question {question_id}, subject: {paper.subject}")
+                explanation_text = generate_explanation(
+                    data_uri,
+                    paper.subject
+                )
+                
+                # The explanation from OpenAI is already in text format, no JSON parsing needed
+                current_app.logger.info("Using explanation text directly without JSON parsing")
+                
+                # Process the mathematical notation
+                processed_text = process_math_notation(explanation_text)
+                
+                # Save the original explanation
+                explanation = Explanation(
+                    question_id=question_id,
+                    explanation_text=explanation_text
+                )
+                
+                # Create a user query record for tracking
+                user_query = UserQuery(
+                    user_id=current_user.id,
+                    query_type='explanation',
+                    question_id=question_id,
+                    response_text=explanation_text,
+                    credits_used=10,
+                    subject=paper.subject
+                )
+                
+                # Deduct 10 credits for successful AI explanation
+                if not current_user.use_credits(10):
+                    # This should never happen as we checked credits earlier, but just in case
+                    current_app.logger.error(f"Failed to deduct credits from user {current_user.id} - insufficient balance")
+                    return jsonify({
+                        'success': False,
+                        'message': 'You need at least 10 credits to use this feature. Please purchase more credits.',
+                        'credits_required': True
+                    }), 403
+                
+                # Add explanation and save both explanation and credit transaction
+                db.session.add(explanation)
+                db.session.add(user_query)
+                db.session.commit()
+                current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
+                
+                return jsonify({
+                    'success': True,
+                    'question_id': question_id,
+                    'explanation': processed_text,
+                    'credits_remaining': current_user.credits,
+                    'is_new': True
+                })
+                
+            except Exception as e:
+                current_app.logger.error(f"Error generating explanation: {str(e)}")
+                return jsonify({
+                    'success': False,
+                    'message': f'Error generating explanation: {str(e)}'
+                }), 500
+        
+        # Return existing explanation for GET requests when one exists
+        processed_text = process_math_notation(existing_explanation.explanation_text)
+    except Exception as e:
+        current_app.logger.error(f"General error in explain_question: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        }), 500
     
     # Track this query in the user's history and deduct credits
     # This ensures credits are deducted even for viewing existing explanations
