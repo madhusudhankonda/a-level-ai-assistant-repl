@@ -264,8 +264,8 @@
             
             const method = forceRefresh ? 'POST' : 'GET';
             
-            // Fetch explanation from API
-            fetch(`/api/explain/${questionId}`, { method: method })
+            // Fetch explanation from API - make sure to use the proper URL with the dashboard prefix
+            fetch(`/dashboard/api/explain/${questionId}`, { method: method })
                 .then(response => {
                     // Check if the response is ok before trying to parse JSON
                     if (!response.ok) {
@@ -401,7 +401,7 @@
         
         // Function to delete a question
         function deleteQuestion(questionId) {
-            fetch(`/api/delete-question/${questionId}`, {
+            fetch(`/dashboard/api/delete-question/${questionId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
