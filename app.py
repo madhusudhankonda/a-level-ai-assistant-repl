@@ -66,8 +66,11 @@ def landing():
     from flask import render_template, redirect, url_for, request
     from flask_login import current_user
     
-    # If user is already logged in, redirect to dashboard
-    if current_user.is_authenticated:
+    # Add a show_landing query parameter to force showing the landing page
+    show_landing = request.args.get('landing', 'false').lower() == 'true'
+    
+    # If user is already logged in and not explicitly asking for landing page, redirect to dashboard
+    if current_user.is_authenticated and not show_landing:
         return redirect(url_for('user.index'))
     
     # Otherwise show the landing page
