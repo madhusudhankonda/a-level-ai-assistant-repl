@@ -1,12 +1,18 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, jsonify
+from datetime import datetime
 import os
 import uuid
 from werkzeug.utils import secure_filename
-from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory
+from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory, QuestionTopic, Explanation, UserQuery, StudentAnswer
 from flask_login import login_required, current_user
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
+
+# Add template context processors
+@admin_bp.context_processor
+def inject_current_year():
+    return {'current_year': datetime.now().year}
 
 def get_data_folder():
     """Get or create the data folder for storing papers and questions"""
@@ -265,18 +271,30 @@ def delete_question(question_id):
     question = Question.query.get_or_404(question_id)
     paper_id = question.paper_id
     
+    # Clean up all dependencies first
+    if not clean_up_question_dependencies(question_id):
+        flash('Error cleaning up question dependencies', 'danger')
+        return redirect(url_for('admin.manage_questions', paper_id=paper_id))
+    
     # Delete the image file
     try:
-        if os.path.exists(question.image_path):
+        if question.image_path and os.path.exists(question.image_path):
             os.remove(question.image_path)
+            current_app.logger.info(f"Deleted question image: {question.image_path}")
     except Exception as e:
         current_app.logger.error(f"Error deleting question image: {str(e)}")
     
-    # Delete from database
-    db.session.delete(question)
-    db.session.commit()
+    # Delete the question itself
+    try:
+        db.session.delete(question)
+        db.session.commit()
+        current_app.logger.info(f"Question {question_id} deleted successfully")
+        flash('Question deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting question: {str(e)}")
+        flash(f'Error deleting question: {str(e)}', 'danger')
     
-    flash('Question deleted successfully', 'success')
     return redirect(url_for('admin.manage_questions', paper_id=paper_id))
 
 @admin_bp.route('/paper/<int:paper_id>/delete', methods=['POST'])
@@ -341,6 +359,30 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def clean_up_question_dependencies(question_id):
+    """Clean up all dependencies for a question (called before update or delete)"""
+    current_app.logger.info(f"Cleaning up dependencies for question {question_id}")
+    try:
+        # Delete all explanations associated with this question
+        Explanation.query.filter_by(question_id=question_id).delete()
+        
+        # Delete all user queries associated with this question
+        UserQuery.query.filter_by(question_id=question_id).delete()
+        
+        # Delete all student answers associated with this question
+        StudentAnswer.query.filter_by(question_id=question_id).delete()
+        
+        # Delete all question topics associations
+        QuestionTopic.query.filter_by(question_id=question_id).delete()
+        
+        db.session.commit()
+        current_app.logger.info(f"Successfully cleaned up dependencies for question {question_id}")
+        return True
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error cleaning up dependencies for question {question_id}: {str(e)}")
+        return False
+
 @admin_bp.route('/edit-question/<int:question_id>', methods=['GET', 'POST'])
 @login_required
 def edit_question(question_id):
@@ -357,6 +399,14 @@ def edit_question(question_id):
         question_number = request.form.get('question_number')
         difficulty_level = request.form.get('difficulty_level')
         marks = request.form.get('marks')
+        
+        # Check if the question number is being changed
+        if question_number and question_number != question.question_number:
+            # If the question number is changing, we need to clean up dependencies
+            current_app.logger.info(f"Question number changing from {question.question_number} to {question_number}, cleaning up dependencies")
+            if not clean_up_question_dependencies(question_id):
+                flash('Error cleaning up question dependencies', 'danger')
+                return redirect(url_for('admin.edit_question', question_id=question_id))
         
         # Check if a new image was uploaded
         if 'question_image' in request.files and request.files['question_image'].filename:
@@ -385,10 +435,20 @@ def edit_question(question_id):
         # Update other question fields
         if question_number:
             question.question_number = question_number
+        
         if difficulty_level:
-            question.difficulty_level = int(difficulty_level)
+            try:
+                question.difficulty_level = int(difficulty_level)
+            except ValueError:
+                flash('Invalid difficulty level. Please provide a number.', 'danger')
+                return redirect(url_for('admin.edit_question', question_id=question_id))
+        
         if marks:
-            question.marks = int(marks)
+            try:
+                question.marks = int(marks)
+            except ValueError:
+                flash('Invalid marks value. Please provide a number.', 'danger')
+                return redirect(url_for('admin.edit_question', question_id=question_id))
         
         try:
             db.session.commit()

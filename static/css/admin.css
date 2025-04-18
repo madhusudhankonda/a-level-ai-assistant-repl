@@ -1,0 +1,243 @@
+/* Admin Dashboard Styles */
+
+/* Shared variables */
+:root {
+    --sparkle-color: #8a2be2;
+    --primary-gradient: linear-gradient(135deg, #6f42c1, #007bff);
+    --success-gradient: linear-gradient(135deg, #218838, #28a745);
+    --danger-gradient: linear-gradient(135deg, #c82333, #dc3545);
+}
+
+/* Admin card enhancements */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 500;
+}
+
+/* Statistics cards */
+.stats-card {
+    height: 100%;
+    border-left: 4px solid var(--bs-primary);
+}
+
+.stats-card.primary {
+    border-left-color: var(--bs-primary);
+}
+
+.stats-card.success {
+    border-left-color: var(--bs-success);
+}
+
+.stats-card.warning {
+    border-left-color: var(--bs-warning);
+}
+
+.stats-card.info {
+    border-left-color: var(--bs-info);
+}
+
+.stats-card .stats-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: var(--bs-primary);
+    color: white;
+    font-size: 1.25rem;
+}
+
+.stats-card.primary .stats-icon {
+    background-color: var(--bs-primary);
+}
+
+.stats-card.success .stats-icon {
+    background-color: var(--bs-success);
+}
+
+.stats-card.warning .stats-icon {
+    background-color: var(--bs-warning);
+}
+
+.stats-card.info .stats-icon {
+    background-color: var(--bs-info);
+}
+
+/* Button styles */
+.btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-image: var(--primary-gradient);
+    border: none;
+}
+
+.btn-success {
+    background-image: var(--success-gradient);
+    border: none;
+}
+
+.btn-danger {
+    background-image: var(--danger-gradient);
+    border: none;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+/* Form styles */
+.form-control, .form-select {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Table enhancements */
+.table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+/* Badge enhancements */
+.badge {
+    padding: 0.35em 0.65em;
+    font-weight: 500;
+    border-radius: 0.25rem;
+}
+
+/* Breadcrumb styling */
+.breadcrumb {
+    padding: 0.75rem 1rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.breadcrumb-item.active {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.breadcrumb-item a {
+    color: var(--bs-primary);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+/* Footer styling */
+footer {
+    background: #131429;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* File upload preview */
+.image-preview {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 0.25rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: none;
+    margin-top: 1rem;
+}
+
+/* Question management */
+.question-list .question-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s;
+}
+
+.question-list .question-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.question-list .question-item img {
+    max-height: 50px;
+    max-width: 100px;
+    margin-right: 1rem;
+}
+
+/* Question image in edit form */
+.question-current-image {
+    max-width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Tooltip custom styles */
+.tooltip {
+    font-size: 0.8rem;
+}
+
+.tooltip .tooltip-inner {
+    background-color: #343a40;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+
+.bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before, 
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #343a40;
+}
+
+.bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before, 
+.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #343a40;
+}
+
+/* Sparkle effect for AI features */
+.sparkle-icon {
+    position: relative;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238a2be2'%3E%3Cpath d='M12 2L9.2 8.6 2 9.2 7.5 14 5.8 21 12 17.3 18.2 21 16.5 14 22 9.2 14.8 8.6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.7; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1.05); }
+}
