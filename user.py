@@ -177,38 +177,63 @@ def view_paper(paper_id):
 @user_bp.route('/question-image/<int:question_id>')
 def get_question_image(question_id):
     """Endpoint to serve question images"""
-    question = Question.query.get_or_404(question_id)
-    
-    # Return the image file
     try:
-        # Print more debug information
-        image_path = question.image_path
-        current_app.logger.info(f"Attempting to serve image at path: {image_path}")
+        # Get the question or return a friendly error
+        question = Question.query.get(question_id)
+        if not question:
+            current_app.logger.error(f"Question with ID {question_id} not found")
+            # Return a placeholder image or error message
+            return jsonify({
+                'success': False,
+                'message': f'Question with ID {question_id} not found'
+            }), 404
         
-        # Check if the file exists at the absolute path
-        if os.path.isfile(image_path):
-            # If it exists, serve it directly
-            return send_file(image_path, mimetype='image/png')
-        else:
-            # Try with a relative path (from app's base directory)
-            relative_path = image_path.replace('/home/runner/workspace/', './')
-            current_app.logger.info(f"Absolute path not found. Trying relative path: {relative_path}")
+        # Return the image file
+        try:
+            # Print more debug information
+            image_path = question.image_path
+            current_app.logger.info(f"Attempting to serve image at path: {image_path}")
             
-            if os.path.isfile(relative_path):
-                return send_file(relative_path, mimetype='image/png')
+            # Check if the file exists at the absolute path
+            if os.path.isfile(image_path):
+                # If it exists, serve it directly
+                return send_file(image_path, mimetype='image/png')
             else:
-                # If both attempts fail, log the error
-                current_app.logger.error(f"Image file not found at either: {image_path} or {relative_path}")
-                return jsonify({
-                    'success': False,
-                    'message': 'Image file not found'
-                }), 404
-    except Exception as e:
-        current_app.logger.error(f"Error serving question image: {str(e)}")
+                # Try with a relative path (from app's base directory)
+                relative_path = image_path.replace('/home/runner/workspace/', './')
+                current_app.logger.info(f"Absolute path not found. Trying relative path: {relative_path}")
+                
+                if os.path.isfile(relative_path):
+                    return send_file(relative_path, mimetype='image/png')
+                else:
+                    # Try one more fallback - data folder in current directory
+                    base_filename = os.path.basename(image_path)
+                    paper_folder = os.path.basename(os.path.dirname(image_path))
+                    local_path = f"./data/{paper_folder}/{base_filename}"
+                    
+                    current_app.logger.info(f"Trying second fallback path: {local_path}")
+                    
+                    if os.path.isfile(local_path):
+                        return send_file(local_path, mimetype='image/png')
+                    else:
+                        # If all attempts fail, log the error
+                        current_app.logger.error(f"Image file not found at any path: {image_path}, {relative_path}, {local_path}")
+                        return jsonify({
+                            'success': False,
+                            'message': 'Image file not found'
+                        }), 404
+        except Exception as e:
+            current_app.logger.error(f"Error serving question image: {str(e)}")
+            return jsonify({
+                'success': False,
+                'message': f'Error retrieving image: {str(e)}'
+            }), 404
+    except Exception as outer_e:
+        current_app.logger.error(f"Unexpected error in get_question_image: {str(outer_e)}")
         return jsonify({
             'success': False,
-            'message': f'Error retrieving image: {str(e)}'
-        }), 404
+            'message': 'An unexpected error occurred'
+        }), 500
 
 def process_math_notation(text):
     """Process mathematical notation in explanation text to ensure proper rendering"""
@@ -565,8 +590,22 @@ def analyze_answer():
 def explain_question(question_id):
     """API endpoint to get an explanation for a question"""
     try:
-        question = Question.query.get_or_404(question_id)
+        # Get the question or return an error
+        question = Question.query.get(question_id)
+        if not question:
+            current_app.logger.error(f"Question with ID {question_id} not found")
+            return jsonify({
+                'success': False,
+                'message': f'Question with ID {question_id} not found'
+            }), 404
+        
         paper = QuestionPaper.query.get(question.paper_id)
+        if not paper:
+            current_app.logger.error(f"Paper with ID {question.paper_id} not found")
+            return jsonify({
+                'success': False,
+                'message': 'The paper associated with this question could not be found'
+            }), 404
         
         # Check if we already have a saved explanation
         existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
@@ -719,35 +758,51 @@ def explain_question(question_id):
 @login_required
 def favorite_query(query_id):
     """Mark a query as favorite"""
-    query = UserQuery.query.get_or_404(query_id)
-    
-    # Check if the query belongs to the current user
-    if query.user_id != current_user.id:
-        flash('You can only favorite your own queries', 'danger')
+    try:
+        query = UserQuery.query.get(query_id)
+        if not query:
+            flash(f'Query with ID {query_id} not found', 'warning')
+            return redirect(url_for('auth.query_history'))
+        
+        # Check if the query belongs to the current user
+        if query.user_id != current_user.id:
+            flash('You can only favorite your own queries', 'danger')
+            return redirect(url_for('auth.query_history'))
+        
+        query.is_favorite = True
+        db.session.commit()
+        
+        flash('Query marked as favorite', 'success')
         return redirect(url_for('auth.query_history'))
-    
-    query.is_favorite = True
-    db.session.commit()
-    
-    flash('Query marked as favorite', 'success')
-    return redirect(url_for('auth.query_history'))
+    except Exception as e:
+        current_app.logger.error(f"Error marking query as favorite: {str(e)}")
+        flash('An error occurred. Please try again.', 'danger')
+        return redirect(url_for('auth.query_history'))
 
 @user_bp.route('/unfavorite-query/<int:query_id>')
 @login_required
 def unfavorite_query(query_id):
     """Remove a query from favorites"""
-    query = UserQuery.query.get_or_404(query_id)
-    
-    # Check if the query belongs to the current user
-    if query.user_id != current_user.id:
-        flash('You can only manage your own queries', 'danger')
+    try:
+        query = UserQuery.query.get(query_id)
+        if not query:
+            flash(f'Query with ID {query_id} not found', 'warning')
+            return redirect(url_for('auth.query_history'))
+        
+        # Check if the query belongs to the current user
+        if query.user_id != current_user.id:
+            flash('You can only manage your own queries', 'danger')
+            return redirect(url_for('auth.query_history'))
+        
+        query.is_favorite = False
+        db.session.commit()
+        
+        flash('Query removed from favorites', 'success')
         return redirect(url_for('auth.query_history'))
-    
-    query.is_favorite = False
-    db.session.commit()
-    
-    flash('Query removed from favorites', 'success')
-    return redirect(url_for('auth.query_history'))
+    except Exception as e:
+        current_app.logger.error(f"Error removing query from favorites: {str(e)}")
+        flash('An error occurred. Please try again.', 'danger')
+        return redirect(url_for('auth.query_history'))
 
 @user_bp.route('/api/delete-question/<int:question_id>', methods=['POST'])
 @login_required
@@ -760,40 +815,72 @@ def delete_question(question_id):
             'message': 'You do not have permission to delete questions'
         }), 403
     
-    question = Question.query.get_or_404(question_id)
-    
     try:
-        # Delete all explanations associated with this question
-        Explanation.query.filter_by(question_id=question_id).delete()
+        # Check if question exists
+        question = Question.query.get(question_id)
+        if not question:
+            current_app.logger.error(f"Question with ID {question_id} not found when attempting to delete")
+            return jsonify({
+                'success': False,
+                'message': f'Question with ID {question_id} not found'
+            }), 404
         
-        # Delete all user queries associated with this question
-        UserQuery.query.filter_by(question_id=question_id).delete()
-        
-        # Delete all student answers associated with this question
-        StudentAnswer.query.filter_by(question_id=question_id).delete()
-        
-        # Delete all question topics associations
-        QuestionTopic.query.filter_by(question_id=question_id).delete()
-        
-        # Delete the image file if it exists
-        if question.image_path and os.path.exists(question.image_path):
-            os.remove(question.image_path)
-            current_app.logger.info(f"Deleted question image: {question.image_path}")
-        
-        # Finally, delete the question
-        db.session.delete(question)
-        db.session.commit()
-        
-        current_app.logger.info(f"Question {question_id} successfully deleted by admin {current_user.id}")
-        
-        return jsonify({
-            'success': True,
-            'message': 'Question deleted successfully'
-        })
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Error deleting question {question_id}: {str(e)}")
+        try:
+            # Delete all explanations associated with this question
+            Explanation.query.filter_by(question_id=question_id).delete()
+            
+            # Delete all user queries associated with this question
+            UserQuery.query.filter_by(question_id=question_id).delete()
+            
+            # Delete all student answers associated with this question
+            StudentAnswer.query.filter_by(question_id=question_id).delete()
+            
+            # Delete all question topics associations
+            QuestionTopic.query.filter_by(question_id=question_id).delete()
+            
+            # Delete the image file if it exists
+            if question.image_path:
+                # Try different path formats
+                paths_to_try = [
+                    question.image_path,
+                    question.image_path.replace('/home/runner/workspace/', './'),
+                    f"./data/{os.path.basename(os.path.dirname(question.image_path))}/{os.path.basename(question.image_path)}"
+                ]
+                
+                deletion_success = False
+                for path in paths_to_try:
+                    if os.path.exists(path):
+                        try:
+                            os.remove(path)
+                            current_app.logger.info(f"Deleted question image: {path}")
+                            deletion_success = True
+                            break
+                        except Exception as file_error:
+                            current_app.logger.warning(f"Error deleting file at {path}: {str(file_error)}")
+                
+                if not deletion_success:
+                    current_app.logger.warning(f"Could not delete image file for question {question_id} - file not found in any expected location")
+            
+            # Finally, delete the question
+            db.session.delete(question)
+            db.session.commit()
+            
+            current_app.logger.info(f"Question {question_id} successfully deleted by admin {current_user.id}")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Question deleted successfully'
+            })
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error deleting question {question_id}: {str(e)}")
+            return jsonify({
+                'success': False,
+                'message': f'Error deleting question: {str(e)}'
+            }), 500
+    except Exception as outer_e:
+        current_app.logger.error(f"Unexpected error in delete_question: {str(outer_e)}")
         return jsonify({
             'success': False,
-            'message': f'Error deleting question: {str(e)}'
+            'message': 'An unexpected error occurred'
         }), 500
