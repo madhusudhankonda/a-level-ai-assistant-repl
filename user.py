@@ -153,8 +153,27 @@ def get_question_image(question_id):
     # Return the image file
     try:
         # Print more debug information
-        current_app.logger.info(f"Attempting to serve image at path: {question.image_path}")
-        return send_file(question.image_path, mimetype='image/png')
+        image_path = question.image_path
+        current_app.logger.info(f"Attempting to serve image at path: {image_path}")
+        
+        # Check if the file exists at the absolute path
+        if os.path.isfile(image_path):
+            # If it exists, serve it directly
+            return send_file(image_path, mimetype='image/png')
+        else:
+            # Try with a relative path (from app's base directory)
+            relative_path = image_path.replace('/home/runner/workspace/', './')
+            current_app.logger.info(f"Absolute path not found. Trying relative path: {relative_path}")
+            
+            if os.path.isfile(relative_path):
+                return send_file(relative_path, mimetype='image/png')
+            else:
+                # If both attempts fail, log the error
+                current_app.logger.error(f"Image file not found at either: {image_path} or {relative_path}")
+                return jsonify({
+                    'success': False,
+                    'message': 'Image file not found'
+                }), 404
     except Exception as e:
         current_app.logger.error(f"Error serving question image: {str(e)}")
         return jsonify({
