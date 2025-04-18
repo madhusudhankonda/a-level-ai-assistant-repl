@@ -806,7 +806,7 @@ def unfavorite_query(query_id):
 
 @user_bp.route('/api/delete-question/<int:question_id>', methods=['POST'])
 @login_required
-def delete_question(question_id):
+def api_delete_question(question_id):
     """API endpoint to delete a question"""
     if not current_user.is_admin:
         current_app.logger.warning(f"Non-admin user {current_user.id} attempted to delete question {question_id}")
@@ -879,7 +879,7 @@ def delete_question(question_id):
                 'message': f'Error deleting question: {str(e)}'
             }), 500
     except Exception as outer_e:
-        current_app.logger.error(f"Unexpected error in delete_question: {str(outer_e)}")
+        current_app.logger.error(f"Unexpected error in api_delete_question: {str(outer_e)}")
         return jsonify({
             'success': False,
             'message': 'An unexpected error occurred'
