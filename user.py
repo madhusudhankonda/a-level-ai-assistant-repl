@@ -152,12 +152,14 @@ def get_question_image(question_id):
     
     # Return the image file
     try:
+        # Print more debug information
+        current_app.logger.info(f"Attempting to serve image at path: {question.image_path}")
         return send_file(question.image_path, mimetype='image/png')
     except Exception as e:
         current_app.logger.error(f"Error serving question image: {str(e)}")
         return jsonify({
             'success': False,
-            'message': 'Error retrieving image'
+            'message': f'Error retrieving image: {str(e)}'
         }), 404
 
 def process_math_notation(text):
