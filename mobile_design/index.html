@@ -8,66 +8,281 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            padding: 20px;
+            padding: 30px 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0d1117;
         }
         .page-header {
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .page-header .tagline {
+            font-size: 18px;
+            color: #4d99ff;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+        .page-header .subtitle {
+            font-size: 22px;
+            opacity: 0.8;
+            font-weight: 300;
+            margin-bottom: 20px;
         }
         .design-preview {
-            margin-bottom: 50px;
+            margin-bottom: 60px;
+            border-radius: 24px;
+            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(30,30,30,0.4), rgba(18,18,18,0.4));
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            transition: all 0.3s;
+        }
+        .design-preview:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
         }
         .design-title {
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 20px 25px 15px;
+        }
+        .design-title h4 {
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 22px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .design-title h4 i {
+            color: #0d6efd;
         }
         .design-description {
             margin-bottom: 20px;
+            padding: 0 25px;
+            font-size: 16px;
+            opacity: 0.85;
+            line-height: 1.6;
         }
         .design-frame {
-            border: 2px solid #0d6efd;
             border-radius: 20px;
-            padding: 10px;
-            margin: 0 auto;
+            overflow: hidden;
+            padding: 0 20px;
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .design-frame iframe {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.1);
         }
         .feature-list {
-            margin-top: 20px;
+            margin: 20px 25px 25px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .feature-item {
             display: flex;
-            margin-bottom: 10px;
-            gap: 10px;
+            margin-bottom: 15px;
+            gap: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .feature-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
         }
         .feature-icon {
-            color: #0d6efd;
+            color: #fff;
             font-size: 20px;
-            width: 24px;
-            text-align: center;
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(13,110,253,0.2), rgba(13,110,253,0.1));
+            border: 1px solid rgba(13,110,253,0.3);
+        }
+        .feature-content strong {
+            color: #4d99ff;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .feature-content p {
+            margin: 0;
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.5;
         }
         iframe {
             border: none;
             width: 100%;
             height: 650px;
+            background-color: #121212;
+        }
+        .section-title {
+            margin: 60px 0 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .section-title h3 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .section-title i {
+            font-size: 24px;
+            color: #0d6efd;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            background: rgba(13,110,253,0.1);
+            border: 1px solid rgba(13,110,253,0.2);
+        }
+        .section-card {
+            border-radius: 20px;
+            background: linear-gradient(to bottom, rgba(30,30,30,0.4), rgba(18,18,18,0.4));
+            border: 1px solid rgba(255,255,255,0.08);
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .section-card .card-header {
+            padding: 20px 25px;
+            background: linear-gradient(to right, rgba(13,110,253,0.2), rgba(13,110,253,0.1));
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .section-card .card-body {
+            padding: 25px;
+        }
+        .phase-card {
+            border-radius: 16px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
+            overflow: hidden;
+            transition: all 0.3s;
+            height: 100%;
+        }
+        .phase-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .phase-header {
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .phase-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 18px;
+        }
+        .phase-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .phase-content {
+            padding: 15px 20px 20px;
+        }
+        .phase-content ul {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        .phase-content ul li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .phase-timeline {
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.2);
+        }
+        .phase-1 .phase-icon {
+            background: linear-gradient(135deg, rgba(13,110,253,0.3), rgba(13,110,253,0.2));
+            color: #4d99ff;
+        }
+        .phase-2 .phase-icon {
+            background: linear-gradient(135deg, rgba(13,202,240,0.3), rgba(13,202,240,0.2));
+            color: #5bc0de;
+        }
+        .phase-3 .phase-icon {
+            background: linear-gradient(135deg, rgba(25,135,84,0.3), rgba(25,135,84,0.2));
+            color: #25d094;
+        }
+        .feature-row h5 {
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-row h5 i {
+            color: #0d6efd;
+        }
+        .feature-row ul {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+        .feature-row ul li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .feature-row ul li strong {
+            color: #4d99ff;
+        }
+        .devices-image {
+            max-width: 100%;
+            border-radius: 10px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        @keyframes floatAnimation {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-animation {
+            animation: floatAnimation 6s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="page-header">
+            <p class="tagline">Mobile App Design 2025</p>
             <h1>A-Level AI Assistant</h1>
-            <h3>Mobile App Design Proposal</h3>
-            <p class="lead">A modern, intuitive mobile experience for A-Level students</p>
+            <p class="subtitle">Reimagining how students learn with AI in the palm of their hands</p>
         </div>
         
         <div class="row">
             <div class="col-md-4">
-                <div class="design-preview">
+                <div class="design-preview float-animation">
                     <div class="design-title">
-                        <h4>Home Screen</h4>
+                        <h4><i class="fas fa-home"></i> Home Screen</h4>
                     </div>
                     <div class="design-description">
-                        <p>The home screen provides quick access to all key features with a modern, student-friendly interface.</p>
+                        <p>A personalized dashboard giving students quick access to all features with real-time progress tracking and gamification elements.</p>
                     </div>
                     <div class="design-frame">
                         <iframe src="home_screen.html"></iframe>
@@ -75,26 +290,29 @@
                     <div class="feature-list">
                         <div class="feature-item">
                             <div class="feature-icon">
-                                <i class="fas fa-tachometer-alt"></i>
+                                <i class="fas fa-bolt"></i>
                             </div>
-                            <div>
-                                <strong>Quick Actions</strong>: One-tap access to most used features
+                            <div class="feature-content">
+                                <strong>Quick Actions Grid</strong>
+                                <p>One-tap access to core features with visual cues and personalized suggestions based on user behavior.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                            <div class="feature-content">
+                                <strong>Study Streak Tracking</strong>
+                                <p>Gamified learning incentives with daily goals, progress visualization and achievement badges.</p>
                             </div>
                         </div>
                         <div class="feature-item">
                             <div class="feature-icon">
                                 <i class="fas fa-history"></i>
                             </div>
-                            <div>
-                                <strong>Recent Activity</strong>: Easy access to previously viewed content
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-credit-card"></i>
-                            </div>
-                            <div>
-                                <strong>Credit Display</strong>: Clear visibility of remaining credits
+                            <div class="feature-content">
+                                <strong>Smart Activity Feed</strong>
+                                <p>Contextual history with time-based grouping and one-tap continuation of previous sessions.</p>
                             </div>
                         </div>
                     </div>
@@ -104,10 +322,10 @@
             <div class="col-md-4">
                 <div class="design-preview">
                     <div class="design-title">
-                        <h4>Camera Capture</h4>
+                        <h4><i class="fas fa-camera"></i> Camera Capture</h4>
                     </div>
                     <div class="design-description">
-                        <p>The camera interface allows students to quickly capture math and physics problems for AI analysis.</p>
+                        <p>Advanced capture interface with intelligent guidance, real-time frame detection and multi-mode functionality for both questions and student answers.</p>
                     </div>
                     <div class="design-frame">
                         <iframe src="camera_screen.html"></iframe>
@@ -115,26 +333,29 @@
                     <div class="feature-list">
                         <div class="feature-item">
                             <div class="feature-icon">
-                                <i class="fas fa-th"></i>
+                                <i class="fas fa-crop-alt"></i>
                             </div>
-                            <div>
-                                <strong>Grid Overlay</strong>: Helps align questions properly
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-toggle-on"></i>
-                            </div>
-                            <div>
-                                <strong>Dual Modes</strong>: Capture questions or answers for feedback
+                            <div class="feature-content">
+                                <strong>Smart Capture Area</strong>
+                                <p>Guided capture zone with real-time equation detection and auto-focus on mathematical content.</p>
                             </div>
                         </div>
                         <div class="feature-item">
                             <div class="feature-icon">
-                                <i class="fas fa-lightbulb"></i>
+                                <i class="fas fa-sliders-h"></i>
                             </div>
-                            <div>
-                                <strong>Lighting Controls</strong>: Adjust flash for optimal captures
+                            <div class="feature-content">
+                                <strong>Enhanced Imaging Controls</strong>
+                                <p>Comprehensive toolset including grid overlay, contrast enhancement, flash control and image stabilization.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <div class="feature-content">
+                                <strong>Dual Analysis Modes</strong>
+                                <p>Seamless switching between question-only mode and question+answer feedback mode with contextual guidance.</p>
                             </div>
                         </div>
                     </div>
@@ -142,12 +363,12 @@
             </div>
             
             <div class="col-md-4">
-                <div class="design-preview">
+                <div class="design-preview float-animation" style="animation-delay: 1s;">
                     <div class="design-title">
-                        <h4>Explanation View</h4>
+                        <h4><i class="fas fa-brain"></i> AI Solution View</h4>
                     </div>
                     <div class="design-description">
-                        <p>The explanation screen provides detailed, step-by-step solutions with beautiful math rendering.</p>
+                        <p>Beautiful, interactive explanations with step-by-step guidance, highlighted key concepts, and multi-format content delivery.</p>
                     </div>
                     <div class="design-frame">
                         <iframe src="explanation_screen.html"></iframe>
@@ -155,26 +376,29 @@
                     <div class="feature-list">
                         <div class="feature-item">
                             <div class="feature-icon">
-                                <i class="fas fa-chalkboard-teacher"></i>
+                                <i class="fas fa-layer-group"></i>
                             </div>
-                            <div>
-                                <strong>Structured Content</strong>: Clear sections make learning easier
-                            </div>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">
-                                <i class="fas fa-volume-up"></i>
-                            </div>
-                            <div>
-                                <strong>Text-to-Speech</strong>: Listen to explanations while studying
+                            <div class="feature-content">
+                                <strong>Progressive Reveal</strong>
+                                <p>Step-by-step solution breakdown with progress tracking and interactive section navigation.</p>
                             </div>
                         </div>
                         <div class="feature-item">
                             <div class="feature-icon">
-                                <i class="fas fa-bookmark"></i>
+                                <i class="fas fa-comment-alt"></i>
                             </div>
-                            <div>
-                                <strong>Save & Share</strong>: Keep explanations for future reference
+                            <div class="feature-content">
+                                <strong>Interactive Learning</strong>
+                                <p>Follow-up questions, alternative solution paths, and contextual hints with one-tap access.</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-headphones"></i>
+                            </div>
+                            <div class="feature-content">
+                                <strong>Multi-Sensory Experience</strong>
+                                <p>High-quality mathematical rendering, text-to-speech with equation reading, and visual animations.</p>
                             </div>
                         </div>
                     </div>
@@ -182,101 +406,113 @@
             </div>
         </div>
         
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Implementation Strategy</h4>
-                    </div>
-                    <div class="card-body">
-                        <h5>Phased Approach to Mobile Development</h5>
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="card mb-3">
-                                    <div class="card-header bg-primary text-white">
-                                        Phase 1: Progressive Web App
-                                    </div>
-                                    <div class="card-body">
-                                        <ul class="mb-0">
-                                            <li>Mobile-optimized web experience</li>
-                                            <li>Works in any mobile browser</li>
-                                            <li>Can be "installed" on home screen</li>
-                                            <li>Quick to implement with existing codebase</li>
-                                            <li>Estimated timeline: 2-3 weeks</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card mb-3">
-                                    <div class="card-header bg-info text-white">
-                                        Phase 2: React Native App
-                                    </div>
-                                    <div class="card-body">
-                                        <ul class="mb-0">
-                                            <li>Cross-platform (Android & iOS)</li>
-                                            <li>Better performance and native feel</li>
-                                            <li>Improved camera integration</li>
-                                            <li>Push notifications and offline support</li>
-                                            <li>Estimated timeline: 2-3 months</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="card mb-3">
-                                    <div class="card-header bg-success text-white">
-                                        Phase 3: Native Apps (Optional)
-                                    </div>
-                                    <div class="card-body">
-                                        <ul class="mb-0">
-                                            <li>Platform-specific Android & iOS apps</li>
-                                            <li>Maximum performance and integration</li>
-                                            <li>Advanced features like AR for problems</li>
-                                            <li>Full offline content and synchronization</li>
-                                            <li>Estimated timeline: 4-6 months</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
+        <div class="section-title">
+            <i class="fas fa-map"></i>
+            <h3>Implementation Roadmap</h3>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="phase-card phase-1">
+                    <div class="phase-header">
+                        <div class="phase-icon">
+                            <i class="fas fa-rocket"></i>
                         </div>
+                        <div class="phase-title">Phase 1: Progressive Web App</div>
+                    </div>
+                    <div class="phase-content">
+                        <ul>
+                            <li>Responsive design optimized for mobile devices</li>
+                            <li>Home screen installation capability</li>
+                            <li>Basic offline functionality for saved content</li>
+                            <li>Camera integration with image processing</li>
+                            <li>User authentication and profile management</li>
+                            <li>Credit system with Stripe integration</li>
+                        </ul>
+                        <div class="phase-timeline">Timeline: 4-6 weeks</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="phase-card phase-2">
+                    <div class="phase-header">
+                        <div class="phase-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <div class="phase-title">Phase 2: React Native Application</div>
+                    </div>
+                    <div class="phase-content">
+                        <ul>
+                            <li>Enhanced native camera integration</li>
+                            <li>Push notifications for study reminders</li>
+                            <li>Full offline capabilities with sync</li>
+                            <li>Study plan scheduler with calendar integration</li>
+                            <li>Interactive practice exercises</li>
+                            <li>Performance optimizations for complex math</li>
+                        </ul>
+                        <div class="phase-timeline">Timeline: 10-12 weeks</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="phase-card phase-3">
+                    <div class="phase-header">
+                        <div class="phase-icon">
+                            <i class="fas fa-vr-cardboard"></i>
+                        </div>
+                        <div class="phase-title">Phase 3: Advanced Features</div>
+                    </div>
+                    <div class="phase-content">
+                        <ul>
+                            <li>AR visualization for physics problems</li>
+                            <li>Handwriting recognition for on-screen work</li>
+                            <li>Peer-to-peer study group capabilities</li>
+                            <li>AI-generated practice sets</li>
+                            <li>Exam simulation mode with timing</li>
+                            <li>Advanced analytics with personalized insights</li>
+                        </ul>
+                        <div class="phase-timeline">Timeline: 12-16 weeks</div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Key Mobile Features</h4>
+        <div class="section-title">
+            <i class="fas fa-lightbulb"></i>
+            <h3>Key Mobile Features</h3>
+        </div>
+        
+        <div class="section-card">
+            <div class="card-body">
+                <div class="row feature-row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-cogs"></i> Core Functionality</h5>
+                        <ul>
+                            <li><strong>Intelligent Camera Capture</strong> - Advanced image processing with math OCR and automatic equation detection</li>
+                            <li><strong>Offline Study Mode</strong> - Full access to saved solutions and explanations without internet connection</li>
+                            <li><strong>Smart Notifications</strong> - Context-aware reminders based on study patterns and upcoming exams</li>
+                            <li><strong>Secure Authentication</strong> - Biometric login options with fast account switching for shared devices</li>
+                            <li><strong>Cross-Device Experience</strong> - Seamless synchronization between mobile, tablet and desktop interfaces</li>
+                            <li><strong>Dark Mode & Accessibility</strong> - Full support for system preferences, screen readers and dynamic text sizing</li>
+                        </ul>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>Core Functionality</h5>
-                                <ul>
-                                    <li><strong>Seamless Camera Integration</strong> - Capture questions with a single tap</li>
-                                    <li><strong>Offline Access</strong> - View saved explanations without internet</li>
-                                    <li><strong>Push Notifications</strong> - Study reminders and content updates</li>
-                                    <li><strong>Biometric Authentication</strong> - Quick and secure login</li>
-                                    <li><strong>Cross-Device Syncing</strong> - Continue studying across devices</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h5>Enhanced Learning Features</h5>
-                                <ul>
-                                    <li><strong>Text-to-Speech</strong> - Listen to explanations on the go</li>
-                                    <li><strong>Study Streaks</strong> - Gamification to encourage regular use</li>
-                                    <li><strong>Progress Tracking</strong> - Visual representation of learning progress</li>
-                                    <li><strong>Exam Countdown</strong> - Personalized study plans based on exam dates</li>
-                                    <li><strong>Flashcard Generation</strong> - AI-generated revision materials</li>
-                                </ul>
-                            </div>
-                        </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-graduation-cap"></i> Learning Enhancements</h5>
+                        <ul>
+                            <li><strong>Personalized Learning Path</strong> - AI-tailored content recommendations based on performance data</li>
+                            <li><strong>Interactive Math Rendering</strong> - Manipulatable equations with step-by-step interactive breakdowns</li>
+                            <li><strong>Spaced Repetition</strong> - Smart review scheduling using proven memory retention techniques</li>
+                            <li><strong>Progress Visualization</strong> - Comprehensive analytics with subject mastery tracking</li>
+                            <li><strong>Exam Preparation Tools</strong> - Countdown timers, study schedules and personalized focus areas</li>
+                            <li><strong>Revision Materials</strong> - One-tap generation of flashcards, summary notes and practice quizzes</li>
+                        </ul>
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <div class="text-center">
+            <img src="https://placehold.co/1200x600/121212/4d99ff/png?text=AI+Learning+Across+All+Devices" alt="Cross-device experience" class="devices-image">
         </div>
     </div>
 </body>

@@ -9,6 +9,7 @@
     <style>
         body {
             padding-bottom: 76px; /* Space for bottom nav */
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .mobile-frame {
             max-width: 375px;
@@ -18,10 +19,11 @@
             overflow: hidden;
             position: relative;
             height: 650px;
+            background-color: #000;
         }
         .status-bar {
             height: 30px;
-            background-color: #121212;
+            background-color: rgba(0,0,0,0.5);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -31,6 +33,7 @@
             left: 0;
             right: 0;
             z-index: 10;
+            backdrop-filter: blur(5px);
         }
         .status-bar .time {
             font-size: 12px;
@@ -51,23 +54,22 @@
             justify-content: space-between;
             align-items: center;
         }
-        .camera-header .back-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 18px;
-            background-color: rgba(0,0,0,0.5);
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background-color: rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+            color: #fff;
         }
-        .camera-header .options-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 18px;
-            background-color: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .header-btn:hover {
+            background-color: rgba(0,0,0,0.8);
+            transform: scale(1.05);
         }
         .camera-view {
             background-color: #000;
@@ -87,6 +89,19 @@
             color: #fff;
             text-align: center;
             padding: 20px;
+            max-width: 300px;
+        }
+        .camera-view .placeholder i {
+            opacity: 0.5;
+        }
+        .camera-view .placeholder h5 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .camera-view .placeholder p {
+            opacity: 0.7;
+            line-height: 1.5;
+            font-size: 14px;
         }
         .camera-controls {
             position: absolute;
@@ -97,71 +112,176 @@
             justify-content: space-around;
             align-items: center;
             padding: 0 20px;
+            z-index: 10;
         }
         .camera-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 35px;
-            background-color: #fff;
+            width: 76px;
+            height: 76px;
+            border-radius: 38px;
+            background-color: rgba(255,255,255,0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 2px solid rgba(255,255,255,0.9);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .camera-btn:hover {
+            transform: scale(1.1);
         }
         .camera-btn .inner-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 30px;
-            border: 2px solid #000;
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            background-color: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
         .mode-btn {
             width: 50px;
             height: 50px;
             border-radius: 25px;
-            background-color: rgba(255,255,255,0.2);
+            background-color: rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+        }
+        .mode-btn:hover {
+            background-color: rgba(0,0,0,0.7);
+            transform: scale(1.05);
         }
         .mode-switch {
-            background-color: rgba(0,0,0,0.5);
-            border-radius: 20px;
-            padding: 8px 15px;
+            background-color: rgba(0,0,0,0.6);
+            border-radius: 25px;
+            padding: 5px;
             position: absolute;
             top: 80px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 0;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
         .mode-switch .mode-option {
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 13px;
             cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
         }
         .mode-switch .mode-option.active {
-            background-color: #0d6efd;
+            background: linear-gradient(135deg, #0d6efd, #0a4b9e);
             color: #fff;
+            box-shadow: 0 2px 10px rgba(13,110,253,0.4);
         }
-        .flash-options {
+        .capture-tips {
             position: absolute;
             top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(13,110,253,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(13,110,253,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            max-width: 300px;
+            text-align: center;
+        }
+        .tools-panel {
+            position: absolute;
             right: 15px;
+            top: 100px;
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
-        .flash-option {
-            width: 40px;
-            height: 40px;
-            border-radius: 20px;
-            background-color: rgba(0,0,0,0.5);
+        .tool-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            background-color: rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+        }
+        .tool-button:hover {
+            background-color: rgba(0,0,0,0.8);
+            transform: scale(1.05);
+        }
+        .tool-button.active {
+            background-color: rgba(13,110,253,0.6);
+            border-color: rgba(13,110,253,0.8);
+        }
+        .subject-select {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 13px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        .subject-select:hover {
+            background: linear-gradient(135deg, rgba(0,0,0,0.8), rgba(0,0,0,0.6));
+            transform: translateY(-2px);
+        }
+        .subject-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #25d094, #198754);
+            border-radius: 15px;
+        }
+        .subject-text {
+            display: flex;
+            flex-direction: column;
+        }
+        .subject-label {
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        .credits-indicator {
+            position: absolute;
+            bottom: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(255,193,7,0.3), rgba(255,193,7,0.1));
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #ffd966;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,193,7,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         .capture-grid {
             position: absolute;
@@ -169,39 +289,76 @@
             left: 0;
             right: 0;
             bottom: 0;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid rgba(255,255,255,0.4);
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
+            z-index: 5;
+            pointer-events: none;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
         }
         .capture-grid .cell {
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
         }
-        .subject-indicator {
+        .capture-area {
             position: absolute;
-            bottom: 100px;
-            left: 20px;
-            background-color: rgba(0,0,0,0.5);
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 12px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .help-tooltip {
-            position: absolute;
-            bottom: 100px;
-            right: 20px;
-            background-color: rgba(0,0,0,0.5);
-            width: 30px;
-            height: 30px;
-            border-radius: 15px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 200px;
+            border: 2px dashed rgba(13,110,253,0.7);
+            border-radius: 10px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.4);
+            z-index: 6;
+            pointer-events: none;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        .capture-area::before {
+            content: 'Position your equation here';
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            font-weight: 500;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .action-tip {
+            position: absolute;
+            bottom: 170px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.6);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
             color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+        .action-tip i {
+            color: #0d6efd;
+        }
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
         }
     </style>
 </head>
@@ -219,24 +376,25 @@
         
         <!-- Camera Header -->
         <div class="camera-header">
-            <div class="back-btn">
-                <i class="fas fa-chevron-left"></i>
+            <div class="header-btn">
+                <i class="fas fa-times"></i>
             </div>
-            <div class="options-btn">
-                <i class="fas fa-cog"></i>
+            <div class="header-btn">
+                <i class="fas fa-sliders-h"></i>
             </div>
         </div>
         
         <!-- Camera View -->
         <div class="camera-view">
             <!-- Example: Replace with actual camera feed -->
-            <!-- <img src="camera-placeholder.jpg" alt="Camera Preview" class="preview"> -->
-            
             <div class="placeholder">
-                <i class="fas fa-camera fa-3x mb-3"></i>
+                <i class="fas fa-camera fa-3x"></i>
                 <h5>Camera Preview</h5>
-                <p>Position your math or physics question in the frame</p>
+                <p>Position your math or physics question in the frame and tap the button to analyze</p>
             </div>
+            
+            <!-- Capture area highlight -->
+            <div class="capture-area"></div>
             
             <!-- Capture grid overlay -->
             <div class="capture-grid">
@@ -257,41 +415,62 @@
                 <div class="mode-option">Question + Answer</div>
             </div>
             
-            <!-- Flash Options -->
-            <div class="flash-options">
-                <div class="flash-option">
+            <!-- Capture Tips -->
+            <div class="capture-tips">
+                <i class="fas fa-lightbulb text-warning"></i>
+                <span>Ensure good lighting for best results</span>
+            </div>
+            
+            <!-- Tools Panel -->
+            <div class="tools-panel">
+                <div class="tool-button active">
+                    <i class="fas fa-th"></i>
+                </div>
+                <div class="tool-button">
                     <i class="fas fa-bolt"></i>
                 </div>
-                <div class="flash-option">
-                    <i class="fas fa-infinity"></i>
+                <div class="tool-button">
+                    <i class="fas fa-magic"></i>
                 </div>
-                <div class="flash-option">
+                <div class="tool-button">
                     <i class="fas fa-adjust"></i>
                 </div>
             </div>
             
-            <!-- Subject Indicator -->
-            <div class="subject-indicator">
-                <i class="fas fa-calculator"></i>
-                <span>Mathematics</span>
-                <i class="fas fa-chevron-down ml-1"></i>
+            <!-- Subject Selection -->
+            <div class="subject-select">
+                <div class="subject-icon">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="subject-text">
+                    <div class="subject-label">SUBJECT</div>
+                    <div>Mathematics</div>
+                </div>
+                <i class="fas fa-chevron-down ml-2"></i>
             </div>
             
-            <!-- Help -->
-            <div class="help-tooltip">
-                <i class="fas fa-question"></i>
+            <!-- Credits Indicator -->
+            <div class="credits-indicator">
+                <i class="fas fa-coins"></i>
+                <span>10 credits per scan</span>
+            </div>
+            
+            <!-- Action Tip -->
+            <div class="action-tip">
+                <i class="fas fa-info-circle"></i>
+                <span>Tap the shutter button to analyze</span>
             </div>
             
             <!-- Camera Controls -->
             <div class="camera-controls">
                 <div class="mode-btn">
-                    <i class="fas fa-images"></i>
+                    <i class="fas fa-image"></i>
                 </div>
-                <div class="camera-btn">
+                <div class="camera-btn pulse">
                     <div class="inner-circle"></div>
                 </div>
                 <div class="mode-btn">
-                    <i class="fas fa-redo"></i>
+                    <i class="fas fa-rotate"></i>
                 </div>
             </div>
         </div>

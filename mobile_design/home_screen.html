@@ -9,6 +9,7 @@
     <style>
         body {
             padding-bottom: 76px; /* Space for bottom nav */
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         .mobile-frame {
             max-width: 375px;
@@ -18,6 +19,8 @@
             overflow: hidden;
             position: relative;
             height: 650px;
+            overflow-y: auto;
+            background-color: #121212;
         }
         .status-bar {
             height: 30px;
@@ -37,64 +40,141 @@
         }
         .app-header {
             padding: 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background-color: rgba(18,18,18,0.95);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .credit-display {
-            background-color: rgba(0,123,255,0.1);
+            background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,193,7,0.05));
             border-radius: 20px;
             padding: 8px 15px;
             display: flex;
             align-items: center;
             gap: 8px;
+            border: 1px solid rgba(255,193,7,0.2);
+            transition: all 0.2s;
+        }
+        .credit-display:hover {
+            transform: scale(1.05);
+        }
+        .streak-indicator {
+            font-size: 12px;
+            background: rgba(13,110,253,0.1);
+            border-radius: 12px;
+            padding: 4px 8px;
+            color: #0d6efd;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 10px;
         }
         .welcome-card {
-            border-radius: 12px;
-            background: linear-gradient(45deg, #004c93, #006aad);
-            padding: 15px;
-            margin-bottom: 15px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #0a4b9e, #0069d3);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(0,73,159,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        .welcome-sparkle {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 80px;
+            height: 80px;
+            opacity: 0.5;
+        }
+        .sparkle-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
         }
         .quick-actions {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        .section-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .section-title h6 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        .section-title .view-all {
+            font-size: 12px;
+            color: #0d6efd;
         }
         .action-button {
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px 5px;
-            border-radius: 12px;
-            transition: all 0.2s;
+            padding: 16px 5px;
+            border-radius: 14px;
+            transition: all 0.25s;
             text-align: center;
+            cursor: pointer;
+            height: 100%;
+        }
+        .action-button:hover, .action-button:active {
+            transform: translateY(-2px);
         }
         .action-button i {
             font-size: 24px;
             margin-bottom: 8px;
         }
         .action-button.primary {
-            background-color: rgba(0,123,255,0.15);
+            background: linear-gradient(to bottom, rgba(13,110,253,0.15), rgba(13,110,253,0.08));
+            border: 1px solid rgba(13,110,253,0.2);
         }
         .action-button.secondary {
-            background-color: rgba(108,117,125,0.15);
+            background: linear-gradient(to bottom, rgba(108,117,125,0.15), rgba(108,117,125,0.08));
+            border: 1px solid rgba(108,117,125,0.2);
         }
         .recent-activity {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .activity-item {
             display: flex;
             align-items: center;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background-color: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+        .activity-item:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateX(2px);
         }
         .activity-icon {
             margin-right: 12px;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: rgba(0,123,255,0.2);
+            background: linear-gradient(135deg, rgba(13,110,253,0.2), rgba(13,110,253,0.1));
+            box-shadow: 0 4px 8px rgba(13,110,253,0.15);
         }
         .activity-content {
             flex-grow: 1;
@@ -102,11 +182,19 @@
         .activity-content h6 {
             margin-bottom: 2px;
             font-size: 14px;
+            font-weight: 600;
         }
         .activity-content p {
             margin-bottom: 0;
             font-size: 12px;
             opacity: 0.7;
+        }
+        .activity-time {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            white-space: nowrap;
         }
         .bottom-nav {
             position: fixed;
@@ -114,15 +202,17 @@
             left: 0;
             right: 0;
             height: 75px;
-            background-color: #1e1e1e;
+            background-color: rgba(18,18,18,0.95);
             display: flex;
             justify-content: space-around;
             align-items: center;
-            padding: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            padding: 8px 5px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
             max-width: 375px;
             margin: 0 auto;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
         }
         .nav-item {
             display: flex;
@@ -130,27 +220,51 @@
             align-items: center;
             justify-content: center;
             flex: 1;
+            transition: all 0.2s;
+            position: relative;
+            padding: 8px 0;
         }
         .nav-item i {
             font-size: 20px;
             margin-bottom: 4px;
+            transition: all 0.2s;
         }
         .nav-item span {
-            font-size: 10px;
+            font-size: 11px;
+            transition: all 0.2s;
         }
         .nav-item.active {
             color: #0d6efd;
         }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 35%;
+            width: 30%;
+            height: 3px;
+            background: #0d6efd;
+            border-radius: 3px 3px 0 0;
+        }
+        .nav-item:not(.active):hover i {
+            transform: translateY(-2px);
+        }
         .camera-btn {
-            height: 50px;
-            width: 50px;
-            border-radius: 25px;
-            background-color: #0d6efd;
+            height: 52px;
+            width: 52px;
+            border-radius: 26px;
+            background: linear-gradient(135deg, #0d6efd, #0a4b9e);
             display: flex;
             align-items: center;
             justify-content: center;
             margin-top: -20px;
-            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+            transition: all 0.3s;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .camera-btn:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.5);
         }
         .camera-btn i {
             font-size: 24px;
@@ -159,26 +273,91 @@
         .subject-badges {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
-            margin-top: 10px;
+            gap: 6px;
+            margin-top: 12px;
         }
         .subject-badge {
-            padding: 5px 10px;
-            border-radius: 15px;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 12px;
             font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
         .badge-maths {
-            background-color: rgba(25, 135, 84, 0.2);
-            color: #198754;
+            background: linear-gradient(135deg, rgba(25,135,84,0.25), rgba(25,135,84,0.15));
+            color: #25d094;
+            border: 1px solid rgba(25,135,84,0.3);
         }
         .badge-physics {
-            background-color: rgba(13, 110, 253, 0.2);
-            color: #0d6efd;
+            background: linear-gradient(135deg, rgba(13,110,253,0.25), rgba(13,110,253,0.15));
+            color: #4d99ff;
+            border: 1px solid rgba(13,110,253,0.3);
         }
         .badge-coming-soon {
-            background-color: rgba(108, 117, 125, 0.2);
-            color: #6c757d;
+            background: linear-gradient(135deg, rgba(108,117,125,0.20), rgba(108,117,125,0.10));
+            color: #9aa4ac;
+            border: 1px solid rgba(108,117,125,0.25);
+        }
+        .promotion-card {
+            background: linear-gradient(135deg, rgba(255,193,7,0.2), rgba(255,193,7,0.05));
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,193,7,0.25);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .promotion-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,193,7,0.15);
+            border-radius: 25px;
+            font-size: 24px;
+            color: #ffc107;
+        }
+        .progress-wrapper {
+            margin-top: 10px;
+        }
+        .progress {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.1);
+        }
+        .progress-bar {
+            background: linear-gradient(to right, #0d6efd, #0a4b9e);
+            border-radius: 3px;
+            height: 100%;
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-top: 4px;
+            color: rgba(255,255,255,0.6);
+        }
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-right: 10px;
+            border: 2px solid rgba(13,110,253,0.3);
+        }
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
@@ -198,10 +377,21 @@
         <div class="app-content">
             <!-- Header with Credit Display -->
             <div class="app-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">A-Level AI</h5>
-                <div class="credit-display">
-                    <i class="fas fa-coins text-warning"></i>
-                    <span class="fw-bold">100</span>
+                <div class="d-flex align-items-center">
+                    <div class="avatar">
+                        <img src="https://ui-avatars.com/api/?name=A+Student&background=0D8ABC&color=fff" alt="Avatar" width="100%">
+                    </div>
+                    <h5 class="mb-0">A-Level AI</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="streak-indicator">
+                        <i class="fas fa-fire"></i>
+                        <span>5 days</span>
+                    </div>
+                    <div class="credit-display">
+                        <i class="fas fa-coins text-warning"></i>
+                        <span class="fw-bold">100</span>
+                    </div>
                 </div>
             </div>
             
@@ -209,21 +399,51 @@
             <div class="container-fluid py-3">
                 <!-- Welcome Card -->
                 <div class="welcome-card text-white mb-4">
-                    <h5>Hello, Student!</h5>
-                    <p class="mb-2 small">Ready to ace your A-Levels? Let's study together!</p>
+                    <div class="welcome-sparkle">
+                        <div class="sparkle-dot" style="top:10px; left:30px;"></div>
+                        <div class="sparkle-dot" style="top:30px; left:10px; width:6px; height:6px;"></div>
+                        <div class="sparkle-dot" style="top:20px; left:60px; width:10px; height:10px;"></div>
+                        <div class="sparkle-dot" style="top:60px; left:40px; width:5px; height:5px;"></div>
+                    </div>
+                    <h5>Hey Alex!</h5>
+                    <p class="mb-3">Ready to ace your A-Levels? Your exam prep assistant is here!</p>
+                    <div class="progress-wrapper">
+                        <small class="d-block mb-1">Daily goal: 2/3 questions</small>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: 66%"></div>
+                        </div>
+                        <div class="progress-label">
+                            <span>0</span>
+                            <span>3</span>
+                        </div>
+                    </div>
                     <div class="subject-badges">
-                        <span class="subject-badge badge-maths">Mathematics</span>
-                        <span class="subject-badge badge-physics">Physics</span>
-                        <span class="subject-badge badge-coming-soon">Chemistry (Coming Soon)</span>
+                        <span class="subject-badge badge-maths"><i class="fas fa-calculator"></i> Mathematics</span>
+                        <span class="subject-badge badge-physics"><i class="fas fa-atom"></i> Physics</span>
+                        <span class="subject-badge badge-coming-soon"><i class="fas fa-flask"></i> Chemistry (Soon)</span>
+                    </div>
+                </div>
+                
+                <!-- Promotion Card -->
+                <div class="promotion-card">
+                    <div class="promotion-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-1">Earn 20 free credits!</h6>
+                        <p class="small mb-0">Invite a friend to join A-Level AI</p>
                     </div>
                 </div>
                 
                 <!-- Quick Actions -->
-                <h6 class="mb-3">Quick Actions</h6>
+                <div class="section-title">
+                    <h6>Quick Actions</h6>
+                    <a href="#" class="view-all">Customize</a>
+                </div>
                 <div class="quick-actions">
-                    <div class="row g-2">
+                    <div class="row g-3">
                         <div class="col-6">
-                            <div class="action-button primary">
+                            <div class="action-button primary pulse">
                                 <i class="fas fa-camera text-primary"></i>
                                 <span>Snap & Solve</span>
                             </div>
@@ -237,20 +457,23 @@
                         <div class="col-6">
                             <div class="action-button secondary">
                                 <i class="fas fa-book text-info"></i>
-                                <span>Browse Subjects</span>
+                                <span>Past Papers</span>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="action-button secondary">
-                                <i class="fas fa-history text-warning"></i>
-                                <span>Recent Activity</span>
+                                <i class="fas fa-graduation-cap text-warning"></i>
+                                <span>Study Plan</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Recent Activity -->
-                <h6 class="mb-3">Recent Activity</h6>
+                <div class="section-title">
+                    <h6>Recent Activity</h6>
+                    <a href="#" class="view-all">See all</a>
+                </div>
                 <div class="recent-activity">
                     <div class="activity-item">
                         <div class="activity-icon">
@@ -258,19 +481,19 @@
                         </div>
                         <div class="activity-content">
                             <h6>Mathematics - Pure 1</h6>
-                            <p>Differentiation explained</p>
+                            <p>Differentiation problem solved</p>
                         </div>
-                        <div class="activity-time small">2h ago</div>
+                        <div class="activity-time">2h ago</div>
                     </div>
                     <div class="activity-item">
-                        <div class="activity-icon">
+                        <div class="activity-icon" style="background: linear-gradient(135deg, rgba(13,202,240,0.2), rgba(13,202,240,0.1));">
                             <i class="fas fa-atom text-info"></i>
                         </div>
                         <div class="activity-content">
                             <h6>Physics - Mechanics</h6>
                             <p>Newton's Laws problem set</p>
                         </div>
-                        <div class="activity-time small">1d ago</div>
+                        <div class="activity-time">Yesterday</div>
                     </div>
                     <div class="activity-item">
                         <div class="activity-icon">
@@ -280,7 +503,7 @@
                             <h6>Mathematics - Statistics</h6>
                             <p>Normal distribution</p>
                         </div>
-                        <div class="activity-time small">2d ago</div>
+                        <div class="activity-time">2 days ago</div>
                     </div>
                 </div>
             </div>
@@ -294,7 +517,7 @@
             </div>
             <div class="nav-item">
                 <i class="fas fa-book"></i>
-                <span>Browse</span>
+                <span>Papers</span>
             </div>
             <div class="nav-item">
                 <div class="camera-btn">
