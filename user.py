@@ -8,7 +8,7 @@ from datetime import datetime
 from flask_login import login_required, current_user
 from models import (
     db, Subject, ExamBoard, PaperCategory, QuestionPaper, 
-    Question, Explanation, User, UserQuery, StudentAnswer
+    Question, Explanation, User, UserQuery, StudentAnswer, QuestionTopic
 )
 from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
