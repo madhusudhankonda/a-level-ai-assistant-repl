@@ -4,21 +4,21 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero py-5 bg-dark text-light position-relative overflow-hidden">
-    <div class="container py-5">
-        <div class="row align-items-center py-5">
-            <div class="col-lg-6 mb-5 mb-lg-0">
+<section class="hero py-5 bg-gradient-dark text-light position-relative overflow-hidden">
+    <div class="container py-4">
+        <div class="row align-items-center py-4">
+            <div class="col-lg-6 mb-4 mb-lg-0">
                 <h1 class="display-4 fw-bold mb-4">
                     Your AI Tutor for<br>
                     <span class="text-warning">A-Level</span> Success
                     <div class="ai-sparkle-icon d-inline-block ms-2"></div>
                 </h1>
                 <p class="lead mb-4">Personalized explanations, instant feedback, and step-by-step solutions for your A-Level subjects.</p>
-                <div class="d-flex flex-column flex-sm-row gap-3 mb-5">
-                    <a href="{{ url_for('auth.signup') }}" class="btn btn-warning btn-lg text-dark fw-semibold px-4 py-3">
+                <div class="d-flex flex-column flex-sm-row gap-3 mb-4">
+                    <a href="{{ url_for('auth.signup') }}" class="btn btn-warning btn-lg text-dark fw-semibold px-4 py-2">
                         Start for free <i class="fas fa-arrow-right ms-2"></i>
                     </a>
-                    <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3">
+                    <a href="#features" class="btn btn-outline-light btn-lg px-4 py-2">
                         Learn more
                     </a>
                 </div>
@@ -63,9 +63,9 @@
         </div>
     </div>
     
-    <!-- Background decoration -->
-    <div class="position-absolute top-0 end-0 w-50 h-100 bg-gradient-purple opacity-10" style="clip-path: polygon(100% 0, 0 0, 100% 100%);"></div>
-    <div class="position-absolute bottom-0 start-0 w-50 h-50 bg-gradient-purple opacity-10" style="clip-path: polygon(0 100%, 100% 100%, 0 0);"></div>
+    <!-- Background decoration - lighter and more subtle -->
+    <div class="position-absolute top-0 end-0 w-50 h-100 bg-gradient-purple opacity-05" style="clip-path: polygon(100% 0, 0 0, 100% 100%);"></div>
+    <div class="position-absolute bottom-0 start-0 w-40 h-40 bg-gradient-purple opacity-05" style="clip-path: polygon(0 100%, 100% 100%, 0 0);"></div>
 </section>
 
 <!-- Subjects Section (More Prominent) -->
@@ -142,55 +142,55 @@
     </div>
 </section>
 
-<!-- How It Works Section -->
-<section id="how-it-works" class="py-5 bg-dark text-light">
+<!-- How It Works Section - Lighter Design -->
+<section id="how-it-works" class="py-5 bg-gradient-dark text-light">
     <div class="container py-4">
-        <div class="text-center mb-5">
+        <div class="text-center mb-4">
             <span class="badge bg-warning text-dark px-3 py-2 mb-3">Simple Process</span>
             <h2 class="display-5 fw-bold">How It <span class="text-warning">Works</span></h2>
-            <p class="lead text-muted mx-auto" style="max-width: 700px;">Get instant help with your A-Level studies in three simple steps</p>
+            <p class="lead mx-auto" style="max-width: 700px; color: rgba(255,255,255,0.8);">Get instant help with your A-Level studies in three simple steps</p>
         </div>
         
         <div class="row g-4 justify-content-center">
             <div class="col-md-4">
-                <div class="step-card bg-dark-subtle p-4 rounded-4 text-center h-100 position-relative">
+                <div class="step-card p-4 rounded-4 text-center h-100 position-relative" style="background-color: rgba(255,255,255,0.1);">
                     <div class="step-number position-absolute top-0 start-50 translate-middle badge rounded-pill bg-warning">
                         <span class="h5 m-0 text-dark fw-bold">1</span>
                     </div>
-                    <div class="py-5">
-                        <div class="icon-wrapper rounded-circle bg-warning bg-opacity-20 p-3 mb-4 mx-auto" style="width: 80px; height: 80px;">
-                            <i class="fas fa-camera text-warning" style="font-size: 2rem;"></i>
+                    <div class="py-4">
+                        <div class="icon-wrapper rounded-circle bg-warning bg-opacity-20 p-3 mb-3 mx-auto" style="width: 70px; height: 70px;">
+                            <i class="fas fa-camera text-warning" style="font-size: 1.8rem;"></i>
                         </div>
                         <h3 class="h4 mb-3">Capture or Upload</h3>
-                        <p class="text-muted mb-0">Take a photo of your question or upload an image file. The system works with handwritten work too!</p>
+                        <p class="mb-0" style="color: rgba(255,255,255,0.8);">Take a photo of your question or upload an image file. The system works with handwritten work too!</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="step-card bg-dark-subtle p-4 rounded-4 text-center h-100 position-relative">
+                <div class="step-card p-4 rounded-4 text-center h-100 position-relative" style="background-color: rgba(255,255,255,0.1);">
                     <div class="step-number position-absolute top-0 start-50 translate-middle badge rounded-pill bg-warning">
                         <span class="h5 m-0 text-dark fw-bold">2</span>
                     </div>
-                    <div class="py-5">
-                        <div class="icon-wrapper rounded-circle bg-warning bg-opacity-20 p-3 mb-4 mx-auto" style="width: 80px; height: 80px;">
-                            <i class="fas fa-robot text-warning" style="font-size: 2rem;"></i>
+                    <div class="py-4">
+                        <div class="icon-wrapper rounded-circle bg-warning bg-opacity-20 p-3 mb-3 mx-auto" style="width: 70px; height: 70px;">
+                            <i class="fas fa-robot text-warning" style="font-size: 1.8rem;"></i>
                         </div>
                         <h3 class="h4 mb-3">AI Analysis</h3>
-                        <p class="text-muted mb-0">Our advanced AI analyzes your question or checks your work, understanding context and requirements.</p>
+                        <p class="mb-0" style="color: rgba(255,255,255,0.8);">Our advanced AI analyzes your question or checks your work, understanding context and requirements.</p>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="step-card bg-dark-subtle p-4 rounded-4 text-center h-100 position-relative">
+                <div class="step-card p-4 rounded-4 text-center h-100 position-relative" style="background-color: rgba(255,255,255,0.1);">
                     <div class="step-number position-absolute top-0 start-50 translate-middle badge rounded-pill bg-warning">
                         <span class="h5 m-0 text-dark fw-bold">3</span>
                     </div>
-                    <div class="py-5">
-                        <div class="icon-wrapper rounded-circle bg-warning bg-opacity-20 p-3 mb-4 mx-auto" style="width: 80px; height: 80px;">
-                            <i class="fas fa-graduation-cap text-warning" style="font-size: 2rem;"></i>
+                    <div class="py-4">
+                        <div class="icon-wrapper rounded-circle bg-warning bg-opacity-20 p-3 mb-3 mx-auto" style="width: 70px; height: 70px;">
+                            <i class="fas fa-graduation-cap text-warning" style="font-size: 1.8rem;"></i>
                         </div>
                         <h3 class="h4 mb-3">Instant Results</h3>
-                        <p class="text-muted mb-0">Get detailed explanations, step-by-step solutions, or feedback on your answers within seconds.</p>
+                        <p class="mb-0" style="color: rgba(255,255,255,0.8);">Get detailed explanations, step-by-step solutions, or feedback on your answers within seconds.</p>
                     </div>
                 </div>
             </div>

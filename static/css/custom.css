@@ -1,4 +1,4 @@
-/* A-Level AI Assistant Custom Styles - Professional Purple-Gold-Black Theme */
+/* A-Level AI Assistant Custom Styles - Improved Lighter Theme for Better UI */
 
 /* Custom theme variables */
 :root {
@@ -13,6 +13,21 @@
     --black-light: #2d2d2d;
     --gray-dark: #343a40;
     --gray-light: #495057;
+    
+    /* New lighter theme variables */
+    --dark-purple-soft: #3a2a4d;
+    --dark-blue-soft: #2a3a5c;
+    --light-bg: #f8f9fa;
+}
+
+/* Updated gradient backgrounds for better contrast and readability */
+.bg-gradient-dark {
+    background: linear-gradient(135deg, var(--dark-blue-soft), var(--dark-purple-soft));
+}
+
+/* Reduced opacity for better contrast */
+.opacity-05 {
+    opacity: 0.05;
 }
 
 /* Gradient backgrounds */
@@ -167,14 +182,33 @@
     }
     
     .container {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-left: 15px;
+        padding-right: 15px;
+        max-width: 100%;
     }
     
     /* Improve tap targets on mobile */
     .btn, .nav-link, .form-control, .form-select {
         padding: 0.625rem 0.75rem;
         min-height: 44px; /* Apple HIG minimum tap target size */
+        white-space: normal; /* Allow text to wrap */
+        word-wrap: break-word;
+        text-overflow: ellipsis;
+    }
+    
+    /* Fix button cropping by ensuring proper width */
+    .btn {
+        margin-bottom: 0.5rem;
+        display: inline-block;
+        width: auto;
+        max-width: 100%;
+    }
+    
+    /* Ensure buttons in containers don't overflow */
+    .d-flex.flex-column .btn, 
+    .d-flex.flex-sm-row .btn {
+        margin-right: 0.25rem;
+        margin-left: 0.25rem;
     }
     
     /* Improve readability on small screens */
@@ -217,6 +251,18 @@
     #video, #canvas {
         max-height: 60vh;
         width: 100%;
+    }
+    
+    /* Improve spacing for sections */
+    section {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow-x: hidden;
+    }
+    
+    /* Make sure stat items don't touch on small screens */
+    .stat-item {
+        margin-bottom: 10px;
     }
 }
 
