@@ -285,7 +285,7 @@ def add_question(paper_id):
     
     return render_template('admin/add_question.html', paper=paper)
 
-@admin_bp.route('/question/<int:question_id>/delete', methods=['POST'])
+@admin_bp.route('/question/<int:question_id>/delete', methods=['POST', 'GET'])
 @login_required
 def delete_question(question_id):
     """Delete a question"""
