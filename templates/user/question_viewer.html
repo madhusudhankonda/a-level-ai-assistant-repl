@@ -194,7 +194,7 @@
             const titleEl = document.getElementById('current-question-title');
             
             // Show the question image
-            const imgUrl = `/question-image/${questionId}`;
+            const imgUrl = "{{ url_for('user.get_question_image', question_id=0) }}".replace('0', questionId);
             const imgEl = document.createElement('img');
             imgEl.src = imgUrl;
             imgEl.className = 'img-fluid question-image mb-3';

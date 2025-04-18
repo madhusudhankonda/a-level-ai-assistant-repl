@@ -76,7 +76,7 @@
                             <span class="badge bg-primary">{{ question.marks or '?' }} marks</span>
                         </div>
                         <div class="card-body text-center">
-                            <img src="{{ url_for('user.question_image', question_id=question.id) }}" 
+                            <img src="{{ url_for('user.get_question_image', question_id=question.id) }}" 
                                  alt="Question {{ question.question_number }}" 
                                  class="question-thumbnail mb-3">
                             

@@ -83,7 +83,7 @@
 
                             <div class="col-md-6">
                                 <h5 class="mb-3">Current Question Image</h5>
-                                <img src="{{ url_for('user.question_image', question_id=question.id) }}" alt="Question {{ question.question_number }}" class="question-image-preview">
+                                <img src="{{ url_for('user.get_question_image', question_id=question.id) }}" alt="Question {{ question.question_number }}" class="question-image-preview">
                             </div>
                         </div>
 
