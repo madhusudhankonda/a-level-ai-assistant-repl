@@ -240,8 +240,8 @@
             const categoryId = categorySelect.value;
             if (categoryId) {
                 console.log('Navigating to category ID:', categoryId);
-                // Navigate to the selected category
-                window.location.href = `/dashboard/category/${categoryId}`;
+                // Navigate to the selected category using a properly constructed URL
+                window.location.href = "{{ url_for('user.view_category', category_id=0) }}".replace('/0', '/' + categoryId);
             } else {
                 console.error('No category selected');
             }

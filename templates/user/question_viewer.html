@@ -158,7 +158,7 @@
             btn.addEventListener('click', function(e) {
                 e.stopPropagation(); // Prevent triggering the parent question-selector
                 const questionId = this.getAttribute('data-question-id');
-                window.location.href = `/admin/edit-question/${questionId}`;
+                window.location.href = "{{ url_for('admin.edit_question', question_id=0) }}".replace('/0', '/' + questionId);
             });
         });
         
@@ -173,7 +173,7 @@
                     // Create a form to submit the delete request
                     const form = document.createElement('form');
                     form.method = 'POST';
-                    form.action = `/admin/question/${questionId}/delete`;
+                    form.action = "{{ url_for('admin.delete_question', question_id=0) }}".replace('/0', '/' + questionId);
                     document.body.appendChild(form);
                     form.submit();
                 }
@@ -264,8 +264,8 @@
             
             const method = forceRefresh ? 'POST' : 'GET';
             
-            // Fetch explanation from API - make sure to use the proper URL with the dashboard prefix
-            fetch(`/dashboard/api/explain/${questionId}`, { method: method })
+            // Fetch explanation from API using url_for to construct the proper URL
+            fetch("{{ url_for('user.api_get_explanation', question_id=0) }}".replace('/0', '/' + questionId), { method: method })
                 .then(response => {
                     // Check if the response is ok before trying to parse JSON
                     if (!response.ok) {
@@ -394,14 +394,14 @@
                 const questionId = this.getAttribute('data-question-id');
                 const questionNumber = this.getAttribute('data-question-number');
                 
-                // Redirect to edit question page in admin panel
-                window.location.href = `/admin/edit-question/${questionId}`;
+                // Redirect to edit question page in admin panel using url_for
+                window.location.href = "{{ url_for('admin.edit_question', question_id=0) }}".replace('/0', '/' + questionId);
             });
         });
         
         // Function to delete a question
         function deleteQuestion(questionId) {
-            fetch(`/dashboard/api/delete-question/${questionId}`, {
+            fetch("{{ url_for('user.api_delete_question', question_id=0) }}".replace('/0', '/' + questionId), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
