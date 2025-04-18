@@ -93,57 +93,86 @@ def view_board(board_id):
 @user_bp.route('/category/<int:category_id>')
 def view_category(category_id):
     """View a specific paper category and its papers"""
-    category = PaperCategory.query.get_or_404(category_id)
-    papers = QuestionPaper.query.filter_by(category_id=category_id).all()
+    try:
+        # Try to get the category
+        category = PaperCategory.query.get(category_id)
+        if not category:
+            # If category doesn't exist, flash a message and redirect to dashboard
+            flash(f"Category with ID {category_id} not found.", "warning")
+            return redirect(url_for('user.index'))
+            
+        # Get papers for this category
+        papers = QuestionPaper.query.filter_by(category_id=category_id).all()
+        
+        return render_template(
+            'user/category_view.html',
+            category=category,
+            papers=papers
+        )
+    except Exception as e:
+        # Log the error for debugging
+        current_app.logger.error(f"Error displaying category {category_id}: {str(e)}")
+        flash(f"An error occurred while loading the category. Please try again.", "danger")
+        return redirect(url_for('user.index'))
     
-    return render_template(
-        'user/category_view.html',
-        category=category,
-        papers=papers
-    )
 
 @user_bp.route('/paper/<int:paper_id>')
 def view_paper(paper_id):
     """View a specific paper and its questions"""
-    paper = QuestionPaper.query.get_or_404(paper_id)
+    try:
+        # Get the paper or redirect with an error message
+        paper = QuestionPaper.query.get(paper_id)
+        if not paper:
+            flash(f"Paper with ID {paper_id} not found.", "warning")
+            return redirect(url_for('user.index'))
+        
+        # Get all questions for this paper
+        questions = Question.query.filter_by(paper_id=paper_id).all()
+        
+        # Sort questions numerically by question number
+        # This handles question numbers like '1', '2', '10' properly
+        def question_number_key(q):
+            # Extract the numeric part from the question number
+            # This handles formats like 'q1', '1a', 'question 1', etc.
+            import re
+            num_match = re.search(r'(\d+)', q.question_number)
+            if num_match:
+                return int(num_match.group(1))
+            return 0  # Default to 0 if no number found
+        
+        # Sort the questions using the custom sorting function
+        questions = sorted(questions, key=question_number_key)
+        
+        # Get category information if available
+        category = None
+        board = None
+        subject = None
+        
+        if paper.category_id:
+            category = PaperCategory.query.get(paper.category_id)
+            if category:
+                board = ExamBoard.query.get(category.board_id)
+                if board:
+                    subject = Subject.query.get(board.subject_id)
+        
+        # Check if there are any questions
+        if not questions:
+            flash("This paper does not have any questions yet.", "info")
+        
+        return render_template(
+            'user/question_viewer.html', 
+            paper=paper, 
+            questions=questions,
+            category=category,
+            board=board,
+            subject=subject
+        )
+    except Exception as e:
+        # Log the error for debugging
+        current_app.logger.error(f"Error displaying paper {paper_id}: {str(e)}")
+        flash("An error occurred while loading the paper. Please try again.", "danger")
+        return redirect(url_for('user.index'))
     
-    # Get all questions for this paper
-    questions = Question.query.filter_by(paper_id=paper_id).all()
-    
-    # Sort questions numerically by question number
-    # This handles question numbers like '1', '2', '10' properly
-    def question_number_key(q):
-        # Extract the numeric part from the question number
-        # This handles formats like 'q1', '1a', 'question 1', etc.
-        import re
-        num_match = re.search(r'(\d+)', q.question_number)
-        if num_match:
-            return int(num_match.group(1))
-        return 0  # Default to 0 if no number found
-    
-    # Sort the questions using the custom sorting function
-    questions = sorted(questions, key=question_number_key)
-    
-    # Get category information if available
-    category = None
-    board = None
-    subject = None
-    
-    if paper.category_id:
-        category = PaperCategory.query.get(paper.category_id)
-        if category:
-            board = ExamBoard.query.get(category.board_id)
-            if board:
-                subject = Subject.query.get(board.subject_id)
-    
-    return render_template(
-        'user/question_viewer.html', 
-        paper=paper, 
-        questions=questions,
-        category=category,
-        board=board,
-        subject=subject
-    )
 
 @user_bp.route('/question-image/<int:question_id>')
 def get_question_image(question_id):
