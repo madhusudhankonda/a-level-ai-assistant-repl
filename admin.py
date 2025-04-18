@@ -335,3 +335,69 @@ def delete_paper(paper_id):
     
     flash(f'Paper "{paper.title}" and all its questions deleted successfully', 'success')
     return redirect(url_for('admin.index'))
+
+def allowed_file(filename):
+    """Check if the file extension is allowed"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@admin_bp.route('/edit-question/<int:question_id>', methods=['GET', 'POST'])
+@login_required
+def edit_question(question_id):
+    """Edit a question"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
+    question = Question.query.get_or_404(question_id)
+    paper = QuestionPaper.query.get_or_404(question.paper_id)
+    
+    if request.method == 'POST':
+        question_number = request.form.get('question_number')
+        difficulty_level = request.form.get('difficulty_level')
+        marks = request.form.get('marks')
+        
+        # Check if a new image was uploaded
+        if 'question_image' in request.files and request.files['question_image'].filename:
+            file = request.files['question_image']
+            if file and allowed_file(file.filename):
+                # Generate a unique filename with UUID
+                filename = secure_filename(file.filename)
+                name, ext = os.path.splitext(filename)
+                unique_filename = f"q{question_number}_{uuid.uuid4().hex.lower()}{ext}"
+                
+                # Create the paper directory if it doesn't exist
+                paper_dir = os.path.join(get_data_folder(), f"paper_{paper.id}")
+                os.makedirs(paper_dir, exist_ok=True)
+                
+                # Save the file
+                file_path = os.path.join(paper_dir, unique_filename)
+                file.save(file_path)
+                
+                # Delete old image file if it exists
+                if question.image_path and os.path.exists(question.image_path):
+                    os.remove(question.image_path)
+                    
+                # Update the question with the new image path
+                question.image_path = file_path
+        
+        # Update other question fields
+        if question_number:
+            question.question_number = question_number
+        if difficulty_level:
+            question.difficulty_level = int(difficulty_level)
+        if marks:
+            question.marks = int(marks)
+        
+        try:
+            db.session.commit()
+            flash('Question updated successfully', 'success')
+            return redirect(url_for('admin.manage_questions', paper_id=paper.id))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error updating question: {str(e)}', 'danger')
+    
+    return render_template('admin/edit_question.html', 
+                          question=question, 
+                          paper=paper)

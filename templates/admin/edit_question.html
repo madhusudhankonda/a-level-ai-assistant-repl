@@ -1,0 +1,77 @@
+{% extends 'admin/layout.html' %}
+
+{% block title %}Edit Question - {{ paper.title }}{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}">{{ paper.title }}</a></li>
+            <li class="breadcrumb-item active">Edit Question {{ question.question_number }}</li>
+        </ol>
+    </nav>
+    
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Edit Question {{ question.question_number }}</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="question_number" class="form-label">Question Number</label>
+                            <input type="text" class="form-control" id="question_number" name="question_number" 
+                                   value="{{ question.question_number }}" required>
+                            <div class="form-text">Example: 1, 2a, 3.1, etc.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="difficulty_level" class="form-label">Difficulty Level (Optional)</label>
+                            <select class="form-select" id="difficulty_level" name="difficulty_level">
+                                <option value="">-- Select Difficulty --</option>
+                                <option value="1" {% if question.difficulty_level == 1 %}selected{% endif %}>1 - Very Easy</option>
+                                <option value="2" {% if question.difficulty_level == 2 %}selected{% endif %}>2 - Easy</option>
+                                <option value="3" {% if question.difficulty_level == 3 %}selected{% endif %}>3 - Medium</option>
+                                <option value="4" {% if question.difficulty_level == 4 %}selected{% endif %}>4 - Hard</option>
+                                <option value="5" {% if question.difficulty_level == 5 %}selected{% endif %}>5 - Very Hard</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="marks" class="form-label">Marks Available (Optional)</label>
+                            <input type="number" class="form-control" id="marks" name="marks" 
+                                   value="{{ question.marks or '' }}" min="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="question_image" class="form-label">Question Image (Optional, leave blank to keep current image)</label>
+                            <input type="file" class="form-control" id="question_image" name="question_image" accept="image/*">
+                            <div class="form-text">Upload a new image only if you want to replace the current image.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">Current Image</div>
+                            <div class="card-body text-center">
+                                <img src="/question-image/{{ question.id }}" class="img-fluid" alt="Current Question Image">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Questions
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

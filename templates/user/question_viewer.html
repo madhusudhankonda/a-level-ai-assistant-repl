@@ -53,10 +53,28 @@
             </div>
             <div class="list-group list-group-flush">
                 {% for question in questions %}
-                <button type="button" class="list-group-item list-group-item-action question-selector" 
-                        data-question-id="{{ question.id }}">
-                    Question {{ question.question_number }}
-                </button>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-link text-decoration-none text-start question-selector flex-grow-1 p-0" 
+                            data-question-id="{{ question.id }}">
+                        Question {{ question.question_number }}
+                    </button>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <div class="question-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary edit-question-btn" 
+                                data-question-id="{{ question.id }}" 
+                                data-question-number="{{ question.question_number }}"
+                                data-toggle="tooltip" title="Edit Question">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-question-btn"
+                                data-question-id="{{ question.id }}"
+                                data-question-number="{{ question.question_number }}"
+                                data-toggle="tooltip" title="Delete Question">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
                 {% endfor %}
             </div>
         </div>
@@ -314,6 +332,77 @@
         const firstQuestion = document.querySelector('.question-selector');
         if (firstQuestion) {
             firstQuestion.click();
+        }
+        
+        // Handle delete question buttons
+        document.querySelectorAll('.delete-question-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering the question selection
+                
+                const questionId = this.getAttribute('data-question-id');
+                const questionNumber = this.getAttribute('data-question-number');
+                
+                if (confirm(`Are you sure you want to delete Question ${questionNumber}? This action cannot be undone.`)) {
+                    deleteQuestion(questionId);
+                }
+            });
+        });
+        
+        // Handle edit question buttons
+        document.querySelectorAll('.edit-question-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering the question selection
+                
+                const questionId = this.getAttribute('data-question-id');
+                const questionNumber = this.getAttribute('data-question-number');
+                
+                // Redirect to edit question page in admin panel
+                window.location.href = `/admin/edit-question/${questionId}`;
+            });
+        });
+        
+        // Function to delete a question
+        function deleteQuestion(questionId) {
+            fetch(`/api/delete-question/${questionId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert('Question deleted successfully');
+                    
+                    // Remove the question from the list
+                    const questionElement = document.querySelector(`.list-group-item .question-selector[data-question-id="${questionId}"]`).closest('.list-group-item');
+                    if (questionElement) {
+                        questionElement.remove();
+                    }
+                    
+                    // Clear the question display if it was the current question
+                    if (currentQuestionId === questionId) {
+                        document.getElementById('question-display').innerHTML = '<p class="text-muted">Question has been deleted. Please select another question from the list.</p>';
+                        document.getElementById('current-question-title').textContent = 'Question deleted';
+                        document.getElementById('explanation-card').style.display = 'none';
+                        currentQuestionId = null;
+                    }
+                    
+                    // Select another question if available
+                    const remainingQuestions = document.querySelectorAll('.question-selector');
+                    if (remainingQuestions.length > 0) {
+                        remainingQuestions[0].click();
+                    }
+                } else {
+                    // Show error message
+                    alert(`Error: ${data.message || 'Failed to delete question'}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting question:', error);
+                alert('An error occurred while deleting the question. Please try again.');
+            });
         }
     });
 </script>

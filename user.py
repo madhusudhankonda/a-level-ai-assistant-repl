@@ -675,3 +675,52 @@ def unfavorite_query(query_id):
     
     flash('Query removed from favorites', 'success')
     return redirect(url_for('auth.query_history'))
+
+@user_bp.route('/api/delete-question/<int:question_id>', methods=['POST'])
+@login_required
+def delete_question(question_id):
+    """API endpoint to delete a question"""
+    if not current_user.is_admin:
+        current_app.logger.warning(f"Non-admin user {current_user.id} attempted to delete question {question_id}")
+        return jsonify({
+            'success': False,
+            'message': 'You do not have permission to delete questions'
+        }), 403
+    
+    question = Question.query.get_or_404(question_id)
+    
+    try:
+        # Delete all explanations associated with this question
+        Explanation.query.filter_by(question_id=question_id).delete()
+        
+        # Delete all user queries associated with this question
+        UserQuery.query.filter_by(question_id=question_id).delete()
+        
+        # Delete all student answers associated with this question
+        StudentAnswer.query.filter_by(question_id=question_id).delete()
+        
+        # Delete all question topics associations
+        QuestionTopic.query.filter_by(question_id=question_id).delete()
+        
+        # Delete the image file if it exists
+        if question.image_path and os.path.exists(question.image_path):
+            os.remove(question.image_path)
+            current_app.logger.info(f"Deleted question image: {question.image_path}")
+        
+        # Finally, delete the question
+        db.session.delete(question)
+        db.session.commit()
+        
+        current_app.logger.info(f"Question {question_id} successfully deleted by admin {current_user.id}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Question deleted successfully'
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting question {question_id}: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error deleting question: {str(e)}'
+        }), 500
