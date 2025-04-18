@@ -348,19 +348,50 @@
                                 </div>
                             `;
                         } else {
-                            explanationContent.innerHTML = `
-                                <div class="alert alert-danger">
-                                    <i class="fas fa-exclamation-circle"></i> Error: ${data.message || 'Failed to generate explanation'}
-                                </div>
-                            `;
+                            // Check if we have an admin message (for admin users only)
+                            const adminMsg = data.admin_message ? `<div class="mt-2 text-muted small">Admin details: ${data.admin_message}</div>` : '';
+                            
+                            // Check if this is a service unavailable message (typically quota error)
+                            if (data.message && data.message.includes('temporarily unavailable')) {
+                                explanationContent.innerHTML = `
+                                    <div class="alert alert-warning">
+                                        <h5><i class="fas fa-exclamation-triangle"></i> AI Service Temporarily Unavailable</h5>
+                                        <p>${data.message}</p>
+                                        ${adminMsg}
+                                    </div>
+                                `;
+                            } else {
+                                explanationContent.innerHTML = `
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-circle"></i> Error: ${data.message || 'Failed to generate explanation'}
+                                        ${adminMsg}
+                                    </div>
+                                `;
+                            }
                         }
                     }
                 })
                 .catch(error => {
                     explanationLoading.style.display = 'none';
+                    
+                    // Check for network/server errors and display a more user-friendly message
+                    const errorMessage = error.message || 'Failed to connect to server';
+                    let alertClass = 'alert-danger';
+                    let icon = 'fa-exclamation-circle';
+                    let title = 'Error';
+                    let message = errorMessage;
+                    
+                    if (errorMessage.includes('500') || errorMessage.includes('503')) {
+                        alertClass = 'alert-warning';
+                        icon = 'fa-exclamation-triangle';
+                        title = 'Service Temporarily Unavailable';
+                        message = 'The AI service is currently unavailable. Our team has been notified and is working to restore service. Please try again later.';
+                    }
+                    
                     explanationContent.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle"></i> Error: ${error.message || 'Failed to connect to server'}
+                        <div class="alert ${alertClass}">
+                            <h5><i class="fas ${icon}"></i> ${title}</h5>
+                            <p>${message}</p>
                         </div>
                     `;
                 });

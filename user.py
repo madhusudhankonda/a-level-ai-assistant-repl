@@ -706,18 +706,34 @@ def api_get_explanation(question_id):
                 
             except Exception as e:
                 current_app.logger.error(f"Error generating explanation: {str(e)}")
+                error_message = str(e)
+                # Display a more user-friendly message for quota errors
+                if "quota" in error_message.lower() or "exceeded" in error_message.lower() or "unavailable" in error_message.lower():
+                    return jsonify({
+                        'success': False,
+                        'message': 'The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later.',
+                        'admin_message': error_message if current_user.is_admin else None
+                    }), 503
                 return jsonify({
                     'success': False,
-                    'message': f'Error generating explanation: {str(e)}'
+                    'message': f'Error generating explanation: {error_message}'
                 }), 500
         
         # Return existing explanation for GET requests when one exists
         processed_text = process_math_notation(existing_explanation.explanation_text)
     except Exception as e:
         current_app.logger.error(f"General error in api_get_explanation: {str(e)}")
+        error_message = str(e)
+        # Display a more user-friendly message for quota errors
+        if "quota" in error_message.lower() or "exceeded" in error_message.lower() or "unavailable" in error_message.lower():
+            return jsonify({
+                'success': False,
+                'message': 'The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later.',
+                'admin_message': error_message if current_user.is_admin else None
+            }), 503
         return jsonify({
             'success': False,
-            'message': f'An error occurred: {str(e)}'
+            'message': f'An error occurred: {error_message}'
         }), 500
     
     # Track this query in the user's history and deduct credits

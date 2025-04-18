@@ -254,12 +254,15 @@ Your explanation should be comprehensive, explaining both the mathematical conce
         except Exception as api_error:
             logger.error(f"OpenAI API call failed: {api_error}")
             # Provide a more detailed error message
-            if "API key" in str(api_error).lower():
+            error_str = str(api_error).lower()
+            if "API key" in error_str:
                 raise Exception("OpenAI API key issue. Please check your API key configuration.")
-            elif "timeout" in str(api_error).lower():
+            elif "timeout" in error_str:
                 raise Exception("The request timed out. The question might be too complex or the server is busy. Please try again.")
-            elif "rate limit" in str(api_error).lower():
+            elif "rate limit" in error_str:
                 raise Exception("OpenAI rate limit reached. Please try again in a few moments.")
+            elif "quota" in error_str or "exceeded" in error_str or "insufficient_quota" in error_str or "429" in error_str:
+                raise Exception("The AI service is temporarily unavailable due to exceeding usage limits. The administrator has been notified. Please try again later.")
             else:
                 raise Exception(f"OpenAI API error: {str(api_error)}")
         
