@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-Level AI Assistant - Camera Capture</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding-bottom: 76px; /* Space for bottom nav */
+        }
+        .mobile-frame {
+            max-width: 375px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            height: 650px;
+        }
+        .status-bar {
+            height: 30px;
+            background-color: #121212;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+        }
+        .status-bar .time {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-bar .icons {
+            display: flex;
+            gap: 5px;
+        }
+        .camera-header {
+            position: absolute;
+            top: 30px;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .camera-header .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-header .options-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-view {
+            background-color: #000;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .camera-view .preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .camera-view .placeholder {
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        .camera-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .camera-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 35px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .camera-btn .inner-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 30px;
+            border: 2px solid #000;
+        }
+        .mode-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background-color: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .mode-switch {
+            background-color: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 8px 15px;
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        .mode-switch .mode-option {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .mode-switch .mode-option.active {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+        .flash-options {
+            position: absolute;
+            top: 140px;
+            right: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .flash-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+        .capture-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid rgba(255,255,255,0.3);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+        }
+        .capture-grid .cell {
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .subject-indicator {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .help-tooltip {
+            position: absolute;
+            bottom: 100px;
+            right: 20px;
+            background-color: rgba(0,0,0,0.5);
+            width: 30px;
+            height: 30px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-frame">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time">9:41</div>
+            <div class="icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-three-quarters"></i>
+            </div>
+        </div>
+        
+        <!-- Camera Header -->
+        <div class="camera-header">
+            <div class="back-btn">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="options-btn">
+                <i class="fas fa-cog"></i>
+            </div>
+        </div>
+        
+        <!-- Camera View -->
+        <div class="camera-view">
+            <!-- Example: Replace with actual camera feed -->
+            <!-- <img src="camera-placeholder.jpg" alt="Camera Preview" class="preview"> -->
+            
+            <div class="placeholder">
+                <i class="fas fa-camera fa-3x mb-3"></i>
+                <h5>Camera Preview</h5>
+                <p>Position your math or physics question in the frame</p>
+            </div>
+            
+            <!-- Capture grid overlay -->
+            <div class="capture-grid">
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+            </div>
+            
+            <!-- Mode Switch -->
+            <div class="mode-switch">
+                <div class="mode-option active">Question Only</div>
+                <div class="mode-option">Question + Answer</div>
+            </div>
+            
+            <!-- Flash Options -->
+            <div class="flash-options">
+                <div class="flash-option">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <div class="flash-option">
+                    <i class="fas fa-infinity"></i>
+                </div>
+                <div class="flash-option">
+                    <i class="fas fa-adjust"></i>
+                </div>
+            </div>
+            
+            <!-- Subject Indicator -->
+            <div class="subject-indicator">
+                <i class="fas fa-calculator"></i>
+                <span>Mathematics</span>
+                <i class="fas fa-chevron-down ml-1"></i>
+            </div>
+            
+            <!-- Help -->
+            <div class="help-tooltip">
+                <i class="fas fa-question"></i>
+            </div>
+            
+            <!-- Camera Controls -->
+            <div class="camera-controls">
+                <div class="mode-btn">
+                    <i class="fas fa-images"></i>
+                </div>
+                <div class="camera-btn">
+                    <div class="inner-circle"></div>
+                </div>
+                <div class="mode-btn">
+                    <i class="fas fa-redo"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

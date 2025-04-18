@@ -80,3 +80,15 @@ def index():
 def landing():
     from flask import render_template
     return render_template('landing.html')
+
+# Route for the mobile app design showcase
+@app.route('/mobile')
+def mobile_design():
+    from flask import send_from_directory
+    return send_from_directory('mobile_design', 'index.html')
+
+# Serve mobile design static files
+@app.route('/mobile/<path:filename>')
+def mobile_design_files(filename):
+    from flask import send_from_directory
+    return send_from_directory('mobile_design', filename)

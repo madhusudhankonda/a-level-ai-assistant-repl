@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-Level AI Assistant - Mobile App Design</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+        }
+        .page-header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .design-preview {
+            margin-bottom: 50px;
+        }
+        .design-title {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .design-description {
+            margin-bottom: 20px;
+        }
+        .design-frame {
+            border: 2px solid #0d6efd;
+            border-radius: 20px;
+            padding: 10px;
+            margin: 0 auto;
+        }
+        .feature-list {
+            margin-top: 20px;
+        }
+        .feature-item {
+            display: flex;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        .feature-icon {
+            color: #0d6efd;
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+        iframe {
+            border: none;
+            width: 100%;
+            height: 650px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>A-Level AI Assistant</h1>
+            <h3>Mobile App Design Proposal</h3>
+            <p class="lead">A modern, intuitive mobile experience for A-Level students</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="design-preview">
+                    <div class="design-title">
+                        <h4>Home Screen</h4>
+                    </div>
+                    <div class="design-description">
+                        <p>The home screen provides quick access to all key features with a modern, student-friendly interface.</p>
+                    </div>
+                    <div class="design-frame">
+                        <iframe src="home_screen.html"></iframe>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <div>
+                                <strong>Quick Actions</strong>: One-tap access to most used features
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <div>
+                                <strong>Recent Activity</strong>: Easy access to previously viewed content
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div>
+                                <strong>Credit Display</strong>: Clear visibility of remaining credits
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="design-preview">
+                    <div class="design-title">
+                        <h4>Camera Capture</h4>
+                    </div>
+                    <div class="design-description">
+                        <p>The camera interface allows students to quickly capture math and physics problems for AI analysis.</p>
+                    </div>
+                    <div class="design-frame">
+                        <iframe src="camera_screen.html"></iframe>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-th"></i>
+                            </div>
+                            <div>
+                                <strong>Grid Overlay</strong>: Helps align questions properly
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-toggle-on"></i>
+                            </div>
+                            <div>
+                                <strong>Dual Modes</strong>: Capture questions or answers for feedback
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div>
+                                <strong>Lighting Controls</strong>: Adjust flash for optimal captures
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="design-preview">
+                    <div class="design-title">
+                        <h4>Explanation View</h4>
+                    </div>
+                    <div class="design-description">
+                        <p>The explanation screen provides detailed, step-by-step solutions with beautiful math rendering.</p>
+                    </div>
+                    <div class="design-frame">
+                        <iframe src="explanation_screen.html"></iframe>
+                    </div>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div>
+                                <strong>Structured Content</strong>: Clear sections make learning easier
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-volume-up"></i>
+                            </div>
+                            <div>
+                                <strong>Text-to-Speech</strong>: Listen to explanations while studying
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-bookmark"></i>
+                            </div>
+                            <div>
+                                <strong>Save & Share</strong>: Keep explanations for future reference
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Implementation Strategy</h4>
+                    </div>
+                    <div class="card-body">
+                        <h5>Phased Approach to Mobile Development</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary text-white">
+                                        Phase 1: Progressive Web App
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li>Mobile-optimized web experience</li>
+                                            <li>Works in any mobile browser</li>
+                                            <li>Can be "installed" on home screen</li>
+                                            <li>Quick to implement with existing codebase</li>
+                                            <li>Estimated timeline: 2-3 weeks</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-info text-white">
+                                        Phase 2: React Native App
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li>Cross-platform (Android & iOS)</li>
+                                            <li>Better performance and native feel</li>
+                                            <li>Improved camera integration</li>
+                                            <li>Push notifications and offline support</li>
+                                            <li>Estimated timeline: 2-3 months</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-success text-white">
+                                        Phase 3: Native Apps (Optional)
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li>Platform-specific Android & iOS apps</li>
+                                            <li>Maximum performance and integration</li>
+                                            <li>Advanced features like AR for problems</li>
+                                            <li>Full offline content and synchronization</li>
+                                            <li>Estimated timeline: 4-6 months</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Key Mobile Features</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>Core Functionality</h5>
+                                <ul>
+                                    <li><strong>Seamless Camera Integration</strong> - Capture questions with a single tap</li>
+                                    <li><strong>Offline Access</strong> - View saved explanations without internet</li>
+                                    <li><strong>Push Notifications</strong> - Study reminders and content updates</li>
+                                    <li><strong>Biometric Authentication</strong> - Quick and secure login</li>
+                                    <li><strong>Cross-Device Syncing</strong> - Continue studying across devices</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Enhanced Learning Features</h5>
+                                <ul>
+                                    <li><strong>Text-to-Speech</strong> - Listen to explanations on the go</li>
+                                    <li><strong>Study Streaks</strong> - Gamification to encourage regular use</li>
+                                    <li><strong>Progress Tracking</strong> - Visual representation of learning progress</li>
+                                    <li><strong>Exam Countdown</strong> - Personalized study plans based on exam dates</li>
+                                    <li><strong>Flashcard Generation</strong> - AI-generated revision materials</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

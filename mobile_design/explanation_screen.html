@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-Level AI Assistant - Explanation</title>
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding-bottom: 76px; /* Space for bottom nav */
+        }
+        .mobile-frame {
+            max-width: 375px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            height: 650px;
+            overflow-y: auto;
+        }
+        .status-bar {
+            height: 30px;
+            background-color: #121212;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+        }
+        .status-bar .time {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-bar .icons {
+            display: flex;
+            gap: 5px;
+        }
+        .app-header {
+            padding: 15px;
+            background-color: #1e1e1e;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .credit-display {
+            background-color: rgba(0,123,255,0.1);
+            border-radius: 20px;
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        .question-card {
+            border-radius: 12px;
+            background-color: rgba(255,255,255,0.05);
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .question-image {
+            width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+            background-color: #000;
+        }
+        .explanation-header {
+            background: linear-gradient(45deg, #004c93, #006aad);
+            padding: 15px;
+            position: relative;
+        }
+        .sparkle-icon {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 60px;
+            height: 60px;
+            opacity: 0.2;
+            transform: rotate(15deg);
+        }
+        .sparkle-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            background-color: #fff;
+            position: absolute;
+        }
+        .sparkle-dot:nth-child(1) {
+            top: 0;
+            left: 20px;
+            width: 18px;
+            height: 18px;
+        }
+        .sparkle-dot:nth-child(2) {
+            top: 25px;
+            left: 0;
+            width: 10px;
+            height: 10px;
+        }
+        .sparkle-dot:nth-child(3) {
+            top: 20px;
+            left: 35px;
+            width: 15px;
+            height: 15px;
+        }
+        .sparkle-dot:nth-child(4) {
+            top: 45px;
+            left: 20px;
+            width: 12px;
+            height: 12px;
+        }
+        .explanation-content {
+            padding: 15px;
+        }
+        .explanation-section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            margin-bottom: 10px;
+            color: #0d6efd;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .math-display {
+            background-color: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .key-point {
+            background-color: rgba(25,135,84,0.1);
+            border-left: 3px solid #198754;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 75px;
+            background-color: #1e1e1e;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            max-width: 375px;
+            margin: 0 auto;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .nav-item span {
+            font-size: 10px;
+        }
+        .action-bar {
+            padding: 10px 15px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .action-button {
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .speech-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background-color: rgba(13,110,253,0.1);
+            color: #0d6efd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .feedback-options {
+            display: flex;
+            gap: 10px;
+        }
+        .feedback-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 17px;
+            background-color: rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .floating-action {
+            position: fixed;
+            bottom: 85px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background-color: #0d6efd;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(13,110,253,0.3);
+            z-index: 100;
+            max-width: 335px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-frame">
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="time">9:41</div>
+            <div class="icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-three-quarters"></i>
+            </div>
+        </div>
+        
+        <!-- App Header -->
+        <div class="app-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <a href="#" class="text-white">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h6 class="mb-0">AI Explanation</h6>
+            </div>
+            <div class="credit-display">
+                <i class="fas fa-coins text-warning"></i>
+                <span class="fw-bold">90</span>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="container-fluid py-3">
+            <!-- Question Display -->
+            <div class="question-card">
+                <div class="p-2 small text-muted">Your Question</div>
+                <img src="https://placehold.co/400x300/121212/FFFFFF/png?text=Math+Problem" alt="Question" class="question-image">
+                <div class="px-3 py-2 text-end small">
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-retake"></i> Retake
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Explanation -->
+            <div class="explanation-card">
+                <div class="explanation-header">
+                    <div class="sparkle-icon">
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                        <div class="sparkle-dot"></div>
+                    </div>
+                    <h5 class="text-white mb-0">AI Explanation</h5>
+                    <div class="text-white-50 small">Mathematics - Integration</div>
+                </div>
+                
+                <div class="explanation-content">
+                    <div class="explanation-section">
+                        <div class="section-title">
+                            <i class="fas fa-lightbulb text-warning"></i> Understanding the Problem
+                        </div>
+                        <p>The question asks us to evaluate the integral:</p>
+                        <div class="math-display">
+                            ∫(2x + 3)(x² + 3x + 5) dx
+                        </div>
+                        <p>This involves integrating the product of two expressions. We can either:</p>
+                        <ul>
+                            <li>Use the product rule for integration, or</li>
+                            <li>Expand the expression and then integrate</li>
+                        </ul>
+                        <p>Let's use the second approach as it's more straightforward for this problem.</p>
+                    </div>
+                    
+                    <div class="explanation-section">
+                        <div class="section-title">
+                            <i class="fas fa-square-root-alt text-primary"></i> Step-by-Step Solution
+                        </div>
+                        <p><strong>Step 1:</strong> Expand the product (2x + 3)(x² + 3x + 5)</p>
+                        <div class="math-display">
+                            (2x + 3)(x² + 3x + 5) = 2x(x² + 3x + 5) + 3(x² + 3x + 5)
+                        </div>
+                        <p>Let's continue expanding:</p>
+                        <div class="math-display">
+                            = 2x³ + 6x² + 10x + 3x² + 9x + 15<br>
+                            = 2x³ + 9x² + 19x + 15
+                        </div>
+                        
+                        <p><strong>Step 2:</strong> Integrate the expanded expression term by term</p>
+                        <div class="math-display">
+                            ∫(2x³ + 9x² + 19x + 15) dx<br><br>
+                            = 2∫x³ dx + 9∫x² dx + 19∫x dx + 15∫dx<br><br>
+                            = 2(x⁴/4) + 9(x³/3) + 19(x²/2) + 15x + C<br><br>
+                            = (1/2)x⁴ + 3x³ + (19/2)x² + 15x + C
+                        </div>
+                        
+                        <div class="key-point">
+                            <strong>Key Point:</strong> Remember that when integrating x^n, the result is x^(n+1)/(n+1) + C, where C is the constant of integration.
+                        </div>
+                    </div>
+                    
+                    <div class="explanation-section">
+                        <div class="section-title">
+                            <i class="fas fa-check-circle text-success"></i> Verification
+                        </div>
+                        <p>To verify our answer, we can differentiate our result and check if we get back the original expression:</p>
+                        <div class="math-display">
+                            d/dx[(1/2)x⁴ + 3x³ + (19/2)x² + 15x + C]<br><br>
+                            = 2x³ + 9x² + 19x + 15
+                        </div>
+                        <p>This matches our expanded expression, confirming our answer is correct.</p>
+                    </div>
+                    
+                    <div class="explanation-section">
+                        <div class="section-title">
+                            <i class="fas fa-graduation-cap text-info"></i> Exam Tips
+                        </div>
+                        <ul>
+                            <li>For product integrations, expanding often simplifies the problem.</li>
+                            <li>Watch for common mistakes in the expansion process.</li>
+                            <li>Don't forget the constant of integration.</li>
+                            <li>Double-check by differentiating your answer.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <div class="feedback-options">
+                        <div class="feedback-btn">
+                            <i class="fas fa-bookmark"></i>
+                        </div>
+                        <div class="feedback-btn">
+                            <i class="fas fa-share-alt"></i>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="action-button btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sync-alt"></i> Regenerate
+                        </button>
+                        <div class="speech-button">
+                            <i class="fas fa-volume-up"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating Action Button -->
+        <div class="floating-action">
+            <i class="fas fa-message"></i>
+        </div>
+        
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Browse</span>
+            </div>
+            <div class="nav-item">
+                <div class="camera-btn bg-primary" style="width:40px;height:40px;border-radius:20px;margin-top:-10px;">
+                    <i class="fas fa-camera text-white"></i>
+                </div>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-tasks"></i>
+                <span>My Work</span>
+            </div>
+            <div class="nav-item active">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
