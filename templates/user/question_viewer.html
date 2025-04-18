@@ -303,7 +303,7 @@
                                     lowCreditAlert.innerHTML = `
                                         <i class="fas fa-exclamation-triangle"></i> 
                                         You're running low on credits! 
-                                        <a href="/auth/buy-credits" class="alert-link">Purchase more</a>
+                                        <a href="{{ url_for('auth.buy_credits') }}" class="alert-link">Purchase more</a>
                                     `;
                                     explanationContent.appendChild(lowCreditAlert);
                                 }

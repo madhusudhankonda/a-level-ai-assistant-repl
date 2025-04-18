@@ -587,7 +587,7 @@ def analyze_answer():
         }), 500
 
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
-def explain_question(question_id):
+def api_get_explanation(question_id):
     """API endpoint to get an explanation for a question"""
     try:
         # Get the question or return an error
@@ -714,7 +714,7 @@ def explain_question(question_id):
         # Return existing explanation for GET requests when one exists
         processed_text = process_math_notation(existing_explanation.explanation_text)
     except Exception as e:
-        current_app.logger.error(f"General error in explain_question: {str(e)}")
+        current_app.logger.error(f"General error in api_get_explanation: {str(e)}")
         return jsonify({
             'success': False,
             'message': f'An error occurred: {str(e)}'
