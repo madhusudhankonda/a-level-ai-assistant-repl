@@ -20,12 +20,22 @@
                 <h5 class="card-title">Your Credits</h5>
                 <div class="d-flex align-items-center justify-content-center">
                     <i class="fas fa-coins text-warning me-2 fa-2x"></i> 
-                    <h3 id="credit-balance" class="mb-0 text-primary">{{ current_user.credits }}</h3>
+                    <h3 id="credit-balance" class="mb-0 text-primary">
+                        {% if current_user.is_authenticated %}
+                            {{ current_user.credits }}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </h3>
                 </div>
                 <p class="card-text mt-2 small">Each explanation costs 10 credits</p>
-                {% if current_user.credits < 10 %}
+                {% if current_user.is_authenticated and current_user.credits < 10 %}
                 <a href="{{ url_for('auth.buy_credits') }}" class="btn btn-warning btn-sm mt-2">
                     <i class="fas fa-plus-circle"></i> Buy More Credits
+                </a>
+                {% elif not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm mt-2">
+                    <i class="fas fa-sign-in-alt"></i> Login to Use
                 </a>
                 {% endif %}
             </div>
@@ -150,10 +160,18 @@
             
             const explainBtn = document.createElement('button');
             explainBtn.className = 'btn btn-primary mb-2';
-            explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain this question';
-            explainBtn.addEventListener('click', function() {
-                fetchExplanation(questionId);
-            });
+            
+            {% if current_user.is_authenticated %}
+                explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain this question';
+                explainBtn.addEventListener('click', function() {
+                    fetchExplanation(questionId);
+                });
+            {% else %}
+                explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Login to see explanation';
+                explainBtn.addEventListener('click', function() {
+                    window.location.href = "{{ url_for('auth.login') }}?next={{ request.path }}";
+                });
+            {% endif %}
             
             // Create sparkle rating
             const sparkleRating = document.createElement('div');
@@ -211,7 +229,8 @@
                             const creditBalanceElement = document.getElementById('credit-balance');
                             if (creditBalanceElement) {
                                 // Animate the credit deduction
-                                const oldCredit = parseInt(creditBalanceElement.textContent);
+                                const oldCreditText = creditBalanceElement.textContent.trim();
+                                const oldCredit = isNaN(parseInt(oldCreditText)) ? 0 : parseInt(oldCreditText);
                                 const newCredit = data.credits_remaining;
                                 
                                 // Add warning class if credits are running low
@@ -247,11 +266,38 @@
                             }
                         }, 300);
                     } else {
-                        explanationContent.innerHTML = `
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-circle"></i> Error: ${data.message || 'Failed to generate explanation'}
-                            </div>
-                        `;
+                        if (data.requires_login) {
+                            explanationContent.innerHTML = `
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> ${data.message}
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-sign-in-alt"></i> Login
+                                        </a>
+                                        <a href="{{ url_for('auth.signup') }}" class="btn btn-outline-primary btn-sm ml-2">
+                                            <i class="fas fa-user-plus"></i> Sign Up
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        } else if (data.credits_required) {
+                            explanationContent.innerHTML = `
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> ${data.message}
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('auth.buy_credits') }}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-coins"></i> Buy Credits
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            explanationContent.innerHTML = `
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-circle"></i> Error: ${data.message || 'Failed to generate explanation'}
+                                </div>
+                            `;
+                        }
                     }
                 })
                 .catch(error => {

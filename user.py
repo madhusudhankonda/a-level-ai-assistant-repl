@@ -512,7 +512,6 @@ def analyze_answer():
         }), 500
 
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
-@login_required
 def explain_question(question_id):
     """API endpoint to get an explanation for a question"""
     question = Question.query.get_or_404(question_id)
@@ -520,6 +519,14 @@ def explain_question(question_id):
     
     # Check if we already have a saved explanation
     existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
+    
+    # Check if user is authenticated
+    if not current_user.is_authenticated:
+        return jsonify({
+            'success': False,
+            'message': 'You need to be logged in to view explanations.',
+            'requires_login': True
+        }), 403
     
     # If requesting a new explanation via POST or no saved explanation exists
     if request.method == 'POST' or not existing_explanation:
