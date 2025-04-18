@@ -153,6 +153,33 @@
             });
         });
         
+        // Handle edit question buttons
+        document.querySelectorAll('.edit-question-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering the parent question-selector
+                const questionId = this.getAttribute('data-question-id');
+                window.location.href = `/admin/edit-question/${questionId}`;
+            });
+        });
+        
+        // Handle delete question buttons
+        document.querySelectorAll('.delete-question-btn').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent triggering the parent question-selector
+                const questionId = this.getAttribute('data-question-id');
+                const questionNumber = this.getAttribute('data-question-number');
+                
+                if (confirm(`Are you sure you want to delete Question ${questionNumber}? This action cannot be undone.`)) {
+                    // Create a form to submit the delete request
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/admin/question/${questionId}/delete`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+        
         // Handle refresh explanation button
         document.getElementById('refresh-explanation').addEventListener('click', function() {
             if (currentQuestionId) {

@@ -1,77 +1,126 @@
-{% extends 'admin/layout.html' %}
+{% extends "admin/layout.html" %}
 
-{% block title %}Edit Question - {{ paper.title }}{% endblock %}
+{% block title %}Edit Question - Admin{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+<style>
+    .question-image-preview {
+        max-width: 100%;
+        max-height: 300px;
+        margin-top: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .form-text {
+        font-size: 0.85rem;
+    }
+
+    #imagePreview {
+        display: none;
+        max-width: 100%;
+        max-height: 300px;
+        margin-top: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 5px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container my-4">
+<div class="container py-4">
+    <!-- Breadcrumb -->
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}">{{ paper.title }}</a></li>
-            <li class="breadcrumb-item active">Edit Question {{ question.question_number }}</li>
+            <li class="breadcrumb-item active" aria-current="page">Edit Question {{ question.question_number }}</li>
         </ol>
     </nav>
-    
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0">Edit Question {{ question.question_number }}</h5>
-        </div>
-        <div class="card-body">
-            <form method="POST" enctype="multipart/form-data">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="question_number" class="form-label">Question Number</label>
-                            <input type="text" class="form-control" id="question_number" name="question_number" 
-                                   value="{{ question.question_number }}" required>
-                            <div class="form-text">Example: 1, 2a, 3.1, etc.</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="difficulty_level" class="form-label">Difficulty Level (Optional)</label>
-                            <select class="form-select" id="difficulty_level" name="difficulty_level">
-                                <option value="">-- Select Difficulty --</option>
-                                <option value="1" {% if question.difficulty_level == 1 %}selected{% endif %}>1 - Very Easy</option>
-                                <option value="2" {% if question.difficulty_level == 2 %}selected{% endif %}>2 - Easy</option>
-                                <option value="3" {% if question.difficulty_level == 3 %}selected{% endif %}>3 - Medium</option>
-                                <option value="4" {% if question.difficulty_level == 4 %}selected{% endif %}>4 - Hard</option>
-                                <option value="5" {% if question.difficulty_level == 5 %}selected{% endif %}>5 - Very Hard</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="marks" class="form-label">Marks Available (Optional)</label>
-                            <input type="number" class="form-control" id="marks" name="marks" 
-                                   value="{{ question.marks or '' }}" min="1">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="question_image" class="form-label">Question Image (Optional, leave blank to keep current image)</label>
-                            <input type="file" class="form-control" id="question_image" name="question_image" accept="image/*">
-                            <div class="form-text">Upload a new image only if you want to replace the current image.</div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header">Current Image</div>
-                            <div class="card-body text-center">
-                                <img src="/question-image/{{ question.id }}" class="img-fluid" alt="Current Question Image">
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Edit Question {{ question.question_number }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.edit_question', question_id=question.id) }}" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="question_number" class="form-label">Question Number</label>
+                                    <input type="text" class="form-control" id="question_number" name="question_number" value="{{ question.question_number }}" required>
+                                    <div class="form-text">E.g., "1", "2a", "3(i)", etc.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="difficulty_level" class="form-label">Difficulty Level (1-5)</label>
+                                    <input type="number" class="form-control" id="difficulty_level" name="difficulty_level" min="1" max="5" value="{{ question.difficulty_level or '' }}">
+                                    <div class="form-text">1 = Very Easy, 5 = Very Difficult</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="marks" class="form-label">Marks</label>
+                                    <input type="number" class="form-control" id="marks" name="marks" min="1" value="{{ question.marks or '' }}">
+                                    <div class="form-text">Number of marks for this question</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="question_image" class="form-label">Question Image</label>
+                                    <input type="file" class="form-control" id="question_image" name="question_image" accept="image/*">
+                                    <div class="form-text">Upload a new image if you want to replace the current one</div>
+                                    <div id="imagePreview"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Current Question Image</h5>
+                                <img src="{{ url_for('user.question_image', question_id=question.id) }}" alt="Question {{ question.question_number }}" class="question-image-preview">
                             </div>
                         </div>
-                    </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">Save Changes</button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Back to Questions
-                    </a>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Preview image before upload
+    document.getElementById('question_image').addEventListener('change', function(event) {
+        const preview = document.getElementById('imagePreview');
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function() {
+            const img = document.createElement('img');
+            img.src = reader.result;
+            img.className = 'question-image-preview';
+            preview.innerHTML = '';
+            preview.appendChild(img);
+            preview.style.display = 'block';
+        }
+        
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+</script>
 {% endblock %}

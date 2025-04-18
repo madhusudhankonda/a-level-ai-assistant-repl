@@ -225,6 +225,8 @@ def add_question(paper_id):
     if request.method == 'POST':
         question_number = request.form.get('question_number')
         question_image = request.files.get('question_image')
+        difficulty_level = request.form.get('difficulty_level')
+        marks = request.form.get('marks')
         
         if not question_number or not question_image:
             flash('Question number and image are required', 'danger')
@@ -232,6 +234,10 @@ def add_question(paper_id):
         
         # Save the question image
         if question_image and question_image.filename:
+            if not allowed_file(question_image.filename):
+                flash('Invalid file type. Only PNG, JPG, and GIF are allowed.', 'danger')
+                return redirect(url_for('admin.add_question', paper_id=paper_id))
+                
             # Create paper directory if it doesn't exist
             paper_dir = os.path.join(get_data_folder(), f'paper_{paper_id}')
             if not os.path.exists(paper_dir):
@@ -251,11 +257,31 @@ def add_question(paper_id):
                 paper_id=paper_id
             )
             
-            db.session.add(question)
-            db.session.commit()
+            # Add optional fields if provided
+            if difficulty_level:
+                try:
+                    question.difficulty_level = int(difficulty_level)
+                except ValueError:
+                    flash('Invalid difficulty level. Please provide a number.', 'warning')
             
-            flash(f'Question {question_number} added successfully', 'success')
-            return redirect(url_for('admin.manage_questions', paper_id=paper_id))
+            if marks:
+                try:
+                    question.marks = int(marks)
+                except ValueError:
+                    flash('Invalid marks value. Please provide a number.', 'warning')
+            
+            try:
+                db.session.add(question)
+                db.session.commit()
+                current_app.logger.info(f"Question {question_number} added successfully to paper {paper_id}")
+                
+                flash(f'Question {question_number} added successfully', 'success')
+                return redirect(url_for('admin.manage_questions', paper_id=paper_id))
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Error adding question: {str(e)}")
+                flash(f'Error adding question: {str(e)}', 'danger')
+                return redirect(url_for('admin.add_question', paper_id=paper_id))
     
     return render_template('admin/add_question.html', paper=paper)
 
@@ -307,51 +333,50 @@ def delete_paper(paper_id):
         return redirect(url_for('user.index'))
         
     paper = QuestionPaper.query.get_or_404(paper_id)
+    paper_title = paper.title
     
-    # Delete all questions for this paper
-    questions = Question.query.filter_by(paper_id=paper_id).all()
-    for question in questions:
-        try:
-            if os.path.exists(question.image_path):
-                os.remove(question.image_path)
-        except Exception as e:
-            current_app.logger.error(f"Error deleting question image: {str(e)}")
-    
-    # Delete paper directory
-    paper_dir = os.path.join(get_data_folder(), f'paper_{paper_id}')
     try:
-        if os.path.exists(paper_dir):
-            import shutil
-            shutil.rmtree(paper_dir)
+        # Get all questions for this paper
+        questions = Question.query.filter_by(paper_id=paper_id).all()
+        
+        # For each question, clean up dependencies and delete the image file
+        for question in questions:
+            # Clean up dependencies for each question
+            clean_up_question_dependencies(question.id)
+            
+            # Delete the image file
+            try:
+                if question.image_path and os.path.exists(question.image_path):
+                    os.remove(question.image_path)
+                    current_app.logger.info(f"Deleted question image: {question.image_path}")
+            except Exception as e:
+                current_app.logger.error(f"Error deleting question image for question {question.id}: {str(e)}")
+        
+        # Delete the paper directory
+        paper_dir = os.path.join(get_data_folder(), f'paper_{paper_id}')
+        try:
+            if os.path.exists(paper_dir):
+                import shutil
+                shutil.rmtree(paper_dir)
+                current_app.logger.info(f"Deleted paper directory: {paper_dir}")
+        except Exception as e:
+            current_app.logger.error(f"Error deleting paper directory: {str(e)}")
+        
+        # Delete all questions for this paper
+        question_count = Question.query.filter_by(paper_id=paper_id).delete()
+        current_app.logger.info(f"Deleted {question_count} questions for paper {paper_id}")
+        
+        # Delete the paper itself
+        db.session.delete(paper)
+        db.session.commit()
+        
+        current_app.logger.info(f"Paper {paper_id} '{paper_title}' deleted successfully")
+        flash(f'Paper "{paper_title}" and all its questions deleted successfully', 'success')
     except Exception as e:
-        current_app.logger.error(f"Error deleting paper directory: {str(e)}")
+        db.session.rollback()
+        current_app.logger.error(f"Error deleting paper {paper_id}: {str(e)}")
+        flash(f'Error deleting paper: {str(e)}', 'danger')
     
-    # Delete from database
-    # First, get all question IDs for this paper
-    question_ids = [q.id for q in db.session.query(Question.id).filter_by(paper_id=paper_id).all()]
-    
-    if question_ids:
-        # Delete any explanations related to these questions first
-        from models import Explanation
-        db.session.query(Explanation).filter(Explanation.question_id.in_(question_ids)).delete(synchronize_session=False)
-        
-        # Delete UserQuery and StudentAnswer records related to these questions
-        from models import UserQuery, StudentAnswer
-        db.session.query(UserQuery).filter(UserQuery.question_id.in_(question_ids)).delete(synchronize_session=False)
-        db.session.query(StudentAnswer).filter(StudentAnswer.question_id.in_(question_ids)).delete(synchronize_session=False)
-        
-        # Delete question-topic relationships
-        from models import QuestionTopic
-        db.session.query(QuestionTopic).filter(QuestionTopic.question_id.in_(question_ids)).delete(synchronize_session=False)
-    
-    # Now it's safe to delete the questions
-    db.session.query(Question).filter_by(paper_id=paper_id).delete()
-    
-    # Delete the paper
-    db.session.delete(paper)
-    db.session.commit()
-    
-    flash(f'Paper "{paper.title}" and all its questions deleted successfully', 'success')
     return redirect(url_for('admin.index'))
 
 def allowed_file(filename):
