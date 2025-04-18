@@ -59,26 +59,18 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(user_bp, url_prefix='/')
 app.register_blueprint(auth_bp, url_prefix='/auth')
 
-# Root route - redirects to dashboard for logged in users, landing page for others
+# Landing page (home) is the default for non-authenticated users
 @app.route('/')
-def index():
+@app.route('/home')
+def landing():
     from flask import render_template, redirect, url_for, request
     from flask_login import current_user
     
-    # Add a show_landing query parameter to force showing the landing page
-    show_landing = request.args.get('landing', 'false').lower() == 'true'
-    
-    # If user is already logged in and not explicitly asking for landing page, redirect to dashboard
-    if current_user.is_authenticated and not show_landing:
+    # If user is already logged in, redirect to dashboard
+    if current_user.is_authenticated:
         return redirect(url_for('user.index'))
     
     # Otherwise show the landing page
-    return render_template('landing.html')
-
-# Dedicated route for the landing page that always shows the landing page
-@app.route('/home')
-def landing():
-    from flask import render_template
     return render_template('landing.html')
 
 # Route for the mobile app design showcase
