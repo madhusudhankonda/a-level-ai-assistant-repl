@@ -336,8 +336,13 @@ def delete_question(question_id):
     if not current_user.is_admin:
         flash('You do not have permission to access the admin area.', 'danger')
         return redirect(url_for('user.index'))
-        
-    question = Question.query.get_or_404(question_id)
+    
+    # Check if the question exists using get() instead of get_or_404()
+    question = Question.query.get(question_id)
+    if not question:
+        current_app.logger.error(f"Question with ID {question_id} not found for deletion")
+        flash(f'Question with ID {question_id} not found.', 'danger')
+        return redirect(url_for('admin.index'))
     paper_id = question.paper_id
     
     # Clean up all dependencies first
@@ -374,8 +379,13 @@ def edit_paper(paper_id):
     if not current_user.is_admin:
         flash('You do not have permission to access the admin area.', 'danger')
         return redirect(url_for('user.index'))
-        
-    paper = QuestionPaper.query.get_or_404(paper_id)
+    
+    # Check if the paper exists using get() instead of get_or_404()
+    paper = QuestionPaper.query.get(paper_id)
+    if not paper:
+        current_app.logger.error(f"Paper with ID {paper_id} not found for editing")
+        flash(f'Paper with ID {paper_id} not found.', 'danger')
+        return redirect(url_for('admin.index'))
     subjects = Subject.query.all()
     
     # Get the paper's current category and board information
@@ -469,8 +479,13 @@ def delete_paper(paper_id):
     if not current_user.is_admin:
         flash('You do not have permission to access the admin area.', 'danger')
         return redirect(url_for('user.index'))
-        
-    paper = QuestionPaper.query.get_or_404(paper_id)
+    
+    # Check if the paper exists using get() instead of get_or_404()
+    paper = QuestionPaper.query.get(paper_id)
+    if not paper:
+        current_app.logger.error(f"Paper with ID {paper_id} not found for deletion")
+        flash(f'Paper with ID {paper_id} not found.', 'danger')
+        return redirect(url_for('admin.index'))
     paper_title = paper.title
     
     try:
@@ -554,9 +569,20 @@ def edit_question(question_id):
     if not current_user.is_admin:
         flash('You do not have permission to access the admin area.', 'danger')
         return redirect(url_for('user.index'))
-        
-    question = Question.query.get_or_404(question_id)
-    paper = QuestionPaper.query.get_or_404(question.paper_id)
+    
+    # Check if the question exists using get() instead of get_or_404()
+    question = Question.query.get(question_id)
+    if not question:
+        current_app.logger.error(f"Question with ID {question_id} not found for editing")
+        flash(f'Question with ID {question_id} not found.', 'danger')
+        return redirect(url_for('admin.index'))
+    
+    # Check if the related paper exists using get() instead of get_or_404()
+    paper = QuestionPaper.query.get(question.paper_id)
+    if not paper:
+        current_app.logger.error(f"Paper with ID {question.paper_id} not found for question {question_id}")
+        flash(f'Paper with ID {question.paper_id} not found for this question.', 'danger')
+        return redirect(url_for('admin.index'))
     
     if request.method == 'POST':
         question_number = request.form.get('question_number')
