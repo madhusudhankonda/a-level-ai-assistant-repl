@@ -982,10 +982,15 @@ def api_get_explanation(question_id):
                     raise FileNotFoundError(f"Could not find image file for question {question_id}")
                 
                 # Read the image and encode it to base64 with data URI format
-                with open(image_path, "rb") as image_file:
-                    image_bytes = image_file.read()
-                    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-                    data_uri = f"data:image/png;base64,{image_base64}"
+                try:
+                    with open(image_path, "rb") as image_file:
+                        image_bytes = image_file.read()
+                        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                        data_uri = f"data:image/png;base64,{image_base64}"
+                        current_app.logger.info(f"Image encoded successfully, size: {len(image_bytes)} bytes, base64 length: {len(image_base64)}")
+                except Exception as img_error:
+                    current_app.logger.error(f"Error encoding image: {str(img_error)}")
+                    raise img_error
                 
                 # Generate explanation using OpenAI with data URI format
                 current_app.logger.info(f"Generating explanation for question {question_id}, subject: {paper.subject}")
