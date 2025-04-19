@@ -23,27 +23,121 @@
                 </div>
                 
                 <form method="POST" action="{{ url_for('auth.signup') }}">
+                    {{ form.hidden_tag() }}
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-user"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" placeholder="Choose a username" required>
+                            {{ form.username(class="form-control", placeholder="Choose a username") }}
                         </div>
+                        {% if form.username.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.username.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email address</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                            {{ form.email(class="form-control", placeholder="Enter your email") }}
                         </div>
+                        {% if form.email.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.email.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                            <input type="password" class="form-control" id="password" name="password" placeholder="Create a password" required>
+                            {{ form.password(class="form-control", placeholder="Create a password (min 8 characters)") }}
+                        </div>
+                        {% if form.password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.password.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm your password") }}
+                        </div>
+                        {% if form.confirm_password.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.confirm_password.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Consent Section -->
+                    <div class="card mb-3 border-info">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-shield-alt me-2"></i> User Agreements
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2 form-check">
+                                {{ form.terms_consent(class="form-check-input") }}
+                                <label class="form-check-label">
+                                    I have read and agree to the <a href="{{ url_for('terms') }}" target="_blank">Terms and Conditions</a>
+                                </label>
+                                {% if form.terms_consent.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.terms_consent.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-2 form-check">
+                                {{ form.privacy_consent(class="form-check-input") }}
+                                <label class="form-check-label">
+                                    I have read and agree to the <a href="{{ url_for('privacy') }}" target="_blank">Privacy Policy</a>
+                                </label>
+                                {% if form.privacy_consent.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.privacy_consent.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-2 form-check">
+                                {{ form.age_consent(class="form-check-input") }}
+                                <label class="form-check-label">
+                                    I confirm that I am at least 16 years old
+                                </label>
+                                {% if form.age_consent.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.age_consent.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-check">
+                                {{ form.marketing_consent(class="form-check-input") }}
+                                <label class="form-check-label">
+                                    I agree to receive updates about new features and educational content (optional)
+                                </label>
+                            </div>
                         </div>
                     </div>
+
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-user-plus me-2"></i> Create Account

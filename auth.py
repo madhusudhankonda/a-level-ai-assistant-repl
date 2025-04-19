@@ -50,31 +50,32 @@ def login():
 
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
-    """Handle user registration"""
+    """Handle user registration with Terms and Conditions consent"""
     if current_user.is_authenticated:
         return redirect(url_for('user.index'))
-        
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        user = User.query.filter_by(email=email).first()
+    
+    form = SignupForm()
+    
+    if form.validate_on_submit():
+        # Check if email already exists
+        user = User.query.filter_by(email=form.email.data).first()
         if user:
             flash('Email address already exists', 'danger')
-            return render_template('auth/signup.html')
-            
-        user = User.query.filter_by(username=username).first()
+            return render_template('auth/signup.html', form=form)
+        
+        # Check if username already exists
+        user = User.query.filter_by(username=form.username.data).first()
         if user:
             flash('Username already exists', 'danger')
-            return render_template('auth/signup.html')
-            
+            return render_template('auth/signup.html', form=form)
+        
+        # Create the new user
         new_user = User(
-            username=username,
-            email=email,
+            username=form.username.data,
+            email=form.email.data,
             credits=50  # New users start with 50 free credits
         )
-        new_user.set_password(password)
+        new_user.set_password(form.password.data)
         
         # Add a transaction for the initial free credits
         transaction = CreditTransaction(
@@ -83,15 +84,25 @@ def signup():
             transaction_type='bonus'
         )
         
+        # Create a profile with consent records
+        profile = UserProfile(
+            user=new_user,
+            terms_accepted=True,
+            privacy_accepted=True,
+            marketing_consent=form.marketing_consent.data,
+            age_confirmed=True
+        )
+        
         db.session.add(new_user)
         db.session.add(transaction)
+        db.session.add(profile)
         db.session.commit()
         
         flash('Account created successfully! You received 50 free credits to start.', 'success')
         login_user(new_user)
         return redirect(url_for('user.index'))
-        
-    return render_template('auth/signup.html')
+    
+    return render_template('auth/signup.html', form=form)
 
 @auth_bp.route('/logout')
 @login_required

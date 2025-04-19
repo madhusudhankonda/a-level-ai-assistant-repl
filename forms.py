@@ -26,6 +26,16 @@ class SignupForm(FlaskForm):
         DataRequired(),
         EqualTo('password', message="Passwords must match")
     ])
+    terms_consent = BooleanField('I have read and agree to the <a href="/terms" target="_blank">Terms and Conditions</a>', validators=[
+        DataRequired(message="You must agree to the Terms and Conditions to register")
+    ])
+    privacy_consent = BooleanField('I have read and agree to the <a href="/privacy" target="_blank">Privacy Policy</a>', validators=[
+        DataRequired(message="You must agree to the Privacy Policy to register")
+    ])
+    age_consent = BooleanField('I confirm that I am at least 16 years old', validators=[
+        DataRequired(message="You must be at least 16 years old to use this service")
+    ])
+    marketing_consent = BooleanField('I agree to receive updates about new features and educational content (optional)')
 
 class ProfileEditForm(FlaskForm):
     """Form for editing user profile"""
