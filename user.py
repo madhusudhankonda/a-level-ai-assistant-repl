@@ -8,7 +8,7 @@ from datetime import datetime
 from flask_login import login_required, current_user
 from models import (
     db, Subject, ExamBoard, PaperCategory, QuestionPaper, 
-    Question, Explanation, User, UserQuery, StudentAnswer, QuestionTopic
+    Question, Explanation, User, UserQuery, StudentAnswer, QuestionTopic, UserProfile
 )
 from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
@@ -65,6 +65,48 @@ def test_openai_api():
         'success': success,
         'message': message
     })
+
+@user_bp.route('/api/record-ai-consent', methods=['POST'])
+@login_required
+def record_ai_consent():
+    """API endpoint to record user's consent for AI usage"""
+    try:
+        if not request.json or 'consent_given' not in request.json:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid request format'
+            }), 400
+        
+        consent_given = request.json['consent_given']
+        if not consent_given:
+            return jsonify({
+                'success': False,
+                'message': 'Consent is required to use AI features'
+            }), 400
+        
+        # Get user profile or create if not exists
+        user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+        if not user_profile:
+            user_profile = UserProfile(user_id=current_user.id)
+            db.session.add(user_profile)
+        
+        # Update consent info
+        user_profile.ai_usage_consent_required = False
+        user_profile.last_ai_consent_date = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'AI usage consent recorded successfully'
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error recording AI consent: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error recording consent: {str(e)}'
+        }), 500
 
 @user_bp.route('/subject/<int:subject_id>')
 def view_subject(subject_id):

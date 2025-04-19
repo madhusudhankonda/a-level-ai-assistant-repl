@@ -1,0 +1,142 @@
+<!-- AI Usage Consent Modal -->
+<div class="modal fade" id="aiConsentModal" tabindex="-1" aria-labelledby="aiConsentModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="aiConsentModalLabel">
+                    <i class="fas fa-robot me-2"></i>AI Usage Terms
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Before using our AI features, please read and agree to the following terms:</strong>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold">Data Processing</h6>
+                    <p>By using our AI features, you acknowledge that:</p>
+                    <ul>
+                        <li>Your questions, images, and other inputs will be processed by our AI systems</li>
+                        <li>We may store your inputs temporarily to provide you with assistance</li>
+                        <li>We may use anonymized data to improve our AI systems</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold">AI Limitations</h6>
+                    <p>You understand that:</p>
+                    <ul>
+                        <li>AI-generated content should be reviewed for accuracy</li>
+                        <li>Our AI is designed to assist with learning, not to replace human judgment</li>
+                        <li>Our AI may occasionally provide incorrect information</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h6 class="fw-bold">Academic Integrity</h6>
+                    <p>You agree to:</p>
+                    <ul>
+                        <li>Use our AI as a learning tool, not to cheat on assignments or exams</li>
+                        <li>Comply with your school or institution's academic integrity policies</li>
+                        <li>Take responsibility for how you use the information provided by our AI</li>
+                    </ul>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="aiTermsConsent">
+                    <label class="form-check-label" for="aiTermsConsent">
+                        I have read and agree to the AI usage terms
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="aiDataConsent">
+                    <label class="form-check-label" for="aiDataConsent">
+                        I consent to the processing of my data as described above
+                    </label>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="aiAcademicConsent">
+                    <label class="form-check-label" for="aiAcademicConsent">
+                        I will use the AI responsibly and in accordance with academic integrity
+                    </label>
+                </div>
+
+                <div class="text-end">
+                    <a href="{{ url_for('terms') }}" target="_blank" class="btn btn-outline-secondary">
+                        <i class="fas fa-file-contract me-1"></i> View Full Terms
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="acceptAiTermsBtn" disabled>
+                    <i class="fas fa-check me-1"></i> Accept and Continue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for the modal -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get consent checkboxes and button
+    const termsCheckbox = document.getElementById('aiTermsConsent');
+    const dataCheckbox = document.getElementById('aiDataConsent');
+    const academicCheckbox = document.getElementById('aiAcademicConsent');
+    const acceptButton = document.getElementById('acceptAiTermsBtn');
+    
+    // Function to check if all checkboxes are checked
+    function checkAllConsents() {
+        if (termsCheckbox.checked && dataCheckbox.checked && academicCheckbox.checked) {
+            acceptButton.disabled = false;
+        } else {
+            acceptButton.disabled = true;
+        }
+    }
+    
+    // Add event listeners to checkboxes
+    termsCheckbox.addEventListener('change', checkAllConsents);
+    dataCheckbox.addEventListener('change', checkAllConsents);
+    academicCheckbox.addEventListener('change', checkAllConsents);
+    
+    // Event listener for accept button
+    acceptButton.addEventListener('click', function() {
+        // Record consent via API
+        fetch('/dashboard/api/record-ai-consent', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                consent_given: true
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide modal
+                const consentModal = bootstrap.Modal.getInstance(document.getElementById('aiConsentModal'));
+                consentModal.hide();
+                
+                // Show success toast
+                const toastBody = document.getElementById('toast-body');
+                const toastTitle = document.getElementById('toast-title');
+                const toast = new bootstrap.Toast(document.getElementById('toast'));
+                
+                toastTitle.textContent = "Consent Recorded";
+                toastBody.textContent = "Your AI usage consent has been recorded. You can now use the AI features.";
+                toast.show();
+            } else {
+                alert('Error recording consent. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error recording consent. Please try again.');
+        });
+    });
+});
+</script>

@@ -186,6 +186,19 @@ class UserProfile(db.Model):
     preferred_subjects = db.Column(db.String(255), nullable=True)  # Comma-separated list
     subscription_tier = db.Column(db.String(20), default="free")  # free, standard, premium
     profile_image_path = db.Column(db.String(255), nullable=True)
+    
+    # Consent tracking fields
+    terms_accepted = db.Column(db.Boolean, default=False)
+    privacy_accepted = db.Column(db.Boolean, default=False)
+    marketing_consent = db.Column(db.Boolean, default=False)
+    age_confirmed = db.Column(db.Boolean, default=False)
+    terms_accepted_date = db.Column(db.DateTime, nullable=True)
+    privacy_accepted_date = db.Column(db.DateTime, nullable=True)
+    
+    # AI usage consent - will be required for each session
+    ai_usage_consent_required = db.Column(db.Boolean, default=True)
+    last_ai_consent_date = db.Column(db.DateTime, nullable=True)
+    
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationship with User

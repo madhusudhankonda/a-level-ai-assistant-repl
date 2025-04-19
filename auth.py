@@ -1,5 +1,6 @@
 import os
 import stripe
+from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -85,12 +86,16 @@ def signup():
         )
         
         # Create a profile with consent records
+        current_time = datetime.utcnow()
         profile = UserProfile(
             user=new_user,
             terms_accepted=True,
             privacy_accepted=True,
             marketing_consent=form.marketing_consent.data,
-            age_confirmed=True
+            age_confirmed=True,
+            terms_accepted_date=current_time,
+            privacy_accepted_date=current_time,
+            last_ai_consent_date=None  # Will be set when they first use AI features
         )
         
         db.session.add(new_user)
