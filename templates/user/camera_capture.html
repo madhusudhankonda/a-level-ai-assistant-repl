@@ -489,7 +489,7 @@
             );
             
             Promise.race([
-                fetch('/api/test-openai'),
+                fetch('/dashboard/api/test-openai'), // Updated with the correct URL prefix (/dashboard)
                 timeoutPromise
             ])
                 .then(response => {
@@ -736,7 +736,7 @@
             
             if (mode === 'explanation-only') {
                 // Send to server for question-only analysis
-                fetch('/api/analyze-captured-image', {
+                fetch('/dashboard/api/analyze-captured-image', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
