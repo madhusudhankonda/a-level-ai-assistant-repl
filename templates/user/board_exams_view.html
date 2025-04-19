@@ -60,11 +60,11 @@
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Paper Type</th>
-                                        <th>Paper Title</th>
-                                        <th>Category</th>
-                                        <th>Questions</th>
-                                        <th>Actions</th>
+                                        <th style="width: 80px;">Type</th>
+                                        <th>Paper</th>
+                                        <th>Topic</th>
+                                        <th style="width: 100px;">Questions</th>
+                                        <th style="width: 100px;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -75,9 +75,20 @@
                                                 {{ paper.paper_type }}
                                             </span>
                                         </td>
-                                        <td>{{ paper.title }}</td>
                                         <td>
-                                            <span class="badge bg-light text-dark">{{ paper.category_name }}</span>
+                                            <strong>{{ paper.title }}</strong>
+                                            <div class="small text-muted">
+                                                {% if paper.paper_type == 'QP' %}Question Paper{% elif paper.paper_type == 'MS' %}Mark Scheme{% else %}{{ paper.paper_type }}{% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if 'Pure Mathematics' == paper.category_name %}bg-primary
+                                                {% elif 'Pure and Statistics' in paper.category_name %}bg-info
+                                                {% elif 'Pure and Mechanics' in paper.category_name %}bg-warning text-dark
+                                                {% else %}bg-light text-dark{% endif %}">
+                                                {{ paper.category_name }}
+                                            </span>
                                         </td>
                                         <td>{{ paper.questions|length }}</td>
                                         <td>
