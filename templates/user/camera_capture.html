@@ -556,6 +556,15 @@
                     errorInfo.className = 'small mt-2 mb-1 text-muted';
                     errorInfo.textContent = 'Note: The OpenAI API key may be expired, invalid, or missing. Please contact an administrator if this problem persists.';
                     
+                    // Add a friendlier message for students
+                    const studentInfo = document.createElement('div');
+                    studentInfo.className = 'mt-3 p-3 border rounded bg-light';
+                    studentInfo.innerHTML = `
+                        <p class="mb-2"><strong>What does this mean?</strong></p>
+                        <p>The AI features aren't available right now. Your teacher or school admin needs to update the AI service.</p>
+                        <p class="mb-0">You can still browse and view all past papers, but the AI explanations won't work until this is fixed.</p>
+                    `;
+                    
                     // Add a retry button
                     const retryButton = document.createElement('button');
                     retryButton.className = 'btn btn-sm btn-outline-danger mt-2';
@@ -568,6 +577,9 @@
                         if (apiStatusAlert.querySelector('.small')) {
                             apiStatusAlert.querySelector('.small').remove();
                         }
+                        if (apiStatusAlert.querySelector('.bg-light')) {
+                            apiStatusAlert.querySelector('.bg-light').remove();
+                        }
                         // Check API again
                         checkOpenAIStatus();
                     };
@@ -575,6 +587,10 @@
                     // Add the additional info and button to the alert if they don't already exist
                     if (!apiStatusAlert.querySelector('.small')) {
                         apiStatusAlert.appendChild(errorInfo);
+                    }
+                    // Add student info if it doesn't exist
+                    if (!apiStatusAlert.querySelector('.bg-light')) {
+                        apiStatusAlert.appendChild(studentInfo);
                     }
                     if (!apiStatusAlert.querySelector('button')) {
                         apiStatusAlert.appendChild(retryButton);
