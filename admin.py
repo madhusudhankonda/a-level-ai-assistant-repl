@@ -29,10 +29,26 @@ def index():
     if not current_user.is_admin:
         flash('You do not have permission to access the admin area.', 'danger')
         return redirect(url_for('user.index'))
-        
-    papers = QuestionPaper.query.order_by(QuestionPaper.created_at.desc()).all()
+    
+    # Get sort parameter (default to exam_period if not specified)
+    sort_by = request.args.get('sort', 'exam_period')
+    
+    # Order papers based on sort parameter
+    if sort_by == 'exam_period':
+        # Order by exam_period descending (most recent first)
+        papers = QuestionPaper.query.order_by(QuestionPaper.exam_period.desc()).all()
+    elif sort_by == 'title':
+        papers = QuestionPaper.query.order_by(QuestionPaper.title).all()
+    elif sort_by == 'subject':
+        papers = QuestionPaper.query.order_by(QuestionPaper.subject).all()
+    elif sort_by == 'created':
+        papers = QuestionPaper.query.order_by(QuestionPaper.created_at.desc()).all()
+    else:
+        # Default to ordering by exam_period
+        papers = QuestionPaper.query.order_by(QuestionPaper.exam_period.desc()).all()
+    
     subjects = Subject.query.all()
-    return render_template('admin/index.html', papers=papers, subjects=subjects)
+    return render_template('admin/index.html', papers=papers, subjects=subjects, current_sort=sort_by)
 
 @admin_bp.route('/paper/create', methods=['GET', 'POST'])
 @login_required
