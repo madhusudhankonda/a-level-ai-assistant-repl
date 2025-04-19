@@ -309,6 +309,7 @@
             const method = forceRefresh ? 'POST' : 'GET';
             
             // Fetch explanation from API using url_for to construct the proper URL
+            // The url_for function handles the blueprint prefix (/dashboard) correctly
             fetch("{{ url_for('user.api_get_explanation', question_id=0) }}".replace('/0', '/' + questionId), { method: method })
                 .then(response => {
                     // Check if the response is ok before trying to parse JSON
