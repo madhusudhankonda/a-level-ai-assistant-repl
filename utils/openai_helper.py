@@ -23,29 +23,50 @@ logger = logging.getLogger(__name__)
 
 def test_openai_connection():
     """
-    Test the OpenAI connection with a simple text prompt
+    Test the OpenAI connection with a simple API check
     
     Returns:
         tuple: (success boolean, message string)
     """
     try:
-        logger.info("Testing OpenAI connection with simple text prompt")
+        logger.info("Testing OpenAI connection")
         
-        # Simple text completion to test the connection
-        response = openai.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Say hello world!"}
-            ],
-            max_tokens=10
-        )
-        
-        # Extract the response
-        message = response.choices[0].message.content
-        logger.info(f"OpenAI test successful. Response: {message}")
-        
-        return True, "OpenAI connection successful"
+        # First try with models endpoint which is much lighter than a full completion
+        if not OPENAI_API_KEY:
+            logger.error("Missing OpenAI API key")
+            return False, "OpenAI API key is missing. Please configure the API key."
+            
+        # Simply verify API key is valid by checking the models endpoint
+        try:
+            # List models to verify API key is valid
+            openai.models.list()
+            logger.info("OpenAI test successful using models list endpoint")
+            return True, "OpenAI connection successful"
+        except Exception as models_error:
+            # Fall back to a simple completion with gpt-3.5-turbo if models list fails
+            error_message = str(models_error)
+            logger.warning(f"Models list check failed: {error_message}, trying simpler model")
+            
+            try:
+                # Simple text completion with a smaller model for basic testing
+                response = openai.chat.completions.create(
+                    model="gpt-3.5-turbo",  # Use a simpler model for testing
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": "Say hello world!"}
+                    ],
+                    max_tokens=5
+                )
+                
+                # Extract the response
+                message = response.choices[0].message.content
+                logger.info(f"OpenAI test successful with fallback model. Response: {message}")
+                
+                return True, "OpenAI connection successful"
+            except Exception as completion_error:
+                # Both methods failed
+                logger.error(f"OpenAI completion test also failed: {completion_error}")
+                return False, f"OpenAI connection failed: {str(completion_error)}"
         
     except Exception as e:
         error_message = str(e)
