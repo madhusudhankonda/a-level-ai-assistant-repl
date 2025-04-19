@@ -53,19 +53,25 @@
                         </div>
                         
                         <div id="categorySection" class="col-12 mt-3" style="display: none;">
-                            <div class="alert alert-info">
-                                <div class="mb-3">
-                                    <label for="categorySelect" class="form-label">Paper Category</label>
-                                    <select id="categorySelect" class="form-select" disabled>
-                                        <option value="">Select a paper category...</option>
-                                        <!-- Will be populated dynamically -->
-                                    </select>
+                            <div class="card">
+                                <div class="card-header bg-dark text-white">
+                                    <h5 class="mb-0">Paper Categories</h5>
                                 </div>
-                                
-                                <div class="text-center">
-                                    <button type="button" id="browseButton" class="btn btn-primary" disabled>
-                                        <i class="fas fa-search me-2"></i> Browse Category Papers
-                                    </button>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table id="categoriesTable" class="table table-hover table-bordered align-middle">
+                                            <thead class="bg-dark text-white">
+                                                <tr id="categoryTableHeaders">
+                                                    <!-- Will be populated dynamically -->
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr id="categoryTableButtons">
+                                                    <!-- Will be populated dynamically -->
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -277,26 +283,46 @@
             }
         });
         
-        // Show Categories Button - Show category selection
+        // Show Categories Button - Show category selection and populate table
         showCategoriesBtn.addEventListener('click', function() {
+            const selectedBoardId = parseInt(boardSelect.value);
+            if (!selectedBoardId) return;
+            
+            // Filter categories by selected board
+            const filteredCategories = categoriesData.filter(category => category.boardId === selectedBoardId);
+            
+            // Get table elements
+            const categoryTableHeaders = document.getElementById('categoryTableHeaders');
+            const categoryTableButtons = document.getElementById('categoryTableButtons');
+            
+            // Clear existing content
+            categoryTableHeaders.innerHTML = '';
+            categoryTableButtons.innerHTML = '';
+            
+            // Populate headers (category names)
+            filteredCategories.forEach(category => {
+                const th = document.createElement('th');
+                th.className = 'text-center text-white';
+                th.textContent = category.name;
+                categoryTableHeaders.appendChild(th);
+            });
+            
+            // Populate cells (buttons to browse papers)
+            filteredCategories.forEach(category => {
+                const td = document.createElement('td');
+                td.className = 'text-center';
+                
+                const button = document.createElement('a');
+                button.href = "{{ url_for('user.view_category', category_id=0) }}".replace('/0', '/' + category.id);
+                button.className = 'btn btn-outline-primary';
+                button.innerHTML = '<i class="fas fa-book me-2"></i>Browse Papers';
+                
+                td.appendChild(button);
+                categoryTableButtons.appendChild(td);
+            });
+            
             // Show the category section
             categorySection.style.display = 'block';
-        });
-        
-        categorySelect.addEventListener('change', function() {
-            // Enable browse button if a category is selected
-            browseButton.disabled = !this.value;
-        });
-        
-        browseButton.addEventListener('click', function() {
-            const categoryId = categorySelect.value;
-            if (categoryId) {
-                console.log('Navigating to category ID:', categoryId);
-                // Navigate to the selected category using a properly constructed URL
-                window.location.href = "{{ url_for('user.view_category', category_id=0) }}".replace('/0', '/' + categoryId);
-            } else {
-                console.error('No category selected');
-            }
         });
         
         // Helper function to clear a dropdown and add a default option
