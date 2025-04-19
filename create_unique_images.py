@@ -4,6 +4,7 @@ import os
 import uuid
 from PIL import Image, ImageDraw, ImageFont
 import io
+from datetime import datetime
 
 def get_data_folder():
     """Get the data folder for storing papers and questions"""
@@ -11,7 +12,7 @@ def get_data_folder():
     os.makedirs(data_folder, exist_ok=True)
     return data_folder
 
-def create_question_image(question_number, path):
+def create_question_image(question_number, path, force_mechanics=False):
     """Create a unique question image with the question number visible"""
     # Create a blank image with white background
     width, height = 800, 600
@@ -26,10 +27,20 @@ def create_question_image(question_number, path):
     except IOError:
         # If font not available, use default
         font = None
+        
+    # Add a timestamp to make each image unique
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     
-    # Draw title at the top
-    title = "Sample A-Level Mathematics Paper"
-    draw.text((width//2 - 200, 50), title, fill='black', font=None)
+    # Check if this paper is for Mechanics content (paper_id 55)
+    paper_id = os.path.basename(os.path.dirname(path)).replace("paper_", "")
+    is_mechanics_paper = (paper_id == "55" or force_mechanics)
+    
+    # Draw title at the top with timestamp to make each image uniquely identifiable
+    if is_mechanics_paper:
+        title = f"A-Level Mathematics & Mechanics ({timestamp})"
+    else:
+        title = f"A-Level Pure Mathematics ({timestamp})"
+    draw.text((width//2 - 250, 50), title, fill='black', font=None)
     
     # Draw a line under the title
     draw.line([(50, 100), (width-50, 100)], fill='black', width=2)
@@ -46,10 +57,6 @@ def create_question_image(question_number, path):
     
     # Add some mathematical content appropriate for question number and paper type
     math_content = ""
-    
-    # Check if this paper is for Mechanics content (paper_id 55)
-    paper_id = os.path.basename(os.path.dirname(path)).replace("paper_", "")
-    is_mechanics_paper = (paper_id == "55")
     
     if is_mechanics_paper:
         # Mechanics questions
@@ -144,9 +151,9 @@ with app.app_context():
         # Create the new file path
         image_path = os.path.join(paper_dir, filename)
         
-        # Create a custom image for this question
+        # Create a custom image for this question - force mechanics content for paper 55
         try:
-            result = create_question_image(question.question_number, image_path)
+            result = create_question_image(question.question_number, image_path, force_mechanics=True)
             if result:
                 print(f"  ✓ Created unique image for Question {question.question_number} at: {image_path}")
             else:
