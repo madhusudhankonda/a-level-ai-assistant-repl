@@ -136,22 +136,22 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-hover table-striped align-middle mb-0">
-                    <thead>
+                    <thead class="table-dark">
                         <tr>
                             <th>
-                                <a href="{{ url_for('admin.index', sort='title') }}" class="text-decoration-none text-dark">
+                                <a href="{{ url_for('admin.index', sort='title') }}" class="text-decoration-none text-white">
                                     Title
                                     {% if current_sort == 'title' %}<i class="fas fa-sort-alpha-down ms-1"></i>{% endif %}
                                 </a>
                             </th>
                             <th>
-                                <a href="{{ url_for('admin.index', sort='subject') }}" class="text-decoration-none text-dark">
+                                <a href="{{ url_for('admin.index', sort='subject') }}" class="text-decoration-none text-white">
                                     Subject
                                     {% if current_sort == 'subject' %}<i class="fas fa-sort-alpha-down ms-1"></i>{% endif %}
                                 </a>
                             </th>
                             <th>
-                                <a href="{{ url_for('admin.index', sort='exam_period') }}" class="text-decoration-none text-dark">
+                                <a href="{{ url_for('admin.index', sort='exam_period') }}" class="text-decoration-none text-white">
                                     Period
                                     {% if current_sort == 'exam_period' %}<i class="fas fa-sort-amount-down ms-1"></i>{% endif %}
                                 </a>
