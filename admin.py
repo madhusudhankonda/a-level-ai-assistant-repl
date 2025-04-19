@@ -261,7 +261,7 @@ def add_question(paper_id):
                 current_app.logger.info(f"Created directory: {paper_dir}")
             
             # Generate a unique filename
-            filename = f"{secure_filename(question_number)}_{uuid.uuid4().hex}.png"
+            filename = f"q{secure_filename(question_number)}_{uuid.uuid4().hex}.png"
             image_path = os.path.join(paper_dir, filename)
             
             # Log the attempt to save
@@ -275,11 +275,23 @@ def add_question(paper_id):
                 # Verify the file exists after saving
                 if os.path.exists(image_path):
                     current_app.logger.info(f"Verified: File exists at {image_path}")
+                    
+                    # Also create a copy with a simple name for easier debugging
+                    debug_path = os.path.join(paper_dir, f"q{question_number}_debug.png")
+                    try:
+                        import shutil
+                        shutil.copy(image_path, debug_path)
+                        current_app.logger.info(f"Created debug copy at: {debug_path}")
+                    except Exception as copy_err:
+                        current_app.logger.warning(f"Failed to create debug copy: {str(copy_err)}")
                 else:
                     current_app.logger.error(f"Error: File was not found at {image_path} after saving!")
+                    flash("Error: Question image was not saved correctly. Please try again.", "danger")
+                    return redirect(url_for('admin.add_question', paper_id=paper_id))
             except Exception as save_error:
                 current_app.logger.error(f"Failed to save image: {str(save_error)}")
-                raise
+                flash(f"Error saving image: {str(save_error)}", "danger")
+                return redirect(url_for('admin.add_question', paper_id=paper_id))
             
             # Create question in database
             question = Question(
