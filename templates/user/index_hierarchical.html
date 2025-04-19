@@ -141,8 +141,9 @@
         // Elements
         const subjectSelect = document.getElementById('subjectSelect');
         const boardSelect = document.getElementById('boardSelect');
-        const categorySelect = document.getElementById('categorySelect');
-        const browseButton = document.getElementById('browseButton');
+        // Update for new table-based UI
+        const categoryTableHeaders = document.getElementById('categoryTableHeaders');
+        const categoryTableButtons = document.getElementById('categoryTableButtons');
         
         // Data for dropdowns (populated from server)
         const boardsData = [
@@ -181,8 +182,6 @@
             
             // Clear and disable subsequent dropdowns and buttons
             clearDropdown(boardSelect, 'Select an exam board...');
-            clearDropdown(categorySelect, 'Select a paper category...');
-            browseButton.disabled = true;
             yearViewButton.disabled = true;
             showCategoriesBtn.disabled = true;
             
@@ -217,7 +216,6 @@
             } else {
                 // Disable all downstream selects and buttons
                 boardSelect.disabled = true;
-                categorySelect.disabled = true;
                 yearViewButton.disabled = true;
                 showCategoriesBtn.disabled = true;
             }
@@ -227,10 +225,6 @@
             const selectedBoardId = parseInt(this.value);
             console.log('Selected Board ID:', selectedBoardId);
             
-            // Clear and disable category dropdown
-            clearDropdown(categorySelect, 'Select a paper category...');
-            browseButton.disabled = true;
-            
             // Always hide the category section when board changes
             categorySection.style.display = 'none';
             
@@ -239,33 +233,11 @@
                 yearViewButton.disabled = false;
                 showCategoriesBtn.disabled = false;
                 
-                // Enable category dropdown and populate with filtered options
-                categorySelect.disabled = false;
-                
                 // Filter categories by selected board
                 const filteredCategories = categoriesData.filter(category => category.boardId === selectedBoardId);
                 console.log('Filtered Categories:', filteredCategories);
-                
-                // Add options to category dropdown
-                filteredCategories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.id;
-                    option.textContent = category.name;
-                    categorySelect.appendChild(option);
-                });
-                
-                // Auto-select Pure Mathematics (ID: 1) for AQA if it exists
-                if (selectedBoardId === 1) {
-                    let pureMathsOption = Array.from(categorySelect.options).find(option => option.value === "1");
-                    if (pureMathsOption) {
-                        categorySelect.value = "1";
-                        // Enable the browse button
-                        browseButton.disabled = false;
-                    }
-                }
             } else {
-                // Disable all downstream selects and buttons
-                categorySelect.disabled = true;
+                // Disable buttons when no board is selected
                 yearViewButton.disabled = true;
                 showCategoriesBtn.disabled = true;
             }
