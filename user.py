@@ -864,9 +864,36 @@ def api_get_explanation(question_id):
                 'generated_at': user_cached_explanation.created_at.strftime('%Y-%m-%d %H:%M:%S')
             })
         
-        # If no user-specific cache but a general explanation exists, return that with credit charge
+        # If no user-specific cache but a general explanation exists, check if we need to charge credits
         if existing_explanation:
             processed_text = process_math_notation(existing_explanation.explanation_text)
+            
+            # If we reach here and this is a GET request, we'll be charging credits (for first-time viewing)
+            # We need to check if the user has sufficient credits before proceeding
+            if request.method == 'GET' and not current_user.has_sufficient_credits(10):
+                # Instead of a 403 error, return a more helpful response with the explanation
+                # but clearly indicate they need to purchase credits for future use
+                current_app.logger.warning(f"User {current_user.id} has insufficient credits to view explanation for first time")
+                processed_text_with_warning = f"""
+                <div class="credits-warning alert alert-warning">
+                    <strong>⚠️ You have insufficient credits to view this explanation.</strong>
+                    <p>This is a preview of the explanation. Purchase credits to unlock more explanations.</p>
+                    <a href="{url_for('auth.buy_credits')}" class="btn btn-sm btn-warning">Buy Credits</a>
+                </div>
+                <div class="preview-explanation" style="opacity: 0.7;">
+                    {processed_text}
+                </div>
+                """
+                return jsonify({
+                    'success': True,
+                    'question_id': question_id,
+                    'explanation': processed_text_with_warning,
+                    'is_new': False,
+                    'is_cached': False,
+                    'is_preview': True,
+                    'credits_remaining': current_user.credits,
+                    'generated_at': existing_explanation.generated_at.strftime('%Y-%m-%d %H:%M:%S')
+                })
         else:
             # No explanation exists at all
             current_app.logger.error(f"No explanation found for question {question_id}")
