@@ -668,8 +668,14 @@ def analyze_answer():
         }), 500
 
 @user_bp.route('/api/explain/<int:question_id>', methods=['GET', 'POST'])
+@login_required
 def api_get_explanation(question_id):
-    """API endpoint to get an explanation for a question"""
+    """API endpoint to get an explanation for a question
+    
+    This endpoint serves two purposes:
+    1. GET: Retrieves an existing explanation or auto-generates one if none exists
+    2. POST: Forces regeneration of an explanation using OpenAI
+    """
     try:
         # Get the question or return an error
         question = Question.query.get(question_id)
