@@ -113,13 +113,14 @@ def check_ai_consent():
 def record_ai_consent():
     """API endpoint to record user's consent for AI usage"""
     try:
-        if not request.json or 'consent_given' not in request.json:
-            return jsonify({
-                'success': False,
-                'message': 'Invalid request format'
-            }), 400
+        # Support both JSON and form data
+        if request.is_json:
+            data = request.json
+            consent_given = data.get('consent_given', False)
+        else:
+            # Handle form data from the consent modal
+            consent_given = 'ai_consent' in request.form
         
-        consent_given = request.json['consent_given']
         if not consent_given:
             return jsonify({
                 'success': False,

@@ -57,10 +57,19 @@ from auth import auth_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(user_bp, url_prefix='/dashboard')
-app.register_blueprint(auth_bp, url_prefix='/auth')
+app.register_blueprint(auth_bp, url_prefix='/')
+
+# Root route - redirect to login or dashboard
+@app.route('/')
+def root():
+    from flask import redirect, url_for
+    from flask_login import current_user
+    
+    if current_user.is_authenticated:
+        return redirect(url_for('user.index'))
+    return redirect(url_for('auth.login'))
 
 # Landing page route
-@app.route('/')
 @app.route('/home')
 def landing():
     from flask import render_template, redirect, url_for, request
