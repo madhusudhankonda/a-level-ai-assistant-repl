@@ -34,7 +34,7 @@
             <h5 class="mb-0">Questions for {{ paper.title }}</h5>
             <div class="d-flex gap-2">
                 <a href="{{ url_for('admin.edit_paper', paper_id=paper.id) }}" class="btn btn-light btn-sm">
-                    <i class="fas fa-edit"></i> Edit Paper
+                    <i class="fas fa-pen-to-square"></i> Edit Paper
                 </a>
                 <a href="{{ url_for('admin.add_question', paper_id=paper.id) }}" class="btn btn-light btn-sm">
                     <i class="fas fa-plus"></i> Add Question
@@ -88,7 +88,7 @@
                             <div class="d-flex justify-content-center gap-2">
                                 <a href="{{ url_for('admin.edit_question', question_id=question.id) }}" 
                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i> Edit
+                                    <i class="fas fa-pen-to-square"></i> Edit
                                 </a>
                                 <button type="button" class="btn btn-sm btn-outline-danger delete-question-btn"
                                         data-question-id="{{ question.id }}"
