@@ -752,7 +752,7 @@
                 .catch(error => handleAnalysisError(error));
             } else {
                 // Send to server for answer analysis
-                fetch('/api/analyze-answer', {
+                fetch('/dashboard/api/analyze-answer', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
