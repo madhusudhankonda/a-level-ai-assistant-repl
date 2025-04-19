@@ -227,11 +227,21 @@ def get_question_image(question_id):
             image_path = question.image_path
             current_app.logger.info(f"Attempting to serve image at path: {image_path}")
             
+            # Extract folder name and filename
+            folder_name = os.path.basename(os.path.dirname(image_path))
+            file_name = os.path.basename(image_path)
+            current_app.logger.info(f"Image folder: {folder_name}, filename: {file_name}")
+            
             # Create a list of possible paths to try
             paths_to_try = [
                 image_path,  # Original path from database
                 image_path.replace('/home/runner/workspace/', './'),  # Relative path
-                f"./data/{os.path.basename(os.path.dirname(image_path))}/{os.path.basename(image_path)}",  # Local data folder
+                f"./data/{folder_name}/{file_name}",  # Local data folder
+                f"./{folder_name}/{file_name}",  # Direct folder access
+                
+                # Try storage in other formats
+                os.path.join(os.getcwd(), 'data', folder_name, file_name),
+                os.path.join(os.getcwd(), folder_name, file_name)
             ]
             
             # Add fallback to default images when image is missing

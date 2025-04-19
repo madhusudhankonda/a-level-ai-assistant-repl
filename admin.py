@@ -258,13 +258,28 @@ def add_question(paper_id):
             paper_dir = os.path.join(get_data_folder(), f'paper_{paper_id}')
             if not os.path.exists(paper_dir):
                 os.makedirs(paper_dir)
+                current_app.logger.info(f"Created directory: {paper_dir}")
             
             # Generate a unique filename
             filename = f"{secure_filename(question_number)}_{uuid.uuid4().hex}.png"
             image_path = os.path.join(paper_dir, filename)
             
+            # Log the attempt to save
+            current_app.logger.info(f"Attempting to save image to: {image_path}")
+            
             # Save the image
-            question_image.save(image_path)
+            try:
+                question_image.save(image_path)
+                current_app.logger.info(f"Image saved successfully to: {image_path}")
+                
+                # Verify the file exists after saving
+                if os.path.exists(image_path):
+                    current_app.logger.info(f"Verified: File exists at {image_path}")
+                else:
+                    current_app.logger.error(f"Error: File was not found at {image_path} after saving!")
+            except Exception as save_error:
+                current_app.logger.error(f"Failed to save image: {str(save_error)}")
+                raise
             
             # Create question in database
             question = Question(
