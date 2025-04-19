@@ -2,6 +2,36 @@
 
 {% block title %}{{ paper.title }} - A-Level AI Assistant{% endblock %}
 
+{% block styles %}
+<style>
+    /* Cached explanation badge styling */
+    #cached-badge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.5rem;
+        vertical-align: middle;
+        animation: fade-in 0.5s ease-in-out;
+    }
+    
+    /* Credits cost indicator */
+    .credits-cost {
+        font-size: 0.75rem;
+        font-weight: normal;
+        opacity: 0.8;
+    }
+    
+    /* Timestamp styling */
+    #explanation-timestamp {
+        font-size: 0.75rem;
+        font-style: italic;
+    }
+    
+    @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-md-9 mb-4">
@@ -105,11 +135,19 @@
             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                 <div class="ai-section-header">
                     <div class="ai-sparkle-icon"></div>
-                    <h5 class="mb-0">AI Explanation</h5>
+                    <h5 class="mb-0">
+                        AI Explanation 
+                        <span id="cached-badge" class="badge bg-info ms-2" style="display: none;">
+                            <i class="fas fa-history"></i> Cached
+                        </span>
+                    </h5>
                 </div>
-                <button class="btn btn-sm btn-light" id="refresh-explanation">
-                    <i class="fas fa-sync-alt"></i> Regenerate
-                </button>
+                <div>
+                    <small id="explanation-timestamp" class="text-white-50 me-2" style="display: none;"></small>
+                    <button class="btn btn-sm btn-light" id="refresh-explanation">
+                        <i class="fas fa-sync-alt"></i> Regenerate with AI <span class="credits-cost">(10 credits)</span>
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="explanation-loading" style="display: none;">
@@ -247,8 +285,14 @@
                 titleEl.textContent = 'Question';
             }
             
-            // Hide explanation if visible
-            document.getElementById('explanation-card').style.display = 'none';
+            // Hide explanation if visible and reset its components
+            const explanationCard = document.getElementById('explanation-card');
+            explanationCard.style.display = 'none';
+            
+            // Reset explanation elements for a clean slate
+            document.getElementById('cached-badge').style.display = 'none';
+            document.getElementById('explanation-timestamp').style.display = 'none';
+            document.getElementById('explanation-content').innerHTML = '';
         }
         
         // Function to fetch explanation from API
@@ -279,6 +323,42 @@
                     if (data.success) {
                         // The explanation is already pre-processed on the server
                         explanationContent.innerHTML = data.explanation;
+                        
+                        // Handle cached explanation indicators
+                        const cachedBadge = document.getElementById('cached-badge');
+                        const timestampEl = document.getElementById('explanation-timestamp');
+                        
+                        if (data.is_cached) {
+                            // Show cached badge and timestamp
+                            cachedBadge.style.display = 'inline-block';
+                            if (data.generated_at && timestampEl) {
+                                timestampEl.textContent = `Generated ${data.generated_at}`;
+                                timestampEl.style.display = 'inline-block';
+                            }
+                            
+                            // Add a note about using cache
+                            const cacheNoteDiv = document.createElement('div');
+                            cacheNoteDiv.className = 'alert alert-info mt-3';
+                            cacheNoteDiv.innerHTML = `
+                                <i class="fas fa-info-circle"></i> 
+                                This explanation is from your history and wasn't charged to your credits. 
+                                <button class="btn btn-sm btn-primary ms-2" onclick="document.getElementById('refresh-explanation').click();">
+                                    <i class="fas fa-sync-alt"></i> Generate Fresh Analysis
+                                </button>
+                            `;
+                            explanationContent.appendChild(cacheNoteDiv);
+                        } else {
+                            // Hide cached indicators for fresh content
+                            cachedBadge.style.display = 'none';
+                            if (timestampEl) {
+                                if (data.generated_at) {
+                                    timestampEl.textContent = data.is_new ? 'Just generated' : `Generated ${data.generated_at}`;
+                                    timestampEl.style.display = 'inline-block';
+                                } else {
+                                    timestampEl.style.display = 'none';
+                                }
+                            }
+                        }
                         
                         // Update credit display if returned from server
                         if (data.credits_remaining !== undefined) {

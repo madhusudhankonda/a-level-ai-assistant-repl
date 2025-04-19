@@ -640,9 +640,6 @@ def api_get_explanation(question_id):
                 'message': 'The paper associated with this question could not be found'
             }), 404
         
-        # Check if we already have a saved explanation
-        existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
-        
         # Check if user is authenticated
         if not current_user.is_authenticated:
             return jsonify({
@@ -651,8 +648,18 @@ def api_get_explanation(question_id):
                 'requires_login': True
             }), 403
         
-        # If requesting a new explanation via POST or no saved explanation exists
-        if request.method == 'POST' or not existing_explanation:
+        # Check if the current user has already queried this explanation
+        user_cached_explanation = UserQuery.query.filter_by(
+            user_id=current_user.id,
+            question_id=question_id,
+            query_type='explanation'
+        ).order_by(UserQuery.created_at.desc()).first()
+        
+        # Check if we have a system-wide explanation (from Explanation model)
+        existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
+        
+        # If requesting a new explanation via POST, always generate new one
+        if request.method == 'POST':
             # Credit verification - require 10 credits for new explanations
             if not current_user.has_sufficient_credits(10):
                 current_app.logger.warning(f"User {current_user.id} attempted to get new explanation without sufficient credits")
@@ -752,8 +759,32 @@ def api_get_explanation(question_id):
                     'message': f'Error generating explanation: {error_message}'
                 }), 500
         
-        # Return existing explanation for GET requests when one exists
-        processed_text = process_math_notation(existing_explanation.explanation_text)
+        # For GET requests, check if we have a cached explanation from this user
+        if user_cached_explanation and request.method == 'GET':
+            # User has already viewed this explanation - return it without charging credits
+            current_app.logger.info(f"Using cached explanation for user {current_user.id}, question {question_id}")
+            processed_text = process_math_notation(user_cached_explanation.response_text)
+            
+            return jsonify({
+                'success': True,
+                'question_id': question_id,
+                'explanation': processed_text,
+                'is_new': False,
+                'is_cached': True,
+                'credits_remaining': current_user.credits,
+                'generated_at': user_cached_explanation.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            })
+        
+        # If no user-specific cache but a general explanation exists, return that with credit charge
+        if existing_explanation:
+            processed_text = process_math_notation(existing_explanation.explanation_text)
+        else:
+            # No explanation exists at all
+            current_app.logger.error(f"No explanation found for question {question_id}")
+            return jsonify({
+                'success': False,
+                'message': 'No explanation is available for this question. Please use "Explain" to generate one.'
+            }), 404
     except Exception as e:
         current_app.logger.error(f"General error in api_get_explanation: {str(e)}")
         error_message = str(e)
@@ -769,8 +800,8 @@ def api_get_explanation(question_id):
             'message': f'An error occurred: {error_message}'
         }), 500
     
+    # At this point, we're fetching an existing explanation for the first time for this user
     # Track this query in the user's history and deduct credits
-    # This ensures credits are deducted even for viewing existing explanations
     user_query = UserQuery(
         user_id=current_user.id,
         query_type='explanation',
@@ -780,8 +811,8 @@ def api_get_explanation(question_id):
         subject=paper.subject
     )
     
-    # Deduct 10 credits for explanation (existing or new)
-    if not current_user.use_credits(10):
+    # Deduct 10 credits for explanation (first time)
+    if not current_user.has_sufficient_credits(10):
         current_app.logger.warning(f"User {current_user.id} has insufficient credits to view explanation")
         return jsonify({
             'success': False,
@@ -789,16 +820,18 @@ def api_get_explanation(question_id):
             'credits_required': True
         }), 403
         
-    # Add the query record and save
+    # Add the query record and save after deducting credits
+    current_user.use_credits(10)
     db.session.add(user_query)
     db.session.commit()
-    current_app.logger.info(f"Deducted 10 credits from user {current_user.id} for viewing explanation, new balance: {current_user.credits}")
+    current_app.logger.info(f"Deducted 10 credits from user {current_user.id} for viewing explanation first time, new balance: {current_user.credits}")
     
     return jsonify({
         'success': True,
         'question_id': question_id,
         'explanation': processed_text,
         'is_new': False,
+        'is_cached': False, # Not cached since this is first view
         'credits_remaining': current_user.credits,
         'generated_at': existing_explanation.generated_at.strftime('%Y-%m-%d %H:%M:%S')
     })
