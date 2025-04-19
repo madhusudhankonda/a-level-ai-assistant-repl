@@ -323,6 +323,101 @@ def delete_question(question_id):
     
     return redirect(url_for('admin.manage_questions', paper_id=paper_id))
 
+@admin_bp.route('/paper/<int:paper_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_paper(paper_id):
+    """Edit an existing question paper"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+        
+    paper = QuestionPaper.query.get_or_404(paper_id)
+    subjects = Subject.query.all()
+    
+    # Get the paper's current category and board information
+    current_category = None
+    current_board = None
+    current_subject = None
+    
+    if paper.category_id:
+        current_category = PaperCategory.query.get(paper.category_id)
+        if current_category:
+            current_board = ExamBoard.query.get(current_category.board_id)
+            if current_board:
+                current_subject = Subject.query.get(current_board.subject_id)
+    
+    if request.method == 'POST':
+        title = request.form.get('title')
+        subject_id = request.form.get('subject')
+        board_id = request.form.get('board_id')
+        category_id = request.form.get('category_id')
+        exam_period = request.form.get('exam_period', 'Unknown')
+        paper_type = request.form.get('paper_type', 'QP')
+        description = request.form.get('description', '')
+        
+        # Debug print to see all form data
+        current_app.logger.info(f"Form data for edit: {request.form}")
+        current_app.logger.info(f"Category ID from edit form: '{category_id}'")
+        
+        if not title or not subject_id:
+            flash('Title and subject are required', 'danger')
+            return redirect(url_for('admin.edit_paper', paper_id=paper_id))
+        
+        # Get subject name from subject_id
+        subject = Subject.query.get(subject_id)
+        if not subject:
+            flash('Invalid subject selected', 'danger')
+            return redirect(url_for('admin.edit_paper', paper_id=paper_id))
+            
+        subject_name = subject.name
+        
+        current_app.logger.info(f"Updating paper: {title}, Subject ID: {subject_id}, Subject Name: {subject_name}, Board ID: {board_id}, Category ID: {category_id}")
+        
+        # Update paper in the database
+        paper.title = title
+        paper.subject = subject_name
+        paper.exam_period = exam_period
+        paper.paper_type = paper_type
+        paper.description = description
+        
+        # Set category_id if provided
+        if category_id and category_id.strip():
+            try:
+                # Convert to integer
+                category_id_int = int(category_id)
+                if category_id_int > 0:  # Ensure it's a positive integer
+                    paper.category_id = category_id_int
+                    current_app.logger.info(f"Paper assigned to category ID: {category_id_int}")
+                else:
+                    flash('Please select a valid category for the paper', 'danger')
+                    return redirect(url_for('admin.edit_paper', paper_id=paper_id))
+            except ValueError:
+                current_app.logger.warning(f"Invalid category_id format: {category_id}")
+                flash('Invalid category format. Please select a proper category.', 'danger')
+                return redirect(url_for('admin.edit_paper', paper_id=paper_id))
+        else:
+            current_app.logger.warning("No category ID provided")
+            flash('Please select a category for the paper', 'danger')
+            return redirect(url_for('admin.edit_paper', paper_id=paper_id))
+        
+        try:
+            db.session.commit()
+            flash(f'Paper "{title}" updated successfully', 'success')
+            return redirect(url_for('admin.manage_questions', paper_id=paper.id))
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error updating paper: {str(e)}")
+            flash(f'Error updating paper: {str(e)}', 'danger')
+            return redirect(url_for('admin.edit_paper', paper_id=paper_id))
+    
+    return render_template('admin/edit_paper.html', 
+                          paper=paper, 
+                          subjects=subjects, 
+                          current_subject=current_subject,
+                          current_board=current_board,
+                          current_category=current_category)
+
 @admin_bp.route('/paper/<int:paper_id>/delete', methods=['POST'])
 @login_required
 def delete_paper(paper_id):
