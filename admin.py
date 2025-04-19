@@ -582,18 +582,40 @@ def edit_question(question_id):
                 
                 # Create the paper directory if it doesn't exist
                 paper_dir = os.path.join(get_data_folder(), f"paper_{paper.id}")
-                os.makedirs(paper_dir, exist_ok=True)
+                if not os.path.exists(paper_dir):
+                    os.makedirs(paper_dir)
+                    current_app.logger.info(f"Created directory: {paper_dir}")
                 
                 # Save the file
                 file_path = os.path.join(paper_dir, unique_filename)
-                file.save(file_path)
+                current_app.logger.info(f"Attempting to save edited image to: {file_path}")
                 
-                # Delete old image file if it exists
-                if question.image_path and os.path.exists(question.image_path):
-                    os.remove(question.image_path)
+                try:
+                    file.save(file_path)
+                    current_app.logger.info(f"Image saved successfully to: {file_path}")
                     
-                # Update the question with the new image path
-                question.image_path = file_path
+                    # Verify the file exists after saving
+                    if os.path.exists(file_path):
+                        current_app.logger.info(f"Verified: File exists at {file_path}")
+                        
+                        # Delete old image file if it exists
+                        if question.image_path and os.path.exists(question.image_path):
+                            try:
+                                os.remove(question.image_path)
+                                current_app.logger.info(f"Deleted old image: {question.image_path}")
+                            except Exception as e:
+                                current_app.logger.warning(f"Failed to delete old image: {str(e)}")
+                        
+                        # Update the question with the new image path
+                        question.image_path = file_path
+                    else:
+                        current_app.logger.error(f"Error: File was not found at {file_path} after saving!")
+                        flash("Error: Question image was not saved correctly. Please try again.", "danger")
+                        return redirect(url_for('admin.edit_question', question_id=question_id))
+                except Exception as e:
+                    current_app.logger.error(f"Error saving image: {str(e)}")
+                    flash(f"Error saving image: {str(e)}", "danger")
+                    return redirect(url_for('admin.edit_question', question_id=question_id))
         
         # Update other question fields
         if question_number:
