@@ -105,7 +105,7 @@ def signup():
         
         flash('Account created successfully! You received 50 free credits to start.', 'success')
         login_user(new_user)
-        return redirect(url_for('user.index'))
+        return redirect('/dashboard/')
     
     return render_template('auth/signup.html', form=form)
 
