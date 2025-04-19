@@ -1,6 +1,6 @@
 import os
 import stripe
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -125,10 +125,38 @@ def profile():
     # Get user queries count
     query_count = UserQuery.query.filter_by(user_id=current_user.id).count()
     
+    # Get user profile with consent information
+    user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+    
+    # Check consent status
+    ai_consent_status = "Not given"
+    consent_expiry = None
+    days_remaining = 0
+    
+    if user_profile and user_profile.last_ai_consent_date:
+        if not user_profile.ai_usage_consent_required:
+            # Calculate days until expiration
+            consent_age = datetime.utcnow() - user_profile.last_ai_consent_date
+            days_remaining = 30 - consent_age.days
+            
+            if days_remaining > 0:
+                ai_consent_status = "Active"
+                consent_expiry = user_profile.last_ai_consent_date + timedelta(days=30)
+            else:
+                ai_consent_status = "Expired"
+                user_profile.ai_usage_consent_required = True
+                db.session.commit()
+        else:
+            ai_consent_status = "Renewal required"
+    
     return render_template('auth/profile.html', 
                            user=current_user, 
                            transactions=transactions,
-                           query_count=query_count)
+                           query_count=query_count,
+                           user_profile=user_profile,
+                           ai_consent_status=ai_consent_status,
+                           consent_expiry=consent_expiry,
+                           days_remaining=days_remaining)
 
 @auth_bp.route('/profile/edit', methods=['GET', 'POST'])
 @login_required

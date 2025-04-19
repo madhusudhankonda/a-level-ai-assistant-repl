@@ -89,6 +89,49 @@
                     </h4>
                 </div>
                 <div class="card-body">
+                    <!-- AI Consent Status -->
+                    <div class="consent-status mb-4">
+                        <h5 class="card-subtitle mb-2">
+                            <i class="fas fa-shield-alt me-2 text-primary"></i>
+                            AI Usage Consent
+                        </h5>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Status:</span>
+                            {% if ai_consent_status == "Active" %}
+                                <span class="badge bg-success">{{ ai_consent_status }}</span>
+                            {% elif ai_consent_status == "Expired" or ai_consent_status == "Renewal required" %}
+                                <span class="badge bg-warning">{{ ai_consent_status }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ ai_consent_status }}</span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if ai_consent_status == "Active" %}
+                            <div class="mt-2">
+                                <small class="text-muted">Expires: {{ consent_expiry.strftime('%Y-%m-%d') }}</small>
+                                <div class="progress mt-1" style="height: 4px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ days_remaining * 100 / 30 }}%" 
+                                         aria-valuenow="{{ days_remaining }}" 
+                                         aria-valuemin="0" aria-valuemax="30">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ days_remaining }} days remaining</small>
+                            </div>
+                        {% elif ai_consent_status == "Expired" or ai_consent_status == "Renewal required" %}
+                            <div class="alert alert-warning mt-2 p-2 small">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                You need to renew your AI consent to continue using AI features
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary mt-2 p-2 small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                AI features require your consent before use
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                     <div class="activity-stat mb-3">
                         <div class="d-flex justify-content-between">
                             <span>
@@ -119,6 +162,25 @@
                     </div>
                     
                     <div class="d-grid gap-2 mt-4">
+                        <!-- Add consent management button -->
+                        {% if ai_consent_status == "Active" %}
+                            <button type="button" id="manage-consent-btn" class="btn btn-outline-primary mb-2" 
+                                    data-bs-toggle="modal" data-bs-target="#aiConsentModal">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                Manage AI Consent
+                            </button>
+                        {% elif ai_consent_status == "Expired" or ai_consent_status == "Renewal required" or ai_consent_status == "Not given" %}
+                            <button type="button" id="provide-consent-btn" class="btn btn-primary mb-2" 
+                                    data-bs-toggle="modal" data-bs-target="#aiConsentModal">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                {% if ai_consent_status == "Not given" %}
+                                    Provide AI Consent
+                                {% else %}
+                                    Renew AI Consent
+                                {% endif %}
+                            </button>
+                        {% endif %}
+                        
                         <a href="{{ url_for('auth.query_history') }}" class="btn btn-outline-info mb-2">
                             <i class="fas fa-history me-2"></i>
                             View AI Interaction History
@@ -232,6 +294,65 @@
         </div>
     </div>
 </div>
+<!-- AI Consent Modal -->
+<div class="modal fade" id="aiConsentModal" tabindex="-1" aria-labelledby="aiConsentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title" id="aiConsentModalLabel">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    AI Usage Consent
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="consent-info mb-4">
+                    <h5>About AI in the A-Level Assistant</h5>
+                    <p>Our application uses artificial intelligence (AI) to help analyze questions, provide explanations, and give feedback on your answers. To provide these services, we need to process your data using our AI systems.</p>
+                    
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>What you should know:</h6>
+                        <ul>
+                            <li>When you use AI features, the question images and your answers may be processed by our AI system.</li>
+                            <li>This processing helps us generate personalized explanations and feedback.</li>
+                            <li>We use OpenAI's API which has strict data handling policies.</li>
+                            <li>Your data is not used to train other AI models.</li>
+                            <li>You can revoke your consent at any time from your profile.</li>
+                            <li>Consent expires after 30 days and needs to be renewed for continued use of AI features.</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="consent-form">
+                    <h5>Your Consent Options</h5>
+                    <form id="aiConsentForm" action="{{ url_for('user.record_ai_consent') }}" method="POST">
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="aiConsentCheck" name="ai_consent" required>
+                            <label class="form-check-label" for="aiConsentCheck">
+                                I consent to the processing of my data (including images uploaded by me) using AI for the purpose of generating 
+                                explanations and providing feedback on my work. I understand this consent is valid for 30 days.
+                            </label>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="ageConfirmCheck" name="age_confirm" required>
+                            <label class="form-check-label" for="ageConfirmCheck">
+                                I confirm that I am at least 16 years old or have parental/guardian consent to use these AI features.
+                            </label>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="submitConsent" class="btn btn-primary">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Provide Consent
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -254,4 +375,63 @@
     font-weight: bold;
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // AI Consent form submission
+    const consentForm = document.getElementById('aiConsentForm');
+    const submitButton = document.getElementById('submitConsent');
+    
+    if (submitButton) {
+        submitButton.addEventListener('click', function() {
+            if (consentForm.checkValidity()) {
+                // Submit the form via AJAX
+                const formData = new FormData(consentForm);
+                
+                fetch(consentForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Hide the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('aiConsentModal'));
+                        modal.hide();
+                        
+                        // Show success message
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                        alertDiv.innerHTML = `
+                            <strong>Success!</strong> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        
+                        // Insert alert at the top of the page
+                        document.querySelector('.container').prepend(alertDiv);
+                        
+                        // Reload the page after a short delay to update consent status
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        // Show error
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            } else {
+                // Trigger browser's built-in validation
+                consentForm.reportValidity();
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
