@@ -90,6 +90,39 @@ def view_board(board_id):
         categories=categories
     )
 
+@user_bp.route('/board/<int:board_id>/exams')
+def view_board_exams(board_id):
+    """View papers for a specific exam board organized by exam period"""
+    board = ExamBoard.query.get_or_404(board_id)
+    
+    # Get all papers for this board across all categories
+    papers_by_period = {}
+    
+    # Get all categories for this board
+    categories = PaperCategory.query.filter_by(board_id=board_id).all()
+    
+    # For each category, get the papers and organize by exam period
+    for category in categories:
+        papers = QuestionPaper.query.filter_by(category_id=category.id).all()
+        for paper in papers:
+            period = paper.exam_period or "Unknown"
+            if period not in papers_by_period:
+                papers_by_period[period] = []
+            
+            # Add category information to the paper for display
+            paper.category_name = category.name
+            papers_by_period[period].append(paper)
+    
+    # Sort the periods (typically these would be like "June 2023", "November 2022", etc.)
+    sorted_periods = sorted(papers_by_period.keys(), reverse=True)
+    
+    return render_template(
+        'user/board_exams_view.html',
+        board=board,
+        papers_by_period=papers_by_period,
+        sorted_periods=sorted_periods
+    )
+
 @user_bp.route('/category/<int:category_id>')
 def view_category(category_id):
     """View a specific paper category and its papers"""

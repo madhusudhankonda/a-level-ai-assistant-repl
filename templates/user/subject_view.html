@@ -43,9 +43,14 @@
                                     <p class="card-text">{{ board.description }}</p>
                                 </div>
                                 <div class="card-footer bg-light">
-                                    <a href="{{ url_for('user.view_board', board_id=board.id) }}" class="btn btn-outline-primary btn-sm d-block">
-                                        Browse Categories
-                                    </a>
+                                    <div class="d-flex flex-column gap-2">
+                                        <a href="{{ url_for('user.view_board_exams', board_id=board.id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-calendar-alt me-1"></i> View Papers by Exam Period
+                                        </a>
+                                        <a href="{{ url_for('user.view_board', board_id=board.id) }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-th-list me-1"></i> Browse by Category
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
