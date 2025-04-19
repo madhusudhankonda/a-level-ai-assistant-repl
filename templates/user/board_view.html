@@ -18,6 +18,9 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="mb-0">{{ board.name }} {{ board.subject.name }} Categories</h1>
                 <div class="d-flex">
+                    <a href="{{ url_for('user.view_board_exams', board_id=board.id) }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-calendar-alt me-1"></i> View Papers by Year
+                    </a>
                     <a href="{{ url_for('user.camera_capture') }}?mode=explanation-only" class="btn btn-primary me-2">
                         <i class="fas fa-camera me-1"></i> Capture Question
                     </a>

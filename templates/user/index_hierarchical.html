@@ -21,7 +21,7 @@
                 </div>
                 <div class="card-body">
                     <form id="paperBrowserForm" class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="subjectSelect" class="form-label">Subject</label>
                             <select id="subjectSelect" class="form-select">
                                 <option value="">Select a subject...</option>
@@ -35,7 +35,7 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="boardSelect" class="form-label">Exam Board</label>
                             <select id="boardSelect" class="form-select" disabled>
                                 <option value="">Select an exam board...</option>
@@ -43,18 +43,31 @@
                             </select>
                         </div>
                         
-                        <div class="col-md-4">
-                            <label for="categorySelect" class="form-label">Paper Category</label>
-                            <select id="categorySelect" class="form-select" disabled>
-                                <option value="">Select a paper category...</option>
-                                <!-- Will be populated dynamically -->
-                            </select>
+                        <div class="col-12 mt-4 text-center">
+                            <button type="button" id="yearViewButton" class="btn btn-primary me-3" disabled>
+                                <i class="fas fa-calendar-alt me-2"></i> View Papers by Year
+                            </button>
+                            <button type="button" id="showCategoriesBtn" class="btn btn-outline-primary" disabled>
+                                <i class="fas fa-th-list me-2"></i> View by Category
+                            </button>
                         </div>
                         
-                        <div class="col-12 mt-4 text-center">
-                            <button type="button" id="browseButton" class="btn btn-primary" disabled>
-                                <i class="fas fa-search me-2"></i> Browse Papers
-                            </button>
+                        <div id="categorySection" class="col-12 mt-3" style="display: none;">
+                            <div class="alert alert-info">
+                                <div class="mb-3">
+                                    <label for="categorySelect" class="form-label">Paper Category</label>
+                                    <select id="categorySelect" class="form-select" disabled>
+                                        <option value="">Select a paper category...</option>
+                                        <!-- Will be populated dynamically -->
+                                    </select>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <button type="button" id="browseButton" class="btn btn-primary" disabled>
+                                        <i class="fas fa-search me-2"></i> Browse Category Papers
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -150,15 +163,25 @@
         console.log('Boards Data:', boardsData);
         console.log('Categories Data:', categoriesData);
         
+        // New Elements
+        const yearViewButton = document.getElementById('yearViewButton');
+        const showCategoriesBtn = document.getElementById('showCategoriesBtn');
+        const categorySection = document.getElementById('categorySection');
+        
         // Event Listeners
         subjectSelect.addEventListener('change', function() {
             const selectedSubjectId = parseInt(this.value);
             console.log('Selected Subject ID:', selectedSubjectId);
             
-            // Clear and disable subsequent dropdowns
+            // Clear and disable subsequent dropdowns and buttons
             clearDropdown(boardSelect, 'Select an exam board...');
             clearDropdown(categorySelect, 'Select a paper category...');
             browseButton.disabled = true;
+            yearViewButton.disabled = true;
+            showCategoriesBtn.disabled = true;
+            
+            // Hide the category section
+            categorySection.style.display = 'none';
             
             if (selectedSubjectId) {
                 // Enable board dropdown and populate with filtered options
@@ -186,9 +209,11 @@
                     }
                 }
             } else {
-                // Disable all downstream selects
+                // Disable all downstream selects and buttons
                 boardSelect.disabled = true;
                 categorySelect.disabled = true;
+                yearViewButton.disabled = true;
+                showCategoriesBtn.disabled = true;
             }
         });
         
@@ -200,7 +225,14 @@
             clearDropdown(categorySelect, 'Select a paper category...');
             browseButton.disabled = true;
             
+            // Always hide the category section when board changes
+            categorySection.style.display = 'none';
+            
             if (selectedBoardId) {
+                // Enable year view button and show categories button
+                yearViewButton.disabled = false;
+                showCategoriesBtn.disabled = false;
+                
                 // Enable category dropdown and populate with filtered options
                 categorySelect.disabled = false;
                 
@@ -226,9 +258,29 @@
                     }
                 }
             } else {
-                // Disable category select
+                // Disable all downstream selects and buttons
                 categorySelect.disabled = true;
+                yearViewButton.disabled = true;
+                showCategoriesBtn.disabled = true;
             }
+        });
+        
+        // Year View Button - Navigate to year-based view
+        yearViewButton.addEventListener('click', function() {
+            const boardId = boardSelect.value;
+            if (boardId) {
+                console.log('Navigating to board exams view by year for board ID:', boardId);
+                // Navigate to the year-based exam paper view
+                window.location.href = "{{ url_for('user.view_board_exams', board_id=0) }}".replace('/0', '/' + boardId);
+            } else {
+                console.error('No board selected');
+            }
+        });
+        
+        // Show Categories Button - Show category selection
+        showCategoriesBtn.addEventListener('click', function() {
+            // Show the category section
+            categorySection.style.display = 'block';
         });
         
         categorySelect.addEventListener('change', function() {
