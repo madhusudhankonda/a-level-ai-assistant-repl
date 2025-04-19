@@ -929,11 +929,28 @@ def api_get_explanation(question_id):
                 })
         else:
             # No explanation exists at all
-            current_app.logger.error(f"No explanation found for question {question_id}")
+            current_app.logger.warning(f"No explanation found for question {question_id}")
+            
+            # Instead of returning a 404 error, provide a more user-friendly response
+            # that will display nicely in the UI
+            friendly_message = """
+            <div class="alert alert-info">
+                <strong>No explanation available yet</strong>
+                <p>This question hasn't been explained yet. Click the "Explain this question" 
+                button to generate an explanation.</p>
+                <p><small>This won't cost any credits until you click the button.</small></p>
+            </div>
+            """
+            
             return jsonify({
-                'success': False,
-                'message': 'No explanation is available for this question. Please use "Explain" to generate one.'
-            }), 404
+                'success': True,
+                'question_id': question_id,
+                'explanation': friendly_message,
+                'is_new': False,
+                'is_cached': False,
+                'requires_generation': True,
+                'credits_remaining': current_user.credits if current_user.is_authenticated else 0
+            })
     except Exception as e:
         current_app.logger.error(f"General error in api_get_explanation: {str(e)}")
         error_message = str(e)
