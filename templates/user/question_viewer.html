@@ -242,6 +242,23 @@
             displayEl.innerHTML = '';
             displayEl.appendChild(imgEl);
             
+            // Check if this is a fallback/sample image using a special callback
+            imgEl.onload = function() {
+                // Try to detect sample images by checking response headers
+                fetch(imgUrl, { method: 'HEAD' })
+                    .then(response => {
+                        if (response.headers.get('X-Is-Fallback-Image') === 'true') {
+                            // Create a warning banner for sample images
+                            const warningEl = document.createElement('div');
+                            warningEl.className = 'alert alert-warning mt-2';
+                            warningEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' +
+                                'This is a sample image. The actual question image is not available.';
+                            displayEl.insertBefore(warningEl, displayEl.firstChild.nextSibling);
+                        }
+                    })
+                    .catch(err => console.log('Error checking image headers:', err));
+            };
+            
             // Add "Explain" button with sparkle stars
             const explainBtnContainer = document.createElement('div');
             explainBtnContainer.className = 'd-flex flex-column align-items-center';

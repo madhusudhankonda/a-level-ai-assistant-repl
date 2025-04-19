@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app, send_file, flash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app, send_file, flash, make_response
 import os
 import base64
 import re
@@ -263,7 +263,10 @@ def get_question_image(question_id):
             for path in sample_paths:
                 if os.path.isfile(path):
                     current_app.logger.warning(f"Using sample image instead: {path}")
-                    return send_file(path, mimetype='image/png')
+                    # Set a cookie to indicate this is a fallback image
+                    response = make_response(send_file(path, mimetype='image/png'))
+                    response.headers['X-Is-Fallback-Image'] = 'true'
+                    return response
             
             # If all attempts fail, log the error
             return jsonify({
