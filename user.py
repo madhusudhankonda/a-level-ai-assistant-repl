@@ -928,29 +928,147 @@ def api_get_explanation(question_id):
                     'generated_at': existing_explanation.generated_at.strftime('%Y-%m-%d %H:%M:%S')
                 })
         else:
-            # No explanation exists at all
-            current_app.logger.warning(f"No explanation found for question {question_id}")
+            # No explanation exists at all - for GET requests, we'll automatically generate one 
+            # if the user has enough credits
+            current_app.logger.info(f"No explanation found for question {question_id}, attempting auto-generation")
             
-            # Instead of returning a 404 error, provide a more user-friendly response
-            # that will display nicely in the UI
-            friendly_message = """
-            <div class="alert alert-info">
-                <strong>No explanation available yet</strong>
-                <p>This question hasn't been explained yet. Click the "Explain this question" 
-                button to generate an explanation.</p>
-                <p><small>This won't cost any credits until you click the button.</small></p>
-            </div>
-            """
-            
-            return jsonify({
-                'success': True,
-                'question_id': question_id,
-                'explanation': friendly_message,
-                'is_new': False,
-                'is_cached': False,
-                'requires_generation': True,
-                'credits_remaining': current_user.credits if current_user.is_authenticated else 0
-            })
+            # Credit verification - require 10 credits for new explanations
+            if not current_user.has_sufficient_credits(10):
+                current_app.logger.warning(f"User {current_user.id} has insufficient credits for auto-generation")
+                # Show a "need credits" message instead of generating explanation
+                insufficient_credits_message = """
+                <div class="alert alert-warning">
+                    <strong>Insufficient Credits</strong>
+                    <p>You need 10 credits to generate an explanation for this question.</p>
+                    <a href="/buy-credits" class="btn btn-warning btn-sm">Buy Credits</a>
+                </div>
+                """
+                return jsonify({
+                    'success': True,
+                    'question_id': question_id,
+                    'explanation': insufficient_credits_message,
+                    'is_new': False,
+                    'credits_required': True,
+                    'credits_remaining': current_user.credits
+                })
+                
+            # User has enough credits, so we'll generate an explanation automatically
+            try:
+                # Show loading message while generating
+                current_app.logger.info(f"Auto-generating explanation for question {question_id}")
+                
+                # Get the image file for the explanation
+                image_path = question.image_path
+                current_app.logger.info(f"Looking for image at path: {image_path}")
+                
+                # Create a list of possible paths to try
+                paths_to_try = [
+                    image_path,  # Original path from database
+                    image_path.replace('/home/runner/workspace/', './'),  # Relative path
+                    f"./data/{os.path.basename(os.path.dirname(image_path))}/{os.path.basename(image_path)}",  # Local data folder
+                ]
+                
+                # Try each path
+                image_found = False
+                for path in paths_to_try:
+                    current_app.logger.info(f"Trying path: {path}")
+                    if os.path.isfile(path):
+                        current_app.logger.info(f"Found image at: {path}")
+                        image_path = path
+                        image_found = True
+                        break
+                
+                if not image_found:
+                    raise FileNotFoundError(f"Could not find image file for question {question_id}")
+                
+                # Read the image and encode it to base64 with data URI format
+                with open(image_path, "rb") as image_file:
+                    image_bytes = image_file.read()
+                    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                    data_uri = f"data:image/png;base64,{image_base64}"
+                
+                # Generate explanation using OpenAI with data URI format
+                current_app.logger.info(f"Generating explanation for question {question_id}, subject: {paper.subject}")
+                explanation_text = generate_explanation(
+                    data_uri,
+                    paper.subject
+                )
+                
+                # Process the mathematical notation
+                processed_text = process_math_notation(explanation_text)
+                
+                # Save the explanation in the database
+                explanation = Explanation(
+                    question_id=question_id,
+                    explanation_text=explanation_text
+                )
+                
+                # Create a user query record
+                user_query = UserQuery(
+                    user_id=current_user.id,
+                    query_type='explanation',
+                    question_id=question_id,
+                    response_text=explanation_text,
+                    credits_used=10,
+                    subject=paper.subject
+                )
+                
+                # Deduct 10 credits for the AI explanation
+                if not current_user.use_credits(10):
+                    raise ValueError("Insufficient credits")
+                
+                # Save the records
+                db.session.add(explanation)
+                db.session.add(user_query)
+                db.session.commit()
+                
+                current_app.logger.info(f"Generated explanation for question {question_id}")
+                
+                return jsonify({
+                    'success': True,
+                    'question_id': question_id,
+                    'explanation': processed_text,
+                    'is_new': True,
+                    'is_auto_generated': True,
+                    'credits_remaining': current_user.credits
+                })
+                
+            except Exception as gen_error:
+                current_app.logger.error(f"Error auto-generating explanation: {str(gen_error)}")
+                
+                # If OpenAI API failed, return a friendly error message
+                error_message = str(gen_error)
+                if "quota" in error_message.lower() or "exceeded" in error_message.lower() or "unavailable" in error_message.lower():
+                    service_error_message = """
+                    <div class="alert alert-danger">
+                        <strong>AI Service Unavailable</strong>
+                        <p>The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later.</p>
+                    </div>
+                    """
+                    return jsonify({
+                        'success': True,
+                        'question_id': question_id,
+                        'explanation': service_error_message,
+                        'service_unavailable': True,
+                        'admin_message': error_message if current_user.is_admin else None
+                    })
+                
+                # Generic error message for other failures
+                loading_message = """
+                <div class="alert alert-info">
+                    <strong>Generating Explanation</strong>
+                    <p>We're working on generating an explanation for this question.</p>
+                    <p>Click the "Explain this question" button below to try again.</p>
+                </div>
+                """
+                return jsonify({
+                    'success': True,
+                    'question_id': question_id,
+                    'explanation': loading_message,
+                    'is_new': False,
+                    'generation_error': True,
+                    'credits_remaining': current_user.credits
+                })
     except Exception as e:
         current_app.logger.error(f"General error in api_get_explanation: {str(e)}")
         error_message = str(e)
