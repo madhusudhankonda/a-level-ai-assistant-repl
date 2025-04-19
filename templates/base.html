@@ -84,7 +84,7 @@
     
     {% block styles %}{% endblock %}
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
@@ -179,6 +179,21 @@
     {% endwith %}
     
     {% block content %}{% endblock %}
+    
+    <!-- Footer with Terms and Privacy -->
+    <footer class="mt-auto py-3 bg-dark text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 A-Level AI Assistant. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="{{ url_for('terms') }}" class="text-white me-3">Terms and Conditions</a>
+                    <a href="{{ url_for('privacy') }}" class="text-white">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
     
     <!-- Toast container for notifications -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Terms and Conditions - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Terms and Conditions</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">1. Acceptance of Terms</h2>
+            <p>By accessing or using the A-Level AI Assistant service, you agree to be bound by these Terms and Conditions and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.</p>
+            
+            <h2 class="h5 mb-3">2. Use of AI Services</h2>
+            <p>Our platform uses artificial intelligence to provide educational assistance. By using our AI services, you acknowledge:</p>
+            <ul>
+                <li>AI-generated content may not always be accurate or complete</li>
+                <li>The AI service is meant to supplement, not replace, traditional educational resources</li>
+                <li>Your inputs (questions, images) will be processed by our AI systems to generate responses</li>
+                <li>We may use anonymized inputs to improve our services</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">3. Image Capture and Processing</h2>
+            <p>Our service allows you to capture or upload images of questions and your work. By using these features:</p>
+            <ul>
+                <li>You grant us permission to process these images using AI services</li>
+                <li>You confirm that any images you upload do not infringe on third-party rights</li>
+                <li>You understand that captured images may be temporarily stored for processing</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">4. Credits and Payments</h2>
+            <p>Our service operates on a credit-based system:</p>
+            <ul>
+                <li>Credits are required to access certain AI features</li>
+                <li>Purchased credits are non-refundable</li>
+                <li>We reserve the right to modify credit pricing or allocation</li>
+                <li>Payment processing is handled by Stripe, subject to their terms and conditions</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">5. User Accounts</h2>
+            <p>To access certain features, you must register for an account:</p>
+            <ul>
+                <li>You are responsible for maintaining the confidentiality of your account information</li>
+                <li>You are responsible for all activities that occur under your account</li>
+                <li>You must provide accurate and complete information when creating an account</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">6. Privacy Policy</h2>
+            <p>Your use of the A-Level AI Assistant is also governed by our Privacy Policy, which outlines how we collect, use, and protect your personal information.</p>
+            
+            <h2 class="h5 mb-3">7. Data Collection and Usage</h2>
+            <p>We collect data to improve our services:</p>
+            <ul>
+                <li>We may collect usage data, including interactions with our AI services</li>
+                <li>We may use anonymized queries to train and improve our AI systems</li>
+                <li>Personal information is handled according to our Privacy Policy</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">8. Intellectual Property</h2>
+            <p>The content on this service, including text, graphics, logos, and software, is the property of A-Level AI Assistant and is protected by intellectual property laws.</p>
+            
+            <h2 class="h5 mb-3">9. Limitation of Liability</h2>
+            <p>A-Level AI Assistant shall not be liable for any direct, indirect, incidental, special, consequential or punitive damages resulting from your use of or inability to use the service.</p>
+            
+            <h2 class="h5 mb-3">10. Changes to Terms</h2>
+            <p>We reserve the right to modify these terms at any time. We will provide notice of significant changes by updating the date at the top of this page.</p>
+            
+            <h2 class="h5 mb-3">11. Governing Law</h2>
+            <p>These Terms shall be governed by and construed in accordance with the laws of the United Kingdom, without regard to its conflict of law provisions.</p>
+            
+            <h2 class="h5 mb-3">12. Contact Information</h2>
+            <p>For any questions about these Terms, please contact us at support@alevelai.com.</p>
+            
+            <div class="alert alert-info mt-4">
+                <p class="mb-0"><strong>Last Updated:</strong> April 19, 2025</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mb-4">
+        <a href="{{ url_for('landing') }}" class="btn btn-primary">
+            <i class="fas fa-home me-1"></i> Return to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

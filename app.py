@@ -87,3 +87,14 @@ def mobile_design():
 def mobile_design_files(filename):
     from flask import send_from_directory
     return send_from_directory('mobile_design', filename)
+
+# Terms and Privacy routes
+@app.route('/terms')
+def terms():
+    from flask import render_template
+    return render_template('terms.html')
+
+@app.route('/privacy')
+def privacy():
+    from flask import render_template
+    return render_template('privacy.html')

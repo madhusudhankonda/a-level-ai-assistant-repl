@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Privacy Policy</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">1. Introduction</h2>
+            <p>At A-Level AI Assistant, we respect your privacy and are committed to protecting your personal data. This Privacy Policy explains how we collect, use, and safeguard your information when you use our service.</p>
+            
+            <h2 class="h5 mb-3">2. Information We Collect</h2>
+            <p>We collect several types of information, including:</p>
+            <ul>
+                <li><strong>Personal Information:</strong> Name, email address, educational institution, grade level</li>
+                <li><strong>Account Information:</strong> Login credentials, profile details</li>
+                <li><strong>Usage Data:</strong> Information about how you interact with our service</li>
+                <li><strong>Content:</strong> Questions, answers, and images you submit</li>
+                <li><strong>Payment Information:</strong> When you purchase credits (processed through Stripe)</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">3. How We Use Your Information</h2>
+            <p>We use the collected information for various purposes, including:</p>
+            <ul>
+                <li>Providing and maintaining our service</li>
+                <li>Processing your AI assistance requests</li>
+                <li>Managing your account</li>
+                <li>Analyzing usage patterns to improve our service</li>
+                <li>Training our AI systems (using anonymized data)</li>
+                <li>Communicating with you about your account or service changes</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">4. AI Processing and Image Data</h2>
+            <p>Our service uses artificial intelligence to process questions and provide educational assistance:</p>
+            <ul>
+                <li>Images you upload (questions, handwritten answers) are processed using AI technology</li>
+                <li>These images may be temporarily stored for processing</li>
+                <li>We may use anonymized content to improve our AI systems</li>
+                <li>We do not share your specific content with third parties except as described in this policy</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">5. Data Sharing and Third Parties</h2>
+            <p>We may share your information with:</p>
+            <ul>
+                <li><strong>Service Providers:</strong> Third-party companies that assist in operating our service (e.g., OpenAI for AI processing, Stripe for payment processing)</li>
+                <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">6. Data Security</h2>
+            <p>We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet or electronic storage is 100% secure, so we cannot guarantee absolute security.</p>
+            
+            <h2 class="h5 mb-3">7. Your Data Rights</h2>
+            <p>Depending on your location, you may have certain rights regarding your personal data, including:</p>
+            <ul>
+                <li>The right to access your data</li>
+                <li>The right to correct inaccurate data</li>
+                <li>The right to request deletion of your data</li>
+                <li>The right to restrict or object to the processing of your data</li>
+                <li>The right to data portability</li>
+            </ul>
+            
+            <h2 class="h5 mb-3">8. Children's Privacy</h2>
+            <p>Our service is intended for use by A-Level students (typically 16-18 years old). If you are under 16, please ensure you have parental consent before using our service or providing any personal information.</p>
+            
+            <h2 class="h5 mb-3">9. Cookies and Tracking</h2>
+            <p>We use cookies and similar tracking technologies to enhance your experience on our website. You can control cookies through your browser settings.</p>
+            
+            <h2 class="h5 mb-3">10. Changes to This Privacy Policy</h2>
+            <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date.</p>
+            
+            <h2 class="h5 mb-3">11. Contact Us</h2>
+            <p>If you have any questions about this Privacy Policy, please contact us at privacy@alevelai.com.</p>
+            
+            <div class="alert alert-info mt-4">
+                <p class="mb-0"><strong>Last Updated:</strong> April 19, 2025</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center mb-4">
+        <a href="{{ url_for('landing') }}" class="btn btn-primary">
+            <i class="fas fa-home me-1"></i> Return to Home
+        </a>
+    </div>
+</div>
+{% endblock %}
