@@ -640,25 +640,35 @@ def api_get_explanation(question_id):
                 'message': 'The paper associated with this question could not be found'
             }), 404
         
-        # Check if user is authenticated
+        # Check if user is authenticated - needed for all operations
         if not current_user.is_authenticated:
+            current_app.logger.warning("Unauthenticated user attempted to access explanation")
             return jsonify({
                 'success': False,
                 'message': 'You need to be logged in to view explanations.',
                 'requires_login': True
             }), 403
         
-        # Check if the current user has already queried this explanation
+        # Log the user and request method for debugging
+        current_app.logger.info(f"User {current_user.id} requesting explanation for question {question_id} via {request.method}")
+        
+        # Check if the current user has already queried this explanation (for caching)
         user_cached_explanation = UserQuery.query.filter_by(
             user_id=current_user.id,
             question_id=question_id,
             query_type='explanation'
         ).order_by(UserQuery.created_at.desc()).first()
         
+        # Log whether we found a cached explanation
+        if user_cached_explanation:
+            current_app.logger.info(f"Found cached explanation from {user_cached_explanation.created_at}")
+        else:
+            current_app.logger.info("No cached explanation found")
+        
         # Check if we have a system-wide explanation (from Explanation model)
         existing_explanation = Explanation.query.filter_by(question_id=question_id).order_by(Explanation.generated_at.desc()).first()
         
-        # If requesting a new explanation via POST, always generate new one
+        # If requesting a new explanation via POST, always generate new one regardless of cache
         if request.method == 'POST':
             # Credit verification - require 10 credits for new explanations
             if not current_user.has_sufficient_credits(10):
@@ -760,15 +770,22 @@ def api_get_explanation(question_id):
                 }), 500
         
         # For GET requests, check if we have a cached explanation from this user
-        if user_cached_explanation and request.method == 'GET':
+        if request.method == 'GET' and user_cached_explanation:
             # User has already viewed this explanation - return it without charging credits
             current_app.logger.info(f"Using cached explanation for user {current_user.id}, question {question_id}")
             processed_text = process_math_notation(user_cached_explanation.response_text)
             
+            # Add a special note that this was a cached explanation
+            explanation_with_cache_note = f"""
+            <div class="cached-explanation">
+                {processed_text}
+            </div>
+            """
+            
             return jsonify({
                 'success': True,
                 'question_id': question_id,
-                'explanation': processed_text,
+                'explanation': explanation_with_cache_note,
                 'is_new': False,
                 'is_cached': True,
                 'credits_remaining': current_user.credits,
