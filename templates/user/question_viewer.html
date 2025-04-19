@@ -232,7 +232,9 @@
             const titleEl = document.getElementById('current-question-title');
             
             // Show the question image
-            const imgUrl = "{{ url_for('user.get_question_image', question_id=0) }}".replace('0', questionId);
+            // Add timestamp to prevent browser caching
+            const timestamp = new Date().getTime();
+            const imgUrl = "{{ url_for('user.get_question_image', question_id=0) }}".replace('0', questionId) + "?t=" + timestamp;
             const imgEl = document.createElement('img');
             imgEl.src = imgUrl;
             imgEl.className = 'img-fluid question-image mb-3';

@@ -258,7 +258,14 @@ def get_question_image(question_id):
                 current_app.logger.info(f"Trying path: {path}")
                 if os.path.isfile(path):
                     current_app.logger.info(f"Found image at: {path}")
-                    return send_file(path, mimetype='image/png')
+                    # Add a timestamp to prevent browser caching
+                    response = make_response(send_file(path, mimetype='image/png'))
+                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = '0'
+                    # Add a timestamp as query param to force fresh load
+                    response.headers['X-Timestamp'] = str(datetime.now().timestamp())
+                    return response
             
             # If we get here, no image was found
             current_app.logger.error(f"Image file not found in any of these locations: {', '.join(paths_to_try)}")
