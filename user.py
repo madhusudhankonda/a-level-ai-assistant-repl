@@ -66,6 +66,48 @@ def test_openai_api():
         'message': message
     })
 
+@user_bp.route('/api/check-ai-consent', methods=['GET'])
+@login_required
+def check_ai_consent():
+    """API endpoint to check if user has consented to AI usage"""
+    try:
+        # Get user profile
+        user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+        
+        # If no profile or consent required, user hasn't consented
+        if not user_profile or user_profile.ai_usage_consent_required:
+            return jsonify({
+                'success': True,
+                'consent_given': False
+            })
+        
+        # Check if consent was given within the last 30 days
+        if user_profile.last_ai_consent_date:
+            consent_age = datetime.utcnow() - user_profile.last_ai_consent_date
+            # If consent is older than 30 days, require new consent
+            if consent_age.days > 30:
+                user_profile.ai_usage_consent_required = True
+                db.session.commit()
+                return jsonify({
+                    'success': True,
+                    'consent_given': False,
+                    'reason': 'Consent expired'
+                })
+        
+        # User has valid consent
+        return jsonify({
+            'success': True,
+            'consent_given': True,
+            'last_consent_date': user_profile.last_ai_consent_date.isoformat() if user_profile.last_ai_consent_date else None
+        })
+    
+    except Exception as e:
+        current_app.logger.error(f"Error checking AI consent: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error checking consent: {str(e)}'
+        }), 500
+
 @user_bp.route('/api/record-ai-consent', methods=['POST'])
 @login_required
 def record_ai_consent():

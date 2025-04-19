@@ -3,6 +3,20 @@
 {% block title %}Student Answer Feedback - A-Level AI Assistant{% endblock %}
 
 {% block content %}
+{% include "user/ai_consent_modal.html" %}
+
+<!-- Toast for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto" id="toast-title">Notification</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toast-body">
+      Message goes here
+    </div>
+  </div>
+</div>
 <div class="row">
     <div class="col-12 mb-4">
         <h1 class="mb-4 d-flex align-items-center">
@@ -723,7 +737,54 @@
         });
         
         // Analyze button (after capturing image)
-        analyzeBtn.addEventListener('click', function() {
+        // Function to check if user has consented to AI usage
+        async function checkAIConsent() {
+            // For non-logged in users, we don't need to check
+            {% if not current_user.is_authenticated %}
+                return false;
+            {% endif %}
+            
+            try {
+                // Make API call to check current user's consent status
+                const response = await fetch('/dashboard/api/check-ai-consent');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    console.error('Error checking consent:', data.message);
+                    return false;
+                }
+                
+                return data.consent_given;
+            } catch (error) {
+                console.error('Error checking AI consent:', error);
+                return false;
+            }
+        }
+        
+        // Initialize consent modal
+        let aiConsentModal;
+        document.addEventListener('DOMContentLoaded', function() {
+            aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
+        });
+        
+        analyzeBtn.addEventListener('click', async function() {
+            // First check if user is logged in
+            {% if not current_user.is_authenticated %}
+                // Redirect to login page
+                window.location.href = "{{ url_for('auth.login', next=request.path) }}";
+                return;
+            {% endif %}
+            
+            // Check if user has consented to AI usage
+            const hasConsent = await checkAIConsent();
+            
+            if (!hasConsent) {
+                // Show consent modal
+                aiConsentModal.show();
+                return;
+            }
+            
+            // User has consent, proceed with analysis
             // Disable the analyze button during processing
             analyzeBtn.disabled = true;
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
