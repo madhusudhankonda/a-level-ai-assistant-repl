@@ -69,6 +69,8 @@ def test_openai_api():
 @user_bp.route('/api/check-ai-consent', methods=['GET'])
 @login_required
 def check_ai_consent():
+    """Check if the user has consented to AI usage"""
+    current_app.logger.info(f"check-ai-consent endpoint called by user {current_user.id}")
     """API endpoint to check if user has consented to AI usage"""
     try:
         # Get user profile

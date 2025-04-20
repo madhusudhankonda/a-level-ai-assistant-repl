@@ -56,7 +56,7 @@ from user import user_bp
 from auth import auth_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
-app.register_blueprint(user_bp, url_prefix='/dashboard')
+app.register_blueprint(user_bp, url_prefix='')
 app.register_blueprint(auth_bp, url_prefix='/')
 
 # Root route - redirect to login or dashboard
