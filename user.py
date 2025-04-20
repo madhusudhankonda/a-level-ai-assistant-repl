@@ -440,6 +440,8 @@ def process_math_notation(text):
 @user_bp.route('/api/analyze-captured-image', methods=['POST'])
 @login_required
 def analyze_captured_image():
+    """API endpoint to analyze a captured image of a question"""
+    current_app.logger.info(f"analyze-captured-image endpoint called by user {current_user.id}")
     """API endpoint to analyze a question image captured with the camera"""
     try:
         current_app.logger.info("Received image analysis request")
@@ -656,6 +658,8 @@ def analyze_captured_image():
 @user_bp.route('/api/analyze-answer', methods=['POST'])
 @login_required
 def analyze_answer():
+    """API endpoint to analyze a student's answer"""
+    current_app.logger.info(f"analyze-answer endpoint called by user {current_user.id}")
     """API endpoint to analyze both question and student answer images"""
     try:
         current_app.logger.info("Received answer analysis request")
