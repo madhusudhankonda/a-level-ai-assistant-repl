@@ -49,6 +49,13 @@ with app.app_context():
     # Create all tables
     db.create_all()
     logger.info("Database tables created")
+    
+    # Validate the OpenAI API key
+    openai_api_key = os.environ.get('OPENAI_API_KEY')
+    if openai_api_key:
+        logger.info(f"OPENAI_API_KEY is configured (length: {len(openai_api_key)})")
+    else:
+        logger.error("OPENAI_API_KEY is not set! AI features will not work.")
 
 # Register blueprints
 from admin import admin_bp
