@@ -741,13 +741,17 @@
         async function checkAIConsent() {
             // For non-logged in users, we don't need to check
             {% if not current_user.is_authenticated %}
+                console.log("User not authenticated, returning false for consent check");
                 return false;
             {% endif %}
             
             try {
+                console.log("Checking AI consent...");
                 // Make API call to check current user's consent status
-                const response = await fetch('/dashboard/api/check-ai-consent');
+                const response = await fetch('/api/check-ai-consent');
+                console.log("Consent check response:", response);
                 const data = await response.json();
+                console.log("Consent check data:", data);
                 
                 if (!data.success) {
                     console.error('Error checking consent:', data.message);
@@ -809,7 +813,8 @@
             
             if (mode === 'explanation-only') {
                 // Send to server for question-only analysis
-                fetch('/dashboard/api/analyze-captured-image', {
+                console.log(`Sending analysis request (explanation mode) for subject: ${subject}`);
+                fetch('/api/analyze-captured-image', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -819,6 +824,10 @@
                         subject: subject,
                         mode: 'question-only'
                     })
+                })
+                .catch(error => {
+                    console.error('Network error with analyze-captured-image endpoint:', error);
+                    throw error;
                 })
                 .then(response => {
                     if (!response.ok) {
@@ -836,7 +845,8 @@
                 .catch(error => handleAnalysisError(error));
             } else {
                 // Send to server for answer analysis
-                fetch('/dashboard/api/analyze-answer', {
+                console.log(`Sending analysis request (answer mode) for subject: ${subject}`);
+                fetch('/api/analyze-answer', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -846,6 +856,10 @@
                         answer_image: capturedImageData,   // We send the same image twice
                         subject: subject
                     })
+                })
+                .catch(error => {
+                    console.error('Network error with analyze-answer endpoint:', error);
+                    throw error;
                 })
                 .then(response => {
                     if (!response.ok) {
