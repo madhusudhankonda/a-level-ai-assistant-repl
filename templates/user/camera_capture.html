@@ -737,38 +737,6 @@
         });
         
         // Analyze button (after capturing image)
-        // Function to check if user has consented to AI usage
-        async function checkAIConsent() {
-            // For non-logged in users, we don't need to check
-            {% if not current_user.is_authenticated %}
-                console.log("User not authenticated, returning false for consent check");
-                return false;
-            {% endif %}
-            
-            try {
-                console.log("Checking AI consent...");
-                // Make API call to check current user's consent status
-                const response = await fetch('/api/check-ai-consent');
-                console.log("Consent check response:", response);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log("Consent check data:", data);
-                
-                if (!data.success) {
-                    console.error('Error checking consent:', data.message);
-                    return false;
-                }
-                
-                return data.consent_given || false;
-            } catch (error) {
-                console.error('Error checking AI consent:', error);
-                throw error; // Re-throw so the calling code can handle it
-            }
-        }
         
         // Initialize consent modal
         let aiConsentModal;
@@ -776,7 +744,7 @@
             aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
         });
         
-        analyzeBtn.addEventListener('click', async function() {
+        analyzeBtn.addEventListener('click', function() {
             console.log("Analyze button clicked");
             // First check if user is logged in
             {% if not current_user.is_authenticated %}
@@ -785,27 +753,40 @@
                 return;
             {% endif %}
             
-            try {
-                // Check if user has consented to AI usage
-                const hasConsent = await checkAIConsent();
-                
-                if (!hasConsent) {
-                    // Show consent modal
-                    aiConsentModal.show();
-                    return;
-                }
-            } catch (error) {
-                console.error("Error checking AI consent:", error);
-                // Show toast notification about the error
-                const toastBody = document.getElementById('toast-body');
-                const toastTitle = document.getElementById('toast-title');
-                const toast = new bootstrap.Toast(document.getElementById('toast'));
-                
-                toastTitle.textContent = "Consent Check Error";
-                toastBody.textContent = "There was an error checking your AI consent status. Please try again.";
-                toast.show();
-                return;
-            }
+            // Simplified consent check with regular fetch (no async/await)
+            fetch('/api/check-ai-consent')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Consent check data:", data);
+                    
+                    if (data.success && data.consent_given) {
+                        // User has consent, process with analysis
+                        proceedWithAnalysis();
+                    } else {
+                        // User has not consented, show modal
+                        aiConsentModal.show();
+                    }
+                })
+                .catch(error => {
+                    console.error("Error checking AI consent:", error);
+                    // Show toast notification about the error
+                    const toastBody = document.getElementById('toast-body');
+                    const toastTitle = document.getElementById('toast-title');
+                    const toast = new bootstrap.Toast(document.getElementById('toast'));
+                    
+                    toastTitle.textContent = "Consent Check Error";
+                    toastBody.textContent = "There was an error checking your AI consent status. Please try again.";
+                    toast.show();
+                });
+        });
+        
+        // Extracted analysis logic to a separate function for clarity
+        function proceedWithAnalysis() {
             
             // User has consent, proceed with analysis
             // Disable the analyze button during processing

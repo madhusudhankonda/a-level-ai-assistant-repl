@@ -130,12 +130,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 toastBody.textContent = "Your AI usage consent has been recorded. You can now use the AI features.";
                 toast.show();
                 
-                // After consent is recorded, trigger the analyze button after a short delay
+                // After consent is recorded, call the proceedWithAnalysis function directly
                 setTimeout(() => {
-                    // Find and click the analyze button to continue the process
-                    const analyzeBtn = document.getElementById('analyze-btn');
-                    if (analyzeBtn) {
-                        analyzeBtn.click();
+                    // Call the analysis function directly (more reliable than simulating a click)
+                    if (typeof proceedWithAnalysis === 'function') {
+                        proceedWithAnalysis();
+                    } else {
+                        console.error('proceedWithAnalysis function not found');
+                        // Fallback to clicking the button if function not available
+                        const analyzeBtn = document.getElementById('analyze-btn');
+                        if (analyzeBtn) {
+                            analyzeBtn.click();
+                        }
                     }
                 }, 1500);
             } else {
