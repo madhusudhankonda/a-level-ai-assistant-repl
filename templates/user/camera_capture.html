@@ -514,7 +514,7 @@
             );
             
             Promise.race([
-                fetch('/dashboard/api/test-openai'), // Updated with the correct URL prefix (/dashboard)
+                fetch('/api/test-openai'), // Updated URL - removed /dashboard prefix
                 timeoutPromise
             ])
                 .then(response => {
