@@ -129,6 +129,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 toastTitle.textContent = "Consent Recorded";
                 toastBody.textContent = "Your AI usage consent has been recorded. You can now use the AI features.";
                 toast.show();
+                
+                // After consent is recorded, trigger the analyze button after a short delay
+                setTimeout(() => {
+                    // Find and click the analyze button to continue the process
+                    const analyzeBtn = document.getElementById('analyze-btn');
+                    if (analyzeBtn) {
+                        analyzeBtn.click();
+                    }
+                }, 1500);
             } else {
                 alert('Error recording consent. Please try again.');
             }

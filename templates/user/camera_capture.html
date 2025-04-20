@@ -780,12 +780,25 @@
                 return;
             {% endif %}
             
-            // Check if user has consented to AI usage
-            const hasConsent = await checkAIConsent();
-            
-            if (!hasConsent) {
-                // Show consent modal
-                aiConsentModal.show();
+            try {
+                // Check if user has consented to AI usage
+                const hasConsent = await checkAIConsent();
+                
+                if (!hasConsent) {
+                    // Show consent modal
+                    aiConsentModal.show();
+                    return;
+                }
+            } catch (error) {
+                console.error("Error checking AI consent:", error);
+                // Show toast notification about the error
+                const toastBody = document.getElementById('toast-body');
+                const toastTitle = document.getElementById('toast-title');
+                const toast = new bootstrap.Toast(document.getElementById('toast'));
+                
+                toastTitle.textContent = "Consent Check Error";
+                toastBody.textContent = "There was an error checking your AI consent status. Please try again.";
+                toast.show();
                 return;
             }
             
