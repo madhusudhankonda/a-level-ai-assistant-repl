@@ -95,6 +95,7 @@ def signup():
             age_confirmed=True,
             terms_accepted_date=current_time,
             privacy_accepted_date=current_time,
+            ai_usage_consent_required=True,
             last_ai_consent_date=None  # Will be set when they first use AI features
         )
         
