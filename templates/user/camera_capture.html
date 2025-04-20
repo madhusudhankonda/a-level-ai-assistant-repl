@@ -750,6 +750,11 @@
                 // Make API call to check current user's consent status
                 const response = await fetch('/api/check-ai-consent');
                 console.log("Consent check response:", response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                
                 const data = await response.json();
                 console.log("Consent check data:", data);
                 
@@ -758,10 +763,10 @@
                     return false;
                 }
                 
-                return data.consent_given;
+                return data.consent_given || false;
             } catch (error) {
                 console.error('Error checking AI consent:', error);
-                return false;
+                throw error; // Re-throw so the calling code can handle it
             }
         }
         
