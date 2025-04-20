@@ -10,6 +10,14 @@ import base64
 # Get your API key from the environment variable
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
+# Check and log API key status
+if OPENAI_API_KEY:
+    logger = logging.getLogger(__name__)
+    logger.info(f"OpenAI API key is configured (length: {len(OPENAI_API_KEY)})")
+else:
+    logger = logging.getLogger(__name__)
+    logger.error("OpenAI API key is missing or empty!")
+
 # Configure OpenAI client with additional timeout parameters
 openai = OpenAI(
     api_key=OPENAI_API_KEY,

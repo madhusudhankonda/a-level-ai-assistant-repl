@@ -592,6 +592,19 @@ def analyze_captured_image():
                     'message': 'The captured image data is invalid or too small. Please try again with a clearer picture.'
                 }), 400
             
+            # Import here to refresh the module and ensure environment variables are loaded
+            from utils.openai_helper import generate_explanation, OPENAI_API_KEY
+            
+            # Check API key availability
+            if not OPENAI_API_KEY:
+                current_app.logger.error("OpenAI API key is not available in the environment")
+                return jsonify({
+                    'success': False,
+                    'message': 'API configuration error: Missing OpenAI API key. Please contact support.'
+                }), 500
+                
+            current_app.logger.info(f"OpenAI API key is available (length: {len(OPENAI_API_KEY)})")
+            
             # Call OpenAI with the validated image data (using the full data URI format)
             explanation_text = generate_explanation(
                 image_data,  # Send the complete data URI
@@ -739,6 +752,19 @@ def analyze_answer():
         try:
             # Call OpenAI to analyze the student's answer
             current_app.logger.info("Calling OpenAI to analyze student answer")
+            
+            # Import here to refresh the module and ensure environment variables are loaded
+            from utils.openai_helper import generate_answer_feedback, OPENAI_API_KEY
+            
+            # Check API key availability
+            if not OPENAI_API_KEY:
+                current_app.logger.error("OpenAI API key is not available in the environment")
+                return jsonify({
+                    'success': False,
+                    'message': 'API configuration error: Missing OpenAI API key. Please contact support.'
+                }), 500
+                
+            current_app.logger.info(f"OpenAI API key is available (length: {len(OPENAI_API_KEY)})")
             
             # Create the prompt with both images
             response = generate_answer_feedback(
