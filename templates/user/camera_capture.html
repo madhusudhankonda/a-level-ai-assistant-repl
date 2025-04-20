@@ -768,6 +768,7 @@
         });
         
         analyzeBtn.addEventListener('click', async function() {
+            console.log("Analyze button clicked");
             // First check if user is logged in
             {% if not current_user.is_authenticated %}
                 // Redirect to login page
