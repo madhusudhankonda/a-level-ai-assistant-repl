@@ -98,79 +98,286 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Process the selected file
     function processFile(file) {
-        console.log("Processing file:", file.name);
-        
-        // Validate file type
-        if (!file.type.match('image.*')) {
-            alert('Please select an image file (JPG, PNG, or GIF).');
-            return;
-        }
-        
-        // Validate file size (10MB max)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size exceeds 10MB limit. Please select a smaller file.');
-            return;
-        }
-        
-        // Create a FileReader to read the image
-        const reader = new FileReader();
-        
-        // Set up the FileReader onload event
-        reader.onload = function(e) {
-            console.log("File loaded, processing image...");
+        try {
+            console.log("Processing file:", file.name, "Size:", Math.round(file.size / 1024), "KB", "Type:", file.type);
             
-            // Create an image element to get dimensions
-            const img = new Image();
+            // Validate file type
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file (JPG, PNG, or GIF).');
+                return;
+            }
             
-            img.onload = function() {
-                console.log("Image loaded, dimensions:", img.width, "x", img.height);
+            // Validate file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit. Please select a smaller file.');
+                return;
+            }
+            
+            // Show loading indicator
+            const uploadContainer = document.getElementById('upload-container');
+            if (uploadContainer) {
+                uploadContainer.innerHTML = `
+                    <div class="d-flex justify-content-center align-items-center" style="min-height: 250px;">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary mb-3" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Processing your image...</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Create a FileReader to read the image
+            const reader = new FileReader();
+            
+            // Handle errors in the FileReader
+            reader.onerror = function(fileReaderError) {
+                console.error("FileReader error:", fileReaderError);
+                alert("Error reading the selected file. Please try a different image.");
                 
-                // Get the canvas context
-                const context = elements.canvas.getContext('2d');
-                
-                // Scale down if necessary
-                const maxWidth = 600;
-                const maxHeight = 450;
-                let width = img.width;
-                let height = img.height;
-                
-                if (width > maxWidth || height > maxHeight) {
-                    const ratio = Math.min(maxWidth / width, maxHeight / height);
-                    width = Math.floor(width * ratio);
-                    height = Math.floor(height * ratio);
+                // Restore upload container
+                if (uploadContainer) {
+                    uploadContainer.innerHTML = `
+                        <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                            <p class="mb-3">Select an image from your device</p>
+                            
+                            <label for="file-input" class="btn btn-outline-primary mb-3">
+                                <i class="fas fa-folder-open me-1"></i> Browse Files
+                            </label>
+                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                            
+                            <p class="text-muted small">Click the button above to select an image</p>
+                        </div>
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-info-circle me-1"></i> 
+                            Supported formats: JPG, PNG, GIF (max 10MB)
+                        </p>
+                    `;
+                    
+                    // Re-attach event listener to the new file input
+                    const newFileInput = document.getElementById('file-input');
+                    if (newFileInput) {
+                        newFileInput.addEventListener('change', function(event) {
+                            console.log('File input change detected (reattached)');
+                            try {
+                                if (this.files && this.files.length > 0) {
+                                    console.log('Processing file:', this.files[0].name);
+                                    processFile(this.files[0]);
+                                }
+                            } catch (err) {
+                                console.error('Error in reattached file input handler:', err);
+                            }
+                        });
+                    }
                 }
-                
-                // Set canvas dimensions
-                elements.canvas.width = width;
-                elements.canvas.height = height;
-                
-                // Draw the image on the canvas
-                context.drawImage(img, 0, 0, width, height);
-                
-                // Save the image data with reduced quality
-                capturedImageData = elements.canvas.toDataURL('image/jpeg', 0.6);
-                
-                // Log size for debugging
-                console.log('Processed image size:', Math.round(capturedImageData.length / 1024), 'KB');
-                
-                // Show the result and hide the upload interface
-                elements.captureResult.style.display = 'block';
-                document.getElementById('upload-container').style.display = 'none';
-                elements.cameraContainer.style.display = 'none';
-                
-                // Update the retake button text for uploads
-                elements.retakeBtnText.textContent = 'Upload Different Image';
+                return;
             };
             
-            // Set the image source
-            img.src = e.target.result;
+            // Set up the FileReader onload event
+            reader.onload = function(e) {
+                console.log("File loaded successfully, processing image...");
+                
+                try {
+                    // Create an image element to get dimensions
+                    const img = new Image();
+                    
+                    // Handle errors in image loading
+                    img.onerror = function(imgError) {
+                        console.error("Error loading image:", imgError);
+                        alert("The selected file could not be processed as an image. Please try a different file.");
+                        
+                        // Restore upload container
+                        if (uploadContainer) {
+                            uploadContainer.innerHTML = `
+                                <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                    <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                                    <p class="mb-3">Select an image from your device</p>
+                                    
+                                    <label for="file-input" class="btn btn-outline-primary mb-3">
+                                        <i class="fas fa-folder-open me-1"></i> Browse Files
+                                    </label>
+                                    <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                    
+                                    <p class="text-muted small">Click the button above to select an image</p>
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i> 
+                                    Supported formats: JPG, PNG, GIF (max 10MB)
+                                </p>
+                            `;
+                            
+                            // Re-attach event listener
+                            const newFileInput = document.getElementById('file-input');
+                            if (newFileInput) {
+                                newFileInput.addEventListener('change', function(event) {
+                                    if (this.files && this.files.length > 0) {
+                                        processFile(this.files[0]);
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    
+                    img.onload = function() {
+                        console.log("Image loaded successfully, dimensions:", img.width, "x", img.height);
+                        
+                        try {
+                            // Get the canvas context
+                            const context = elements.canvas.getContext('2d');
+                            
+                            // Scale down if necessary
+                            const maxWidth = 600;
+                            const maxHeight = 450;
+                            let width = img.width;
+                            let height = img.height;
+                            
+                            if (width > maxWidth || height > maxHeight) {
+                                const ratio = Math.min(maxWidth / width, maxHeight / height);
+                                width = Math.floor(width * ratio);
+                                height = Math.floor(height * ratio);
+                            }
+                            
+                            // Set canvas dimensions
+                            elements.canvas.width = width;
+                            elements.canvas.height = height;
+                            
+                            // Draw the image on the canvas
+                            context.drawImage(img, 0, 0, width, height);
+                            
+                            // Save the image data with reduced quality
+                            capturedImageData = elements.canvas.toDataURL('image/jpeg', 0.6);
+                            
+                            // Log size for debugging
+                            console.log('Processed image size:', Math.round(capturedImageData.length / 1024), 'KB');
+                            
+                            // Show the result and hide the upload interface
+                            elements.captureResult.style.display = 'block';
+                            if (document.getElementById('upload-container')) {
+                                document.getElementById('upload-container').style.display = 'none';
+                            }
+                            elements.cameraContainer.style.display = 'none';
+                            
+                            // Update the retake button text for uploads
+                            elements.retakeBtnText.textContent = 'Upload Different Image';
+                        } catch (canvasError) {
+                            console.error("Error processing canvas:", canvasError);
+                            alert("Error processing the image. Please try a different file.");
+                            
+                            // Restore upload container
+                            if (uploadContainer) {
+                                uploadContainer.innerHTML = `
+                                    <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                        <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                                        <p class="mb-3">Select an image from your device</p>
+                                        
+                                        <label for="file-input" class="btn btn-outline-primary mb-3">
+                                            <i class="fas fa-folder-open me-1"></i> Browse Files
+                                        </label>
+                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                        
+                                        <p class="text-muted small">Click the button above to select an image</p>
+                                    </div>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-info-circle me-1"></i> 
+                                        Supported formats: JPG, PNG, GIF (max 10MB)
+                                    </p>
+                                `;
+                                
+                                // Re-attach event listener
+                                const newFileInput = document.getElementById('file-input');
+                                if (newFileInput) {
+                                    newFileInput.addEventListener('change', function(event) {
+                                        if (this.files && this.files.length > 0) {
+                                            processFile(this.files[0]);
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    };
+                    
+                    // Set the image source
+                    img.src = e.target.result;
+                    
+                    // Also store the full data URL for sending to server
+                    capturedImageData = e.target.result;
+                } catch (imageProcessError) {
+                    console.error("Error in image processing:", imageProcessError);
+                    alert("Error processing the image file. Please try again with a different image.");
+                    
+                    // Restore upload container
+                    if (uploadContainer) {
+                        uploadContainer.innerHTML = `
+                            <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                                <p class="mb-3">Select an image from your device</p>
+                                
+                                <label for="file-input" class="btn btn-outline-primary mb-3">
+                                    <i class="fas fa-folder-open me-1"></i> Browse Files
+                                </label>
+                                <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                
+                                <p class="text-muted small">Click the button above to select an image</p>
+                            </div>
+                            <p class="text-muted small mb-0">
+                                <i class="fas fa-info-circle me-1"></i> 
+                                Supported formats: JPG, PNG, GIF (max 10MB)
+                            </p>
+                        `;
+                        
+                        // Re-attach event listener
+                        const newFileInput = document.getElementById('file-input');
+                        if (newFileInput) {
+                            newFileInput.addEventListener('change', function(event) {
+                                if (this.files && this.files.length > 0) {
+                                    processFile(this.files[0]);
+                                }
+                            });
+                        }
+                    }
+                }
+            };
             
-            // Also store the full data URL for sending to server
-            capturedImageData = e.target.result;
-        };
-        
-        // Read the file as a data URL
-        reader.readAsDataURL(file);
+            // Read the file as a data URL
+            reader.readAsDataURL(file);
+        } catch (generalError) {
+            console.error("General error in processFile:", generalError);
+            alert("An error occurred while processing the image. Please try again.");
+            
+            // Restore upload container
+            const uploadContainer = document.getElementById('upload-container');
+            if (uploadContainer) {
+                uploadContainer.innerHTML = `
+                    <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                        <p class="mb-3">Select an image from your device</p>
+                        
+                        <label for="file-input" class="btn btn-outline-primary mb-3">
+                            <i class="fas fa-folder-open me-1"></i> Browse Files
+                        </label>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                        
+                        <p class="text-muted small">Click the button above to select an image</p>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-info-circle me-1"></i> 
+                        Supported formats: JPG, PNG, GIF (max 10MB)
+                    </p>
+                `;
+                
+                // Re-attach event listener
+                const newFileInput = document.getElementById('file-input');
+                if (newFileInput) {
+                    newFileInput.addEventListener('change', function(event) {
+                        if (this.files && this.files.length > 0) {
+                            processFile(this.files[0]);
+                        }
+                    });
+                }
+            }
+        }
     }
     
     // Start camera
@@ -1046,14 +1253,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // File input change
     if (elements.fileInput) {
+        console.log('Setting up file input event listener');
         elements.fileInput.addEventListener('change', function(event) {
             console.log('File input change detected');
-            if (this.files.length > 0) {
-                console.log('Processing file:', this.files[0].name);
-                // Process the file
-                processFile(this.files[0]);
+            try {
+                if (this.files && this.files.length > 0) {
+                    console.log('Processing file:', this.files[0].name, 'Size:', Math.round(this.files[0].size / 1024), 'KB', 'Type:', this.files[0].type);
+                    // Process the file
+                    processFile(this.files[0]);
+                } else {
+                    console.error('No files selected or files property is null');
+                }
+            } catch (err) {
+                console.error('Error in file input change handler:', err);
+                alert('Error processing the selected file: ' + err.message);
             }
         });
+    } else {
+        console.error('File input element not found in the DOM. Check the ID in the HTML.');
     }
     
     // Capture button
