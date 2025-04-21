@@ -242,25 +242,37 @@ Your explanation should be comprehensive, explaining both the mathematical conce
     try:
         logger.info(f"Processing image for {subject} explanation")
         
-        # Clean the base64 string if it has a data URI prefix
-        if isinstance(base64_image, str) and 'base64' in base64_image and ',' in base64_image:
-            logger.info("Removing data URI prefix from image")
-            image_parts = base64_image.split(',')
-            if len(image_parts) > 1:
-                base64_image = image_parts[1]
+        # Handle different input formats
+        if isinstance(base64_image, str):
+            # Check if it already has a data URI prefix
+            if base64_image.startswith('data:image/'):
+                logger.info("Using provided data URI directly")
+                image_url = base64_image
+            elif 'base64,' in base64_image:
+                # Extract base64 part from data URI
+                logger.info("Extracting base64 data from URI")
+                image_parts = base64_image.split('base64,')
+                if len(image_parts) > 1:
+                    base64_data = image_parts[1]
+                    image_url = f"data:image/jpeg;base64,{base64_data}"
+                else:
+                    raise ValueError("Invalid data URI format")
             else:
-                logger.warning("Data URI format detected but couldn't extract base64 part")
+                # Assume it's a raw base64 string, add data URI prefix
+                logger.info("Adding data URI prefix to raw base64 data")
+                image_url = f"data:image/jpeg;base64,{base64_image}"
+        else:
+            # Invalid data type
+            raise ValueError(f"Invalid image data type: {type(base64_image)}")
         
-        # Validate the base64 string
-        if not base64_image or not isinstance(base64_image, str):
-            raise ValueError("Invalid base64 image data")
-        
-        # Prepare the image URL
-        image_url = f"data:image/jpeg;base64,{base64_image}"
-        logger.info(f"Image prepared, length: {len(base64_image)}")
+        # Validate we have a proper URL now
+        if not image_url or len(image_url) < 100:
+            raise ValueError("Image data is too short or empty")
+            
+        logger.info(f"Image URL prepared, total length: {len(image_url)}")
         
         # API call without requiring JSON response format
-        logger.info("Calling OpenAI API for explanation")
+        logger.info(f"Calling OpenAI API for explanation with {len(image_url) // 1000}KB image data")
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",  # the newest OpenAI model, released May 13, 2024

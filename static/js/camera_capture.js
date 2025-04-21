@@ -328,16 +328,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => reject(new Error('Request timed out after 60 seconds')), 60000);
             });
             
+            console.log('Preparing to send image analysis request...');
+            
+            // Create the request payload with exact size logging
+            const payload = {
+                image_data: capturedImageData,
+                subject: subject,
+                mode: 'question-only'
+            };
+            
+            // Log payload size for debugging
+            const payloadSize = JSON.stringify(payload).length;
+            console.log(`Request payload size: ${Math.round(payloadSize / 1024)} KB`);
+            
+            // Check if payload is extremely large
+            if (payloadSize > 5 * 1024 * 1024) { // 5MB
+                console.error('Payload too large:', Math.round(payloadSize / 1024 / 1024), 'MB');
+                handleAnalysisError(new Error('The image is too large to process. Please try with a smaller image or lower resolution.'));
+                return;
+            }
+            
+            console.log('Sending analysis request to server...');
             const fetchPromise = fetch('/api/analyze-captured-image', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    image_data: capturedImageData,
-                    subject: subject,
-                    mode: 'question-only'
-                })
+                body: JSON.stringify(payload)
             });
             
             // Use Promise.race to implement timeout
@@ -758,17 +775,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 .catch(error => {
                     console.error("Error checking AI consent:", error);
                     
-                    // Show error toast
-                    const toastBody = document.getElementById('toast-body');
-                    const toastTitle = document.getElementById('toast-title');
-                    const toast = new bootstrap.Toast(document.getElementById('toast'));
+                    // Reset analyze button
+                    elements.analyzeBtn.disabled = false;
+                    elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
                     
-                    toastTitle.textContent = "Consent Check Error";
-                    toastBody.textContent = "There was an error checking your AI consent status. Please try again.";
-                    toast.show();
+                    // Hide loading
+                    elements.feedbackLoading.style.display = 'none';
                     
-                    // Log error but don't show consent modal again to avoid double modal issue
-                    console.log("Consent check error - will not show modal to avoid duplicate display");
+                    // Show error in feedback tab
+                    elements.feedbackError.style.display = 'block';
+                    elements.errorMessage.textContent = 'Failed to verify your AI consent status. Please try again.';
+                    
+                    // Add a "Try Again" button
+                    if (!elements.errorMessage.nextElementSibling || !elements.errorMessage.nextElementSibling.classList.contains('btn')) {
+                        const retryButton = document.createElement('button');
+                        retryButton.className = 'btn btn-outline-primary mt-3';
+                        retryButton.innerHTML = '<i class="fas fa-redo me-1"></i> Try Again';
+                        retryButton.onclick = function() {
+                            // Go back to capture tab
+                            elements.captureTab.click();
+                        };
+                        elements.errorMessage.parentNode.appendChild(retryButton);
+                    }
                 });
         });
     }

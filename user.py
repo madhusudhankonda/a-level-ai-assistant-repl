@@ -556,12 +556,15 @@ def analyze_captured_image():
                 'message': 'Invalid request format: No JSON data'
             }), 400
             
-        # Get the image data and subject from the request
+        # Get the image data and subject from the request and log the payload size
+        request_size = len(str(request.json))
+        current_app.logger.info(f"Received analysis request: JSON payload size: {request_size / 1024:.2f} KB")
+        
         image_data = request.json.get('image_data', '')
         subject = request.json.get('subject', 'Mathematics')
         mode = request.json.get('mode', 'question-only')  # Default to question-only
         
-        current_app.logger.info(f"Processing image for subject: {subject}, mode: {mode}")
+        current_app.logger.info(f"Processing image for subject: {subject}, mode: {mode}, image data length: {len(image_data) if image_data else 'EMPTY'}")
         
         if not image_data:
             current_app.logger.error("No image data provided")
