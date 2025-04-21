@@ -285,64 +285,67 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Proceed with analysis after consent - make it available globally
     window.proceedWithAnalysis = function() {
-        // Disable the analyze button during processing
-        elements.analyzeBtn.disabled = true;
-        elements.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+        console.log("proceedWithAnalysis called");
         
-        // Stop camera
+        // Stop camera if running
         stopCameraStream();
-        
-        // Enable and show feedback step
-        elements.feedbackTab.disabled = false;
-        elements.feedbackTab.click();
-        
-        // Show loading
-        elements.feedbackLoading.style.display = 'block';
-        elements.feedbackResult.style.display = 'none';
-        elements.feedbackPlaceholder.style.display = 'none';
-        elements.feedbackError.style.display = 'none';
         
         // Get subject and mode
         const subject = elements.subjectSelect.value;
         const mode = elements.analysisMode.value;
         
+        // Validate image data
+        if (!capturedImageData) {
+            handleAnalysisError(new Error('No image data available. Please capture or upload an image first.'));
+            return;
+        }
+        
+        console.log(`Image data length: ${capturedImageData.length} characters`);
+        
+        // This check is already done in the analyze button handler, but double-check to be safe
+        if (elements.feedbackLoading.style.display !== 'block') {
+            // Enable and show feedback step
+            elements.feedbackTab.disabled = false;
+            elements.feedbackTab.click();
+            
+            // Show loading
+            elements.feedbackLoading.style.display = 'block';
+            elements.feedbackResult.style.display = 'none';
+            elements.feedbackPlaceholder.style.display = 'none';
+            elements.feedbackError.style.display = 'none';
+        }
+        
+        // Start processing timer for debugging
+        const startTime = new Date();
+        console.log(`Starting analysis at ${startTime.toISOString()}`);
+        
         if (mode === 'explanation-only') {
             // Question-only analysis
             console.log(`Sending analysis request (explanation mode) for subject: ${subject}`);
             
-            // Check if we have valid image data
-            if (!capturedImageData) {
-                handleAnalysisError(new Error('No image data available. Please capture or upload an image first.'));
-                return;
-            }
+            // Send the actual analysis request with a timeout for safety
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timed out after 60 seconds')), 60000);
+            });
             
-            console.log(`Image data length: ${capturedImageData.length} characters`);
-            
-            // First test endpoint to ensure OpenAI is working
-            fetch('/api/test-openai')
-                .then(response => response.json())
-                .then(testData => {
-                    if (!testData.success) {
-                        console.error('OpenAI test failed:', testData.message);
-                        throw new Error(`OpenAI connection failed: ${testData.message}`);
-                    }
-                    
-                    console.log('OpenAI connection confirmed, proceeding with analysis');
-                    
-                    // Now send the actual analysis request
-                    return fetch('/api/analyze-captured-image', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            image_data: capturedImageData,
-                            subject: subject,
-                            mode: 'question-only'
-                        })
-                    });
+            const fetchPromise = fetch('/api/analyze-captured-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    image_data: capturedImageData,
+                    subject: subject,
+                    mode: 'question-only'
                 })
+            });
+            
+            // Use Promise.race to implement timeout
+            Promise.race([fetchPromise, timeoutPromise])
                 .then(response => {
+                    const processingTime = (new Date() - startTime) / 1000;
+                    console.log(`Received server response after ${processingTime} seconds`);
+                    
                     if (!response || !response.ok) {
                         // Check if it's an authentication error
                         if (response && (response.status === 401 || response.url.includes('login'))) {
@@ -353,48 +356,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     return response.json();
                 })
-                .then(data => handleExplanationResponse(data))
+                .then(data => {
+                    const totalTime = (new Date() - startTime) / 1000;
+                    console.log(`Analysis completed in ${totalTime} seconds`);
+                    handleExplanationResponse(data);
+                })
                 .catch(error => {
                     console.error('Error in analyze-captured-image:', error);
+                    
+                    // Add more context to timeout errors
+                    if (error.message.includes('timed out')) {
+                        error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
+                    }
+                    
                     handleAnalysisError(error);
                 });
         } else {
             // Answer analysis
             console.log(`Sending analysis request (answer mode) for subject: ${subject}`);
             
-            // Check if we have valid image data
-            if (!capturedImageData) {
-                handleAnalysisError(new Error('No image data available. Please capture or upload an image first.'));
-                return;
-            }
+            // Send the actual analysis request with a timeout for safety
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('Request timed out after 60 seconds')), 60000);
+            });
             
-            console.log(`Image data length: ${capturedImageData.length} characters`);
-            
-            // First test endpoint to ensure OpenAI is working
-            fetch('/api/test-openai')
-                .then(response => response.json())
-                .then(testData => {
-                    if (!testData.success) {
-                        console.error('OpenAI test failed:', testData.message);
-                        throw new Error(`OpenAI connection failed: ${testData.message}`);
-                    }
-                    
-                    console.log('OpenAI connection confirmed, proceeding with answer analysis');
-                    
-                    // Now send the actual analysis request
-                    return fetch('/api/analyze-answer', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            question_image: capturedImageData, // Same image for both
-                            answer_image: capturedImageData,
-                            subject: subject
-                        })
-                    });
+            const fetchPromise = fetch('/api/analyze-answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question_image: capturedImageData, // Same image for both
+                    answer_image: capturedImageData,
+                    subject: subject
                 })
+            });
+            
+            // Use Promise.race to implement timeout
+            Promise.race([fetchPromise, timeoutPromise])
                 .then(response => {
+                    const processingTime = (new Date() - startTime) / 1000;
+                    console.log(`Received server response after ${processingTime} seconds`);
+                    
                     if (!response || !response.ok) {
                         // Check if it's an authentication error
                         if (response && (response.status === 401 || response.url.includes('login'))) {
@@ -405,9 +408,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     return response.json();
                 })
-                .then(data => handleFeedbackResponse(data))
+                .then(data => {
+                    const totalTime = (new Date() - startTime) / 1000;
+                    console.log(`Analysis completed in ${totalTime} seconds`);
+                    handleFeedbackResponse(data);
+                })
                 .catch(error => {
                     console.error('Error in analyze-answer:', error);
+                    
+                    // Add more context to timeout errors
+                    if (error.message.includes('timed out')) {
+                        error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
+                    }
+                    
                     handleAnalysisError(error);
                 });
         }
@@ -667,7 +680,29 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.analyzeBtn.addEventListener('click', function() {
             console.log("Analyze button clicked");
             
-            // Check authentication with server-side logic
+            // Ensure we have an image to analyze
+            if (!capturedImageData) {
+                // Show error
+                elements.feedbackTab.click();
+                elements.feedbackLoading.style.display = 'none';
+                elements.feedbackError.style.display = 'block';
+                elements.errorMessage.textContent = 'No image captured or uploaded. Please take or upload a photo first.';
+                return;
+            }
+            
+            // Disable analyze button during processing
+            elements.analyzeBtn.disabled = true;
+            elements.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+            
+            // Enable and show feedback step immediately to show loading state
+            elements.feedbackTab.disabled = false;
+            elements.feedbackTab.click();
+            
+            // Show loading
+            elements.feedbackLoading.style.display = 'block';
+            elements.feedbackResult.style.display = 'none';
+            elements.feedbackPlaceholder.style.display = 'none';
+            elements.feedbackError.style.display = 'none';
             
             // Check consent
             fetch('/api/check-ai-consent')
@@ -681,13 +716,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log("Consent check data:", data);
                     
                     if (data.success && data.consent_given) {
-                        // User has consent
-                        console.log("User has valid AI consent. Proceeding with analysis.");
-                        window.proceedWithAnalysis(); // Call the function on the window object
+                        // User has consent - verify OpenAI connection
+                        console.log("User has valid AI consent. Checking OpenAI connection...");
+                        
+                        // Test OpenAI connection before proceeding
+                        return fetch('/api/test-openai')
+                            .then(response => response.json())
+                            .then(testData => {
+                                if (testData.success) {
+                                    console.log('OpenAI connection confirmed, proceeding with analysis');
+                                    window.proceedWithAnalysis();
+                                } else {
+                                    console.error('OpenAI test failed:', testData.message);
+                                    throw new Error('OpenAI API error: ' + testData.message);
+                                }
+                            });
                     } else {
                         // User needs consent
                         console.log("User needs to provide AI consent. Showing consent modal.");
                         console.log("Consent reason:", data.reason || "Unknown");
+                        
+                        // Reset analyze button
+                        elements.analyzeBtn.disabled = false;
+                        elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
+                        
+                        // Go back to capture tab
+                        elements.captureTab.click();
                         
                         // Show consent modal
                         if (window.aiConsentModal) {
@@ -774,7 +828,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial setup
     updateModeUI();
-    checkOpenAIStatus();
+    // Don't automatically check OpenAI status - wait for user to click Analyze
     
     // Clean up on page unload
     window.addEventListener('beforeunload', function() {
