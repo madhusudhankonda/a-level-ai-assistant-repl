@@ -427,7 +427,7 @@ def get_question_image(question_id):
             question_number = question.question_number.replace('q', '')
             try:
                 q_num = int(question_number)
-                if 1 <= q_num <= 4:  # Only use sample images for questions 1-4
+                if 1 <= q_num <= 12:  # We now have sample images for questions 1-12
                     paths_to_try.append(f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png")
             except:
                 pass  # Skip if question number isn't numeric
@@ -458,15 +458,16 @@ def get_question_image(question_id):
             # Try to use a sample image that matches the current question number
             try:
                 q_num = int(question_number)
-                if 1 <= q_num <= 4:
+                if 1 <= q_num <= 12:  # We now have samples for questions 1-12
                     question_sample = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
                     current_app.logger.info(f"Using numbered sample image for q{q_num}")
             except:
                 current_app.logger.warning(f"Could not determine question number, using default sample")
             
             sample_paths = [
-                question_sample,
-                "./data/papers/sample_math_paper.png"
+                question_sample,  # Try the question-specific sample first
+                "./data/questions/paper_1/question_q1_703866-q1.png",  # Fallback to q1 if specific not found
+                "./data/papers/sample_math_paper.png"  # Final fallback
             ]
             
             for path in sample_paths:
