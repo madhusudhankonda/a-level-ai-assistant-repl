@@ -305,6 +305,9 @@
 
 {% block scripts %}
 <script>
+    // Create a global variable to store a reference to the modal
+    var aiConsentModal;
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Step elements
         const captureTab = document.getElementById('capture-tab');
@@ -711,8 +714,8 @@
         
         // Analyze button (after capturing image)
         
-        // Initialize consent modal
-        let aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
+        // Initialize consent modal when DOM is loaded
+        aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
         
         analyzeBtn.addEventListener('click', function() {
             console.log("Analyze button clicked");
@@ -1030,66 +1033,30 @@
             
             // Reset the analyze button
             analyzeBtn.disabled = false;
-            analyzeBtn.innerHTML = `<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">${analysisMode.value === 'explanation-only' ? 'Get Explanation' : 'Get Feedback'}</span>`;
+            analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
             
             console.error('API Error:', error);
             
             // Show error
             feedbackError.style.display = 'block';
             
-            // Provide helpful error messages
-            let errorMsg;
+            // Provide a simple error message
+            let errorMsg = 'Error processing your request. Please try again.';
             
-            // Check if there's a response object with JSON data
-            let responseData = null;
-            if (error.responseData) {
-                responseData = error.responseData;
-                console.log("Error response data:", responseData);
-            }
-            
-            // Try to extract the response data if it's in JSON format
-            if (error.response && typeof error.response.json === 'function') {
-                try {
-                    error.response.json().then(data => {
-                        console.log("Response error data:", data);
-                        if (data && data.message) {
-                            // Update error message with server data
-                            errorMessage.innerHTML = `${errorMessage.textContent}<br><small class="text-danger">Server message: ${data.message}</small>`;
-                            
-                            // Check for consent issues
-                            if (data.consent_required) {
-                                // Show the consent modal after a short delay
-                                setTimeout(() => {
-                                    if (aiConsentModal) {
-                                        aiConsentModal.show();
-                                    }
-                                }, 1000);
-                            }
-                        }
-                    }).catch(e => console.error("Error parsing response JSON:", e));
-                } catch (e) {
-                    console.error("Could not parse response as JSON:", e);
-                }
-            }
-            
-            // Determine error message based on error type
-            if (error.message && error.message.includes('pattern')) {
-                errorMsg = 'Image format error: There was an issue with the captured image. Please try again with a clearer picture.';
-            } else if (error.message && error.message.includes('Failed to fetch')) {
-                errorMsg = 'Connection error: Please check your internet connection and try again.';
-            } else if (error.message && error.message.includes('Unexpected token')) {
-                errorMsg = 'Invalid response received. Please try again with a smaller or clearer image.';
-            } else if (error.message && error.message.includes('403')) {
-                errorMsg = 'Permission error: You may need to provide AI consent or purchase more credits. The consent dialog will appear if needed.';
+            // Determine if it's a consent error
+            if (error.message && (error.message.includes('403') || 
+                                  error.message.includes('consent') || 
+                                  error.message.includes('permission'))) {
+                errorMsg = 'Permission error: You may need to provide AI consent or purchase more credits.';
                 
-                // Show the consent modal after a short delay in case of 403
+                // Show consent modal
                 setTimeout(() => {
                     if (aiConsentModal) {
                         aiConsentModal.show();
                     }
-                }, 2000);
-            } else {
-                errorMsg = 'Error: ' + (error.message || 'Something went wrong. Please try again.');
+                }, 1000);
+            } else if (error.message && error.message.includes('Failed to fetch')) {
+                errorMsg = 'Connection error: Please check your internet connection and try again.';
             }
             
             errorMessage.innerHTML = errorMsg;
