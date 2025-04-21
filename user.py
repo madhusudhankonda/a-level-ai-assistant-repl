@@ -390,10 +390,6 @@ def view_paper(paper_id):
 def get_question_image(question_id):
     """Endpoint to serve question images"""
     try:
-        # Run our sample image creator to ensure all images exist
-        from ensure_samples import ensure_question_sample_images
-        ensure_question_sample_images()
-        
         # Get the question or return a friendly error
         question = Question.query.get(question_id)
         if not question:
@@ -415,23 +411,28 @@ def get_question_image(question_id):
             file_name = os.path.basename(image_path)
             current_app.logger.info(f"Image folder: {folder_name}, filename: {file_name}")
             
-            # First, try to get a sample image based on question number
-            sample_path = None
+            # Get the question number for fallback purposes
             question_number = question.question_number.replace('q', '')
             try:
                 q_num = int(question_number)
-                if 1 <= q_num <= 12:  # We now have sample images for questions 1-12
-                    sample_path = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
-                    if os.path.isfile(sample_path):
-                        current_app.logger.info(f"Using sample image for q{q_num}: {sample_path}")
-                        response = make_response(send_file(sample_path, mimetype='image/png'))
-                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                        response.headers['X-Is-Sample-Image'] = 'true'
-                        return response
             except Exception as e:
-                current_app.logger.warning(f"Error using sample image: {str(e)}")
+                current_app.logger.warning(f"Could not parse question number: {str(e)}")
+                q_num = 1
             
-            # Create a list of possible paths to try
+            # Create a list of possible paths to try - prioritize actual uploaded images 
+            # from the attached_assets directory
+            
+            # First, try the original uploaded question files, prioritizing original authentic assets
+            if 1 <= q_num <= 12:
+                # First priority - use the original images you uploaded
+                original_image_path = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
+                if os.path.isfile(original_image_path):
+                    current_app.logger.info(f"Using original uploaded image for q{q_num}")
+                    response = make_response(send_file(original_image_path, mimetype='image/png'))
+                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                    return response
+            
+            # Try database paths as fallback
             paths_to_try = [
                 image_path,  # Original path from database
                 image_path.replace('/home/runner/workspace/', './'),  # Relative path
@@ -443,13 +444,15 @@ def get_question_image(question_id):
                 os.path.join(os.getcwd(), folder_name, file_name)
             ]
             
-            # Add fallback to sample images when original image is missing
-            try:
-                q_num = int(question_number)
-                if 1 <= q_num <= 12:  # We now have sample images for questions 1-12
-                    paths_to_try.append(f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png")
-            except:
-                pass  # Skip if question number isn't numeric
+            # Add the original image path if it exists
+            if 1 <= q_num <= 4:  # We have originals for q1-q4
+                # Include the original image path as the first option
+                paths_to_try.insert(0, f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png")
+            elif 1 <= q_num <= 12:  # For other questions, use q1 as fallback
+                paths_to_try.append(f"./data/questions/paper_1/question_q1_703866-q1.png")
+            else:
+                # Fallback to q1 if we can't determine the question number
+                paths_to_try.append(f"./data/questions/paper_1/question_q1_703866-q1.png")
             
             # Try each path
             for path in paths_to_try:
@@ -471,21 +474,16 @@ def get_question_image(question_id):
             # Return a placeholder or default image instead of error
             # Let's check if we have any sample images to use
             
-            # Determine which sample question file to use based on the question number
-            question_sample = "./data/questions/paper_1/question_q1_703866-q1.png"  # Default fallback
+            # Determine which uploaded question file to use based on the question number
+            # Use the original uploaded images as the primary source
+            original_image = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
             
-            # Try to use a sample image that matches the current question number
-            try:
-                q_num = int(question_number)
-                if 1 <= q_num <= 12:  # We now have samples for questions 1-12
-                    question_sample = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
-                    current_app.logger.info(f"Using numbered sample image for q{q_num}")
-            except:
-                current_app.logger.warning(f"Could not determine question number, using default sample")
+            # Use the original images you uploaded for all questions
+            current_app.logger.info(f"Looking for original image: {original_image}")
             
             sample_paths = [
-                question_sample,  # Try the question-specific sample first
-                "./data/questions/paper_1/question_q1_703866-q1.png",  # Fallback to q1 if specific not found
+                original_image,  # Try the specific question's original image first
+                "./data/questions/paper_1/question_q1_703866-q1.png",  # Fallback to q1 original if specific not found
                 "./data/papers/sample_math_paper.png"  # Final fallback
             ]
             
