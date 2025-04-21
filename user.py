@@ -139,7 +139,14 @@ def record_ai_consent():
         user_profile.ai_usage_consent_required = False
         user_profile.last_ai_consent_date = datetime.utcnow()
         
+        # Log the update for debugging
+        current_app.logger.info(f"Recording AI consent for user {current_user.id}. Setting ai_usage_consent_required=False and last_ai_consent_date={user_profile.last_ai_consent_date}")
+        
         db.session.commit()
+        
+        # Double-check if the changes were saved properly
+        db.session.refresh(user_profile)
+        current_app.logger.info(f"After commit: User {current_user.id}, ai_usage_consent_required={user_profile.ai_usage_consent_required}, last_ai_consent_date={user_profile.last_ai_consent_date}")
         
         return jsonify({
             'success': True,

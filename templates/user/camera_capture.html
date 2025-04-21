@@ -772,9 +772,11 @@
                     
                     if (data.success && data.consent_given) {
                         // User has consent, process with analysis
+                        console.log("User has valid AI consent. Proceeding with analysis.");
                         proceedWithAnalysis();
                     } else {
                         // User has not consented, show modal
+                        console.log("User needs to provide AI consent. Showing consent modal.");
                         aiConsentModal.show();
                     }
                 })
@@ -788,6 +790,12 @@
                     toastTitle.textContent = "Consent Check Error";
                     toastBody.textContent = "There was an error checking your AI consent status. Please try again.";
                     toast.show();
+                    
+                    // Default to showing the consent modal in case of errors
+                    setTimeout(() => {
+                        console.log("Showing consent modal due to consent check error");
+                        aiConsentModal.show();
+                    }, 1500);
                 });
         });
         
