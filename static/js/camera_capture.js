@@ -290,9 +290,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stop camera if running
         stopCameraStream();
         
-        // Get subject and mode
-        const subject = elements.subjectSelect.value;
-        const mode = elements.analysisMode.value;
+        // Get subject and mode - with fallbacks in case elements are undefined
+        let subject = 'Mathematics';
+        let mode = 'question-only';
+        
+        try {
+            if (elements.subjectSelect) {
+                subject = elements.subjectSelect.value;
+            }
+            if (elements.analysisMode) {
+                mode = elements.analysisMode.value;
+            }
+            console.log(`Using subject: ${subject}, mode: ${mode}`);
+        } catch (error) {
+            console.error("Error getting subject or mode:", error);
+        }
         
         // Validate image data
         if (!capturedImageData) {
@@ -742,7 +754,19 @@ document.addEventListener('DOMContentLoaded', function() {
                             .then(testData => {
                                 if (testData.success) {
                                     console.log('OpenAI connection confirmed, proceeding with analysis');
-                                    window.proceedWithAnalysis();
+                                    try {
+                                        window.proceedWithAnalysis();
+                                    } catch (analysisError) {
+                                        console.error('Error in proceedWithAnalysis:', analysisError);
+                                        // Show error in feedback tab
+                                        elements.feedbackLoading.style.display = 'none';
+                                        elements.feedbackError.style.display = 'block';
+                                        elements.errorMessage.textContent = 'An error occurred starting the analysis. Please try again.';
+                                        
+                                        // Reset analyze button
+                                        elements.analyzeBtn.disabled = false;
+                                        elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
+                                    }
                                 } else {
                                     console.error('OpenAI test failed:', testData.message);
                                     throw new Error('OpenAI API error: ' + testData.message);
