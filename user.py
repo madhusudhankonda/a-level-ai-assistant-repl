@@ -859,15 +859,17 @@ def analyze_answer():
             analysis_mode = request.json.get('mode', 'answer-feedback')
             current_app.logger.info(f"Answer analysis mode: {analysis_mode}")
             
-            # Check if both images are identical (likely a combined image with both question and answer)
+            # Check if this is a combined image (explicitly specified or identical images)
+            is_combined_image = request.json.get('combined_image', False)
             same_image = question_image == answer_image
-            if same_image:
-                current_app.logger.info("Question and answer images are identical - analyzing combined image")
+            
+            if is_combined_image or same_image:
+                current_app.logger.info(f"Using combined image mode: explicitly set={is_combined_image}, identical images={same_image}")
                 
                 # Update the prompt to inform OpenAI that this is a combined image containing both question and answer
                 response = generate_answer_feedback(
                     question_image,  # Combined image with both question and answer (data URI)
-                    None,           # No separate answer image needed
+                    answer_image,    # Pass the answer image for backwards compatibility
                     subject,
                     combined_image=True
                 )

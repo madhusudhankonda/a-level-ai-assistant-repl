@@ -486,12 +486,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         question_image: capturedImageData,
                         answer_image: capturedImageData, // Using same image, but the AI will analyze both parts
                         subject: subject,
-                        mode: 'answer-feedback'
+                        mode: 'answer-feedback',
+                        combined_image: true
                     })
                 });
-            
-            // Use Promise.race to implement timeout
-            Promise.race([fetchPromise, timeoutPromise])
+                
+                // Use Promise.race to implement timeout
+                Promise.race([fetchPromise, timeoutPromise])
                 .then(response => {
                     const processingTime = (new Date() - startTime) / 1000;
                     console.log(`Received server response after ${processingTime} seconds`);
