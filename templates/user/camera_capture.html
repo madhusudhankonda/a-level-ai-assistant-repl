@@ -777,7 +777,19 @@
                     } else {
                         // User has not consented, show modal
                         console.log("User needs to provide AI consent. Showing consent modal.");
-                        aiConsentModal.show();
+                        console.log("Consent reason:", data.reason || "Unknown");
+                        
+                        // Check the consent modal exists
+                        if (aiConsentModal) {
+                            aiConsentModal.show();
+                        } else {
+                            console.error("Consent modal not initialized!");
+                            // Create a new modal if missing
+                            setTimeout(() => {
+                                aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
+                                aiConsentModal.show();
+                            }, 500);
+                        }
                     }
                 })
                 .catch(error => {
@@ -1064,17 +1076,59 @@
             // Provide helpful error messages
             let errorMsg;
             
+            // Check if there's a response object with JSON data
+            let responseData = null;
+            if (error.responseData) {
+                responseData = error.responseData;
+                console.log("Error response data:", responseData);
+            }
+            
+            // Try to extract the response data if it's in JSON format
+            if (error.response && typeof error.response.json === 'function') {
+                try {
+                    error.response.json().then(data => {
+                        console.log("Response error data:", data);
+                        if (data && data.message) {
+                            // Update error message with server data
+                            errorMessage.innerHTML = `${errorMessage.textContent}<br><small class="text-danger">Server message: ${data.message}</small>`;
+                            
+                            // Check for consent issues
+                            if (data.consent_required) {
+                                // Show the consent modal after a short delay
+                                setTimeout(() => {
+                                    if (aiConsentModal) {
+                                        aiConsentModal.show();
+                                    }
+                                }, 1000);
+                            }
+                        }
+                    }).catch(e => console.error("Error parsing response JSON:", e));
+                } catch (e) {
+                    console.error("Could not parse response as JSON:", e);
+                }
+            }
+            
+            // Determine error message based on error type
             if (error.message && error.message.includes('pattern')) {
                 errorMsg = 'Image format error: There was an issue with the captured image. Please try again with a clearer picture.';
             } else if (error.message && error.message.includes('Failed to fetch')) {
                 errorMsg = 'Connection error: Please check your internet connection and try again.';
             } else if (error.message && error.message.includes('Unexpected token')) {
                 errorMsg = 'Invalid response received. Please try again with a smaller or clearer image.';
+            } else if (error.message && error.message.includes('403')) {
+                errorMsg = 'Permission error: You may need to provide AI consent or purchase more credits. The consent dialog will appear if needed.';
+                
+                // Show the consent modal after a short delay in case of 403
+                setTimeout(() => {
+                    if (aiConsentModal) {
+                        aiConsentModal.show();
+                    }
+                }, 2000);
             } else {
                 errorMsg = 'Error: ' + (error.message || 'Something went wrong. Please try again.');
             }
             
-            errorMessage.textContent = errorMsg;
+            errorMessage.innerHTML = errorMsg;
             
             // Add retry button to error message
             const retryButton = document.createElement('button');

@@ -455,25 +455,41 @@ def analyze_captured_image():
         
         # Check for AI usage consent
         user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+        
+        # Log detailed consent status for debugging
+        if user_profile:
+            current_app.logger.info(f"User {current_user.id} consent status: ai_usage_consent_required={user_profile.ai_usage_consent_required}, last_ai_consent_date={user_profile.last_ai_consent_date}")
+        else:
+            current_app.logger.warning(f"User {current_user.id} does not have a UserProfile record")
+        
         if not user_profile or user_profile.ai_usage_consent_required or not user_profile.last_ai_consent_date:
             current_app.logger.warning(f"User {current_user.id} attempted analysis without AI consent")
+            
+            # Provide detailed reasons for debugging
+            reason = "No profile" if not user_profile else "Consent required" if user_profile.ai_usage_consent_required else "No consent date"
+            current_app.logger.info(f"Consent denied reason: {reason}")
+            
             return jsonify({
                 'success': False,
                 'message': 'You need to provide consent for AI usage before using this feature.',
-                'consent_required': True
+                'consent_required': True,
+                'reason': reason
             }), 403
             
         # Check if consent is expired (older than 30 days)
         if user_profile.last_ai_consent_date:
             consent_age = datetime.utcnow() - user_profile.last_ai_consent_date
+            current_app.logger.info(f"User {current_user.id} consent age: {consent_age.days} days")
+            
             if consent_age.days > 30:
                 user_profile.ai_usage_consent_required = True
                 db.session.commit()
-                current_app.logger.warning(f"User {current_user.id} has expired AI consent")
+                current_app.logger.warning(f"User {current_user.id} has expired AI consent ({consent_age.days} days old)")
                 return jsonify({
                     'success': False,
                     'message': 'Your AI usage consent has expired. Please renew your consent to continue using AI features.',
-                    'consent_required': True
+                    'consent_required': True,
+                    'days_since_consent': consent_age.days
                 }), 403
         
         # Credit verification - require 10 credits per analysis
@@ -686,25 +702,41 @@ def analyze_answer():
         
         # Check for AI usage consent
         user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+        
+        # Log detailed consent status for debugging
+        if user_profile:
+            current_app.logger.info(f"User {current_user.id} consent status: ai_usage_consent_required={user_profile.ai_usage_consent_required}, last_ai_consent_date={user_profile.last_ai_consent_date}")
+        else:
+            current_app.logger.warning(f"User {current_user.id} does not have a UserProfile record")
+        
         if not user_profile or user_profile.ai_usage_consent_required or not user_profile.last_ai_consent_date:
             current_app.logger.warning(f"User {current_user.id} attempted answer analysis without AI consent")
+            
+            # Provide detailed reasons for debugging
+            reason = "No profile" if not user_profile else "Consent required" if user_profile.ai_usage_consent_required else "No consent date"
+            current_app.logger.info(f"Consent denied reason: {reason}")
+            
             return jsonify({
                 'success': False,
                 'message': 'You need to provide consent for AI usage before using this feature.',
-                'consent_required': True
+                'consent_required': True,
+                'reason': reason
             }), 403
             
         # Check if consent is expired (older than 30 days)
         if user_profile.last_ai_consent_date:
             consent_age = datetime.utcnow() - user_profile.last_ai_consent_date
+            current_app.logger.info(f"User {current_user.id} consent age: {consent_age.days} days")
+            
             if consent_age.days > 30:
                 user_profile.ai_usage_consent_required = True
                 db.session.commit()
-                current_app.logger.warning(f"User {current_user.id} has expired AI consent")
+                current_app.logger.warning(f"User {current_user.id} has expired AI consent ({consent_age.days} days old)")
                 return jsonify({
                     'success': False,
                     'message': 'Your AI usage consent has expired. Please renew your consent to continue using AI features.',
-                    'consent_required': True
+                    'consent_required': True,
+                    'days_since_consent': consent_age.days
                 }), 403
         
         # Credit verification - require 10 credits per analysis
@@ -896,25 +928,41 @@ def api_get_explanation(question_id):
         if request.method == 'POST':
             # Check for AI usage consent
             user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
+            
+            # Log detailed consent status for debugging
+            if user_profile:
+                current_app.logger.info(f"User {current_user.id} consent status: ai_usage_consent_required={user_profile.ai_usage_consent_required}, last_ai_consent_date={user_profile.last_ai_consent_date}")
+            else:
+                current_app.logger.warning(f"User {current_user.id} does not have a UserProfile record")
+            
             if not user_profile or user_profile.ai_usage_consent_required or not user_profile.last_ai_consent_date:
                 current_app.logger.warning(f"User {current_user.id} attempted to get explanation without AI consent")
+                
+                # Provide detailed reasons for debugging
+                reason = "No profile" if not user_profile else "Consent required" if user_profile.ai_usage_consent_required else "No consent date"
+                current_app.logger.info(f"Consent denied reason: {reason}")
+                
                 return jsonify({
                     'success': False,
                     'message': 'You need to provide consent for AI usage before using this feature.',
-                    'consent_required': True
+                    'consent_required': True,
+                    'reason': reason
                 }), 403
                 
             # Check if consent is expired (older than 30 days)
             if user_profile.last_ai_consent_date:
                 consent_age = datetime.utcnow() - user_profile.last_ai_consent_date
+                current_app.logger.info(f"User {current_user.id} consent age: {consent_age.days} days")
+                
                 if consent_age.days > 30:
                     user_profile.ai_usage_consent_required = True
                     db.session.commit()
-                    current_app.logger.warning(f"User {current_user.id} has expired AI consent")
+                    current_app.logger.warning(f"User {current_user.id} has expired AI consent ({consent_age.days} days old)")
                     return jsonify({
                         'success': False,
                         'message': 'Your AI usage consent has expired. Please renew your consent to continue using AI features.',
-                        'consent_required': True
+                        'consent_required': True,
+                        'days_since_consent': consent_age.days
                     }), 403
             
             # Credit verification - require 10 credits for new explanations
