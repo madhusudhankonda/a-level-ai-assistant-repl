@@ -1430,28 +1430,9 @@ def api_get_explanation(question_id):
         }), 500
     
     # At this point, we're fetching an existing explanation for the first time for this user
-    # First, check for AI consent
+    # We don't need to check for AI consent here as we're just viewing an existing explanation
+    # The consent check should only happen when generating new explanations
     user_profile = UserProfile.query.filter_by(user_id=current_user.id).first()
-    if not user_profile or user_profile.ai_usage_consent_required or not user_profile.last_ai_consent_date:
-        current_app.logger.warning(f"User {current_user.id} attempted to view explanation without AI consent")
-        return jsonify({
-            'success': False,
-            'message': 'You need to provide consent for AI usage before using this feature.',
-            'consent_required': True
-        }), 403
-        
-    # Check if consent is expired (older than 30 days)
-    if user_profile.last_ai_consent_date:
-        consent_age = datetime.utcnow() - user_profile.last_ai_consent_date
-        if consent_age.days > 30:
-            user_profile.ai_usage_consent_required = True
-            db.session.commit()
-            current_app.logger.warning(f"User {current_user.id} has expired AI consent")
-            return jsonify({
-                'success': False,
-                'message': 'Your AI usage consent has expired. Please renew your consent to continue using AI features.',
-                'consent_required': True
-            }), 403
     
     # Track this query in the user's history and deduct credits
     user_query = UserQuery(
