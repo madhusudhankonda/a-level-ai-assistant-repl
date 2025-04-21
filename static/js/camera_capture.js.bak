@@ -193,12 +193,13 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.captureBtn.disabled = false;
         } catch (err) {
             console.error('Error accessing camera:', err);
-            elements.cameraContainer.innerHTML = 
-                '<div class="alert alert-danger">' +
-                '<i class="fas fa-exclamation-circle me-2"></i>' +
-                'Unable to access camera: ' + err.message +
-                '</div>' +
-                '<p class="mt-3">Make sure your browser has permission to access the camera and try again.</p>';
+            elements.cameraContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Unable to access camera: ${err.message}
+                </div>
+                <p class="mt-3">Make sure your browser has permission to access the camera and try again.</p>
+            `;
             elements.captureBtn.disabled = true;
         }
     }
@@ -221,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/api/test-openai')
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('HTTP error! Status: ' + response.status);
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 return response.json();
             })
@@ -271,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (details) {
             const detailsDiv = document.createElement('div');
             detailsDiv.className = 'mt-3 small';
-            detailsDiv.innerHTML = '<strong>Details:</strong> ' + details;
+            detailsDiv.innerHTML = `<strong>Details:</strong> ${details}`;
             
             // Insert elements
             elements.apiStatusAlert.appendChild(detailsDiv);
@@ -301,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (elements.analysisMode) {
                 mode = elements.analysisMode.value;
             }
-            console.log('Using subject: ' + subject + ', mode: ' + mode);
+            console.log(`Using subject: ${subject}, mode: ${mode}`);
         } catch (error) {
             console.error("Error getting subject or mode:", error);
         }
@@ -312,7 +313,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        console.log('Image data length: ' + capturedImageData.length + ' characters');
+        console.log(`Image data length: ${capturedImageData.length} characters`);
         
         // This check is already done in the analyze button handler, but double-check to be safe
         if (elements.feedbackLoading.style.display !== 'block') {
@@ -329,11 +330,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Start processing timer for debugging
         const startTime = new Date();
-        console.log('Starting analysis at ' + startTime.toISOString());
+        console.log(`Starting analysis at ${startTime.toISOString()}`);
         
         if (mode === 'explanation-only') {
             // Question-only analysis
-            console.log('Sending analysis request (explanation mode) for subject: ' + subject);
+            console.log(`Sending analysis request (explanation mode) for subject: ${subject}`);
             
             // Send the actual analysis request with a timeout for safety
             const timeoutPromise = new Promise((_, reject) => {
@@ -351,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Log payload size for debugging
             const payloadSize = JSON.stringify(payload).length;
-            console.log('Request payload size: ' + Math.round(payloadSize / 1024) + ' KB');
+            console.log(`Request payload size: ${Math.round(payloadSize / 1024)} KB`);
             
             // Check if payload is extremely large
             if (payloadSize > 5 * 1024 * 1024) { // 5MB
@@ -373,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             Promise.race([fetchPromise, timeoutPromise])
                 .then(response => {
                     const processingTime = (new Date() - startTime) / 1000;
-                    console.log('Received server response after ' + processingTime + ' seconds');
+                    console.log(`Received server response after ${processingTime} seconds`);
                     
                     if (!response || !response.ok) {
                         // Check if it's an authentication error
@@ -381,13 +382,37 @@ document.addEventListener('DOMContentLoaded', function() {
                             window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
                             throw new Error('Authentication required. Please log in.');
                         }
-                        throw new Error('HTTP error! Status: ' + (response ? response.status : 'No response'));
+                        throw new Error(`HTTP error! Status: ${response ? response.status : 'No response'}`);
                     }
                     return response.json();
                 })
                 .then(data => {
                     const totalTime = (new Date() - startTime) / 1000;
-                    console.log('Analysis completed in ' + totalTime + ' seconds');
+                    console.log(`Analysis completed in ${totalTime} seconds`);
+                    
+                    // Additional safeguards for malformed response data
+                    if (!data) {
+                        throw new Error('No response data received from server');
+                    }
+                    
+                    // Log the actual response for debugging
+                    console.log('Server response:', JSON.stringify(data).substring(0, 200) + '...');
+                    
+                    // Always ensure the response is in the expected format
+                    if (typeof data === 'string') {
+                        try {
+                            // Try to parse if it's a JSON string
+                            data = JSON.parse(data);
+                        } catch (e) {
+                            // If it's not JSON, create a simple wrapper
+                            data = { 
+                                success: true, 
+                                explanation: data,
+                                subject: subject
+                            };
+                        }
+                    }
+                    
                     handleExplanationResponse(data);
                 })
                 .catch(error => {
@@ -398,62 +423,105 @@ document.addEventListener('DOMContentLoaded', function() {
                         error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
                     }
                     
+                    // Check if the error is from JSON parsing
+                    if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+                        error = new Error('Error parsing server response. The server might be overloaded. Please try again.');
+                    }
+                    
                     handleAnalysisError(error);
                 });
         } else {
-            // Answer feedback mode
-            console.log('Sending feedback request for subject: ' + subject);
+            // In Answer Feedback mode, we need to:
+            // 1. Alert the user that we need separate captures for question and answer
+            // 2. Guide them through the process
+
+            // Hide the loading state temporarily
+            elements.feedbackLoading.style.display = 'none';
+
+            // Show an instructional alert to the user
+            const alertHTML = `
+                <div class="alert alert-warning answer-mode-alert mb-3">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Answer Feedback Mode</h5>
+                    <p>To analyze your work, we need to capture <strong>both</strong> the question and your answer.</p>
+                    <hr>
+                    <p class="mb-2">Please make sure your image contains:</p>
+                    <ol>
+                        <li>The original question clearly visible at the top</li>
+                        <li>Your handwritten solution/answer clearly visible below it</li>
+                    </ol>
+                    <p class="mb-0">For best results, ensure both are on the same page and clearly visible.</p>
+                </div>
+                <div class="text-center">
+                    <button id="confirm-answer-mode" class="btn btn-primary">
+                        <i class="fas fa-check me-1"></i> I've Included Both Question and Answer
+                    </button>
+                </div>
+            `;
             
-            // Use Promise race for timeout
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Request timed out after 90 seconds')), 90000);
-            });
+            // Show the alert in the feedback area
+            elements.feedbackPlaceholder.innerHTML = alertHTML;
+            elements.feedbackPlaceholder.style.display = 'block';
             
-            const fetchPromise = fetch('/api/analyze-answer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    question_image: capturedImageData,
-                    answer_image: capturedImageData, // Using same image, but the AI will analyze both parts
-                    subject: subject,
-                    mode: 'answer-feedback',
-                    combined_image: true
-                })
-            });
-            
-            // Use Promise.race to implement timeout
-            Promise.race([fetchPromise, timeoutPromise])
-                .then(response => {
-                    const processingTime = (new Date() - startTime) / 1000;
-                    console.log('Received server response after ' + processingTime + ' seconds');
-                    
-                    if (!response || !response.ok) {
-                        // Check if it's an authentication error
-                        if (response && (response.status === 401 || response.url.includes('login'))) {
-                            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
-                            throw new Error('Authentication required. Please log in.');
-                        }
-                        throw new Error('HTTP error! Status: ' + (response ? response.status : 'No response'));
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const totalTime = (new Date() - startTime) / 1000;
-                    console.log('Analysis completed in ' + totalTime + ' seconds');
-                    handleFeedbackResponse(data);
-                })
-                .catch(error => {
-                    console.error('Error in analyze-answer:', error);
-                    
-                    // Add more context to timeout errors
-                    if (error.message.includes('timed out')) {
-                        error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
-                    }
-                    
-                    handleAnalysisError(error);
+            // Add event listener to the confirm button
+            document.getElementById('confirm-answer-mode').addEventListener('click', function() {
+                // Hide the placeholder and show loading again
+                elements.feedbackPlaceholder.style.display = 'none';
+                elements.feedbackLoading.style.display = 'block';
+                
+                console.log(`Sending analysis request (answer mode) for subject: ${subject}`);
+                
+                // Send the actual analysis request with a timeout for safety
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Request timed out after 90 seconds')), 90000); // Longer timeout for answer analysis
                 });
+                
+                // Now send the request with the combined image
+                // The OpenAI system prompt will guide the AI to look for both question and answer in the image
+                const fetchPromise = fetch('/api/analyze-answer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question_image: capturedImageData,
+                        answer_image: capturedImageData, // Using same image, but the AI will analyze both parts
+                        subject: subject,
+                        mode: 'answer-feedback',
+                        combined_image: true
+                    })
+                });
+                
+                // Use Promise.race to implement timeout
+                Promise.race([fetchPromise, timeoutPromise])
+                    .then(response => {
+                        const processingTime = (new Date() - startTime) / 1000;
+                        console.log(`Received server response after ${processingTime} seconds`);
+                        
+                        if (!response || !response.ok) {
+                            // Check if it's an authentication error
+                            if (response && (response.status === 401 || response.url.includes('login'))) {
+                                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+                                throw new Error('Authentication required. Please log in.');
+                            }
+                            throw new Error(`HTTP error! Status: ${response ? response.status : 'No response'}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const totalTime = (new Date() - startTime) / 1000;
+                        console.log(`Analysis completed in ${totalTime} seconds`);
+                        handleFeedbackResponse(data);
+                    })
+                    .catch(error => {
+                        console.error('Error in analyze-answer:', error);
+                        
+                        // Add more context to timeout errors
+                        if (error.message.includes('timed out')) {
+                            error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
+                        }
+                        
+                        handleAnalysisError(error);
+                    });
         }
     }
     
@@ -672,14 +740,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         elements.explanationContent.innerHTML = '<div class="alert alert-warning">No explanation content was provided. Please try again.</div>';
                     }
                     
-                    // Create nice feedback content
-                    elements.feedbackContent.innerHTML = 
-                        '<div class="alert alert-success">' +
-                        '<h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Question Analysis</h5>' +
-                        '<p>This problem has been analyzed by the AI. The explanation tab provides a detailed solution.</p>' +
-                        '<hr>' +
-                        '<p class="mb-0">Click the "Full Explanation" tab above to see the complete step-by-step solution.</p>' +
-                        '</div>';
+                    // Generate proper content for all tabs in explanation-only mode
+                    // Feedback tab
+                    elements.feedbackContent.innerHTML = `
+                        <div class="alert alert-info mb-3">
+                            <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Explanation Mode</h5>
+                            <p>You're using the explanation-only mode, which provides a detailed walkthrough of how to solve this question.</p>
+                            <hr>
+                            <p class="mb-0">Click the "Full Explanation" tab above to see the complete step-by-step solution.</p>
+                        </div>
+                    `;
                     
                     // Tips tab - Extract or generate some useful tips from the explanation
                     let tipContent = '';
@@ -699,28 +769,31 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // If we found a concept section, use it; otherwise provide generic tips
                         if (conceptSection) {
-                            tipContent = 
-                                '<h5>Key Concepts for this Question:</h5>' +
-                                '<div class="mb-3">' + conceptSection + '</div>';
+                            tipContent = `
+                                <h5>Key Concepts for this Question:</h5>
+                                <div class="mb-3">${conceptSection}</div>
+                            `;
                         } else {
-                            tipContent = 
-                                '<h5>Study Tips:</h5>' +
-                                '<ul class="mb-3">' +
-                                '<li>Review the full explanation to understand the solution approach</li>' +
-                                '<li>Practice similar questions to reinforce your understanding</li>' +
-                                '<li>Pay attention to the mathematical techniques used in the solution</li>' +
-                                '<li>Try to solve the problem on your own before reviewing the explanation</li>' +
-                                '</ul>';
+                            tipContent = `
+                                <h5>Study Tips:</h5>
+                                <ul class="mb-3">
+                                    <li>Review the full explanation to understand the solution approach</li>
+                                    <li>Practice similar questions to reinforce your understanding</li>
+                                    <li>Pay attention to the mathematical techniques used in the solution</li>
+                                    <li>Try to solve the problem on your own before reviewing the explanation</li>
+                                </ul>
+                            `;
                         }
                     } catch (e) {
                         console.error('Error generating tips:', e);
-                        tipContent = 
-                            '<div class="alert alert-success">' +
-                            '<h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Study Tips</h5>' +
-                            '<p>Review the full explanation to understand this question thoroughly.</p>' +
-                            '<hr>' +
-                            '<p class="mb-0">Try to solve similar problems to practice the concepts demonstrated in the explanation.</p>' +
-                            '</div>';
+                        tipContent = `
+                            <div class="alert alert-success">
+                                <h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Study Tips</h5>
+                                <p>Review the full explanation to understand this question thoroughly.</p>
+                                <hr>
+                                <p class="mb-0">Try to solve similar problems to practice the concepts demonstrated in the explanation.</p>
+                            </div>
+                        `;
                     }
                     
                     elements.tipsContent.innerHTML = tipContent;
@@ -736,7 +809,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update timestamp
                 const now = new Date();
-                elements.feedbackTimestamp.textContent = 'Generated on ' + now.toLocaleDateString() + ' at ' + now.toLocaleTimeString();
+                elements.feedbackTimestamp.textContent = `Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
                 
                 // Display captured image (if available)
                 try {
@@ -820,7 +893,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update timestamp
             const now = new Date();
-            elements.feedbackTimestamp.textContent = 'Generated on ' + now.toLocaleDateString() + ' at ' + now.toLocaleTimeString();
+            elements.feedbackTimestamp.textContent = `Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
             
             // Display image
             displayCapturedImageInFeedback();
@@ -875,52 +948,54 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 1. Consent or permission errors
         if (errorMessage.match(/consent|permission|403|unauthorized access/i)) {
-            errorMsg = 'You need to provide consent for AI image analysis.';
-            actionSuggestion = 'Please accept the terms and try again.';
-        }
-        // 2. Authentication errors
-        else if (errorMessage.match(/login|auth|401|authenticate|unauthenticated/i)) {
-            errorMsg = 'You need to log in to use this feature.';
-            actionSuggestion = '<a href="/auth/login?next=' + encodeURIComponent(window.location.pathname) + '">Login now</a> to continue.';
-        }
-        // 3. Timeout errors
-        else if (errorMessage.match(/timeout|timed out|too long/i)) {
-            errorMsg = 'The request timed out. This may happen if:';
-            errorDetails = 
-                '<ul class="my-2">' +
-                '<li>The image is too complex or unclear</li>' +
-                '<li>The server is experiencing high traffic</li>' +
-                '<li>Your internet connection is unstable</li>' +
-                '</ul>';
-            actionSuggestion = 'Try again with a simpler or clearer image, or try later when traffic may be lower.';
-        }
-        // 4. Image format or size errors
-        else if (errorMessage.match(/image format|image size|too large|file size|resolution/i)) {
-            errorMsg = 'There was a problem with the image format or size.';
-            actionSuggestion = 'Try a different image in JPG or PNG format, or resize your image to be smaller.';
-        }
-        // 5. AI/OpenAI errors
-        else if (errorMessage.match(/openai|ai service|ai model|gpt/i)) {
-            errorMsg = 'The AI analysis service is temporarily unavailable.';
-            actionSuggestion = 'Please try again later. If the problem persists, contact support.';
-        }
-        // 6. Credits or quota errors
-        else if (errorMessage.match(/credit|quota|payment|subscription|insufficient/i)) {
-            errorMsg = 'You don\'t have enough credits for this operation.';
-            actionSuggestion = 'Please <a href="/auth/buy-credits">purchase more credits</a> to continue using AI features.';
+            errorMsg = 'Permission error: AI consent or credits required';
+            errorDetails = 'You need to provide consent for AI usage or purchase more credits to use this feature.';
+            actionSuggestion = 'Click the "AI Consent" button when prompted or visit your profile to add credits.';
+            
+            // Don't show consent modal here to avoid double-showing it
+            console.log("Consent error in analysis - not showing modal to avoid duplicate");
         }
         
-        // Build final error message
-        let errorHtml = '<div class="alert alert-danger">' + errorMsg + '</div>';
-        
-        if (errorDetails) {
-            errorHtml += '<div class="mt-3">' + errorDetails + '</div>';
+        // 2. Credit or balance errors
+        else if (errorMessage.match(/credit|insufficient|balance|purchase/i)) {
+            errorMsg = 'Insufficient credits';
+            errorDetails = 'You need more credits to use this feature.';
+            actionSuggestion = 'Please visit your profile page to purchase more credits.';
         }
         
-        errorHtml += '<div class="mt-3 alert alert-info"><i class="fas fa-lightbulb me-2"></i> ' + actionSuggestion + '</div>';
+        // 3. Network or connectivity errors
+        else if (errorMessage.match(/network|timeout|failed to fetch|connection|502|504|offline/i)) {
+            errorMsg = 'Network connection error';
+            errorDetails = 'Unable to connect to the server or the request timed out.';
+            actionSuggestion = 'Check your internet connection and try again. If the problem persists, try again later.';
+        }
         
-        // Update error message and display
-        elements.errorMessage.innerHTML = errorHtml;
+        // 4. OpenAI service errors
+        else if (errorMessage.match(/openai|gpt|model|api key|quota|rate limit|exceeded/i)) {
+            errorMsg = 'AI service error';
+            errorDetails = errorMessage.replace(/^OpenAI API error: /, '');
+            actionSuggestion = 'This is likely a temporary issue. Please try again in a few moments.';
+        }
+        
+        // 5. Image format or data errors
+        else if (errorMessage.match(/image|format|invalid|corrupt|data|empty|base64/i)) {
+            errorMsg = 'Image processing error';
+            errorDetails = 'The image could not be processed correctly.';
+            actionSuggestion = 'Try capturing a clearer photo with good lighting or upload a different image.';
+        }
+        
+        // Create a structured error display
+        const errorHTML = `
+            <div class="alert alert-danger mb-3">
+                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>${errorMsg}</h5>
+                <p>${errorDetails}</p>
+                <hr>
+                <p class="mb-0"><i class="fas fa-lightbulb me-1"></i> <strong>Suggestion:</strong> ${actionSuggestion}</p>
+            </div>
+        `;
+        
+        // Set error message with improved HTML formatting
+        elements.errorMessage.innerHTML = errorHTML;
         
         // Add retry button
         const retryButton = document.createElement('button');
@@ -1078,7 +1153,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/api/check-ai-consent')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('HTTP error! Status: ' + response.status);
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
                 })
