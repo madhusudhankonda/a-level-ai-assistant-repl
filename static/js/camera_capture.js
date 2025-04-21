@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tipsContent: document.getElementById('tips-content'),
         feedbackSubject: document.getElementById('feedback-subject'),
         feedbackScore: document.getElementById('feedback-score'),
+        feedbackTimestamp: document.getElementById('feedback-timestamp'),
         errorMessage: document.getElementById('error-message'),
         startOverBtn: document.getElementById('start-over-btn'),
         
