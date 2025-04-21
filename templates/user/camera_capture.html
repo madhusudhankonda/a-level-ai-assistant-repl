@@ -659,7 +659,13 @@
         
         // Upload area drop event
         uploadArea.addEventListener('drop', function(e) {
-            handleFileDrop(e);
+            e.preventDefault();
+            uploadArea.classList.remove('border-primary');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processFile(files[0]);
+            }
         });
         
         // File input change event
