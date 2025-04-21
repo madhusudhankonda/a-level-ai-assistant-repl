@@ -499,6 +499,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        // Ensure the image container is visible
+        if (elements.feedbackImageContainer) {
+            elements.feedbackImageContainer.style.display = 'block';
+            // Reset any previous max-height settings that might be restricting display
+            elements.feedbackImageContainer.style.maxHeight = 'none';
+        }
+        
         // Try direct image display first
         try {
             // Create a new image element
@@ -518,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     context.font = "14px Arial";
                     context.fillStyle = "#842029";
                     context.fillText("Unable to display image", 20, 50);
+                    context.fillText("Check browser console for details", 20, 75);
                 } catch (canvasErr) {
                     console.error("Canvas error:", canvasErr);
                 }
@@ -532,46 +540,101 @@ document.addEventListener('DOMContentLoaded', function() {
                     const context = elements.feedbackImageCanvas.getContext('2d');
                     
                     // Set dimensions - limit to reasonable size if huge
-                    const maxWidth = 1000;
-                    const maxHeight = 800;
+                    const maxWidth = 800;  // Reduced for better display
+                    const maxHeight = 600; // Reduced for better display
                     
                     let drawWidth = img.width;
                     let drawHeight = img.height;
                     
-                    // Scale down if necessary
-                    if (drawWidth > maxWidth) {
-                        const scale = maxWidth / drawWidth;
-                        drawWidth = maxWidth;
-                        drawHeight = Math.floor(img.height * scale);
+                    // Scale down if necessary, preserving aspect ratio
+                    if (drawWidth > maxWidth || drawHeight > maxHeight) {
+                        const scale = Math.min(maxWidth / drawWidth, maxHeight / drawHeight);
+                        drawWidth = Math.floor(drawWidth * scale);
+                        drawHeight = Math.floor(drawHeight * scale);
                     }
                     
-                    if (drawHeight > maxHeight) {
-                        const scale = maxHeight / drawHeight;
-                        drawHeight = maxHeight;
-                        drawWidth = Math.floor(drawWidth * scale);
-                    }
+                    // Log the final dimensions for debugging
+                    console.log("Final image dimensions:", drawWidth, "x", drawHeight);
                     
                     // Set canvas dimensions
                     elements.feedbackImageCanvas.width = drawWidth;
                     elements.feedbackImageCanvas.height = drawHeight;
                     
+                    // Clear the canvas first
+                    context.clearRect(0, 0, drawWidth, drawHeight);
+                    
                     // Draw the image
                     context.drawImage(img, 0, 0, drawWidth, drawHeight);
                     console.log("Image drawn successfully");
                     
-                    // Show canvas container
-                    elements.feedbackImageContainer.style.display = 'block';
+                    // Update toggle image button text if available
+                    if (elements.toggleImageText) {
+                        elements.toggleImageText.textContent = "Expand Image";
+                    }
+                    
+                    // Add click handler to toggle image size
+                    if (elements.toggleImageBtn) {
+                        // Remove any previous handlers to avoid duplicates
+                        elements.toggleImageBtn.onclick = function() {
+                            const container = elements.feedbackImageContainer;
+                            const isExpanded = container.style.maxHeight === 'none';
+                            
+                            if (isExpanded) {
+                                // Collapse the image
+                                container.style.maxHeight = '150px';
+                                elements.toggleImageText.textContent = "Expand Image";
+                            } else {
+                                // Expand the image
+                                container.style.maxHeight = 'none';
+                                elements.toggleImageText.textContent = "Collapse Image";
+                            }
+                        };
+                    }
+                    
                 } catch (drawErr) {
                     console.error("Error drawing image:", drawErr);
                 }
             };
             
             // Set source - this triggers the loading
+            // Add cache buster to prevent browser caching issues
+            const cacheBuster = '?cache=' + new Date().getTime();
             console.log("Setting image source, data length:", capturedImageData.length);
-            img.src = capturedImageData;
+            
+            // Check if it's a data URI and use directly, otherwise add cache buster
+            if (capturedImageData.startsWith('data:')) {
+                img.src = capturedImageData;
+            } else {
+                img.src = capturedImageData + cacheBuster;
+            }
+            
+            // Set a timeout in case the image loading hangs
+            setTimeout(function() {
+                if (!img.complete) {
+                    console.error("Image loading timed out");
+                    img.onerror(new Error("Loading timed out"));
+                }
+            }, 5000);
             
         } catch (err) {
             console.error("Exception in displayCapturedImageInFeedback:", err);
+            
+            // Try alternative display method if the default fails
+            try {
+                // Display an error message in the canvas
+                const context = elements.feedbackImageCanvas.getContext('2d');
+                elements.feedbackImageCanvas.width = 400;
+                elements.feedbackImageCanvas.height = 120;
+                context.fillStyle = "#fff3cd";
+                context.fillRect(0, 0, 400, 120);
+                context.font = "14px Arial";
+                context.fillStyle = "#856404";
+                context.fillText("Image display error: " + (err.message || "Unknown error"), 20, 40);
+                context.fillText("Your analysis will still work correctly.", 20, 70);
+                context.fillText("Check browser console for details.", 20, 90);
+            } catch (fallbackErr) {
+                console.error("Even fallback display failed:", fallbackErr);
+            }
         }
     }
     
@@ -758,41 +821,94 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle analysis errors
     function handleAnalysisError(error) {
-        // Hide loading
+        // Hide loading and reset display states
         elements.feedbackLoading.style.display = 'none';
+        elements.feedbackPlaceholder.style.display = 'none';
+        elements.feedbackResult.style.display = 'none';
         
-        // Reset analyze button
-        elements.analyzeBtn.disabled = false;
-        elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
+        // Reset analyze button if it exists
+        if (elements.analyzeBtn) {
+            elements.analyzeBtn.disabled = false;
+            elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
+        }
         
         console.error('API Error:', error);
         
-        // Show error
+        // Show error container
         elements.feedbackError.style.display = 'block';
         
-        // Simple error message
-        let errorMsg = 'Error processing your request. Please try again.';
+        // Extract error message safely
+        const errorMessage = error instanceof Error ? error.message : 
+                            typeof error === 'string' ? error : 
+                            error && error.message ? error.message : 
+                            'Unknown error occurred';
         
-        // Determine if it's a consent error
-        if (error.message && (error.message.includes('403') || 
-                              error.message.includes('consent') || 
-                              error.message.includes('permission'))) {
-            errorMsg = 'Permission error: You may need to provide AI consent or purchase more credits.';
+        console.log("Error details:", errorMessage);
+        
+        // Default error message with more helpful details
+        let errorMsg = 'Error processing your request. Please try again with a clearer image.';
+        let errorDetails = '';
+        let actionSuggestion = 'Try uploading a different image or capturing again with better lighting.';
+        
+        // Determine the type of error and provide appropriate messaging
+        
+        // 1. Consent or permission errors
+        if (errorMessage.match(/consent|permission|403|unauthorized access/i)) {
+            errorMsg = 'Permission error: AI consent or credits required';
+            errorDetails = 'You need to provide consent for AI usage or purchase more credits to use this feature.';
+            actionSuggestion = 'Click the "AI Consent" button when prompted or visit your profile to add credits.';
             
             // Don't show consent modal here to avoid double-showing it
             console.log("Consent error in analysis - not showing modal to avoid duplicate");
-        } else if (error.message && error.message.includes('Failed to fetch')) {
-            errorMsg = 'Connection error: Please check your internet connection and try again.';
         }
         
-        elements.errorMessage.innerHTML = errorMsg;
+        // 2. Credit or balance errors
+        else if (errorMessage.match(/credit|insufficient|balance|purchase/i)) {
+            errorMsg = 'Insufficient credits';
+            errorDetails = 'You need more credits to use this feature.';
+            actionSuggestion = 'Please visit your profile page to purchase more credits.';
+        }
+        
+        // 3. Network or connectivity errors
+        else if (errorMessage.match(/network|timeout|failed to fetch|connection|502|504|offline/i)) {
+            errorMsg = 'Network connection error';
+            errorDetails = 'Unable to connect to the server or the request timed out.';
+            actionSuggestion = 'Check your internet connection and try again. If the problem persists, try again later.';
+        }
+        
+        // 4. OpenAI service errors
+        else if (errorMessage.match(/openai|gpt|model|api key|quota|rate limit|exceeded/i)) {
+            errorMsg = 'AI service error';
+            errorDetails = errorMessage.replace(/^OpenAI API error: /, '');
+            actionSuggestion = 'This is likely a temporary issue. Please try again in a few moments.';
+        }
+        
+        // 5. Image format or data errors
+        else if (errorMessage.match(/image|format|invalid|corrupt|data|empty|base64/i)) {
+            errorMsg = 'Image processing error';
+            errorDetails = 'The image could not be processed correctly.';
+            actionSuggestion = 'Try capturing a clearer photo with good lighting or upload a different image.';
+        }
+        
+        // Create a structured error display
+        const errorHTML = `
+            <div class="alert alert-danger mb-3">
+                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>${errorMsg}</h5>
+                <p>${errorDetails}</p>
+                <hr>
+                <p class="mb-0"><i class="fas fa-lightbulb me-1"></i> <strong>Suggestion:</strong> ${actionSuggestion}</p>
+            </div>
+        `;
+        
+        // Set error message with improved HTML formatting
+        elements.errorMessage.innerHTML = errorHTML;
         
         // Add retry button
         const retryButton = document.createElement('button');
         retryButton.className = 'btn btn-outline-primary mt-3';
         retryButton.innerHTML = '<i class="fas fa-redo me-1"></i> Try Again';
         retryButton.onclick = function() {
-            // Remove button
+            // Remove any existing buttons
             if (elements.errorMessage.nextElementSibling) {
                 elements.errorMessage.parentNode.removeChild(elements.errorMessage.nextElementSibling);
             }
@@ -801,13 +917,19 @@ document.addEventListener('DOMContentLoaded', function() {
             elements.feedbackError.style.display = 'none';
             elements.captureTab.click();
             
-            // Start camera again
-            startCamera();
+            // Start camera again if on the camera tab
+            if (document.querySelector('#camera-tab.active')) {
+                startCamera();
+            }
         };
         
+        // Only add the button if it doesn't already exist
         if (!elements.errorMessage.nextElementSibling || !elements.errorMessage.nextElementSibling.classList.contains('btn')) {
             elements.errorMessage.parentNode.appendChild(retryButton);
         }
+        
+        // Scroll to error message to ensure visibility
+        elements.feedbackError.scrollIntoView({ behavior: 'smooth' });
     }
     
     // Event listeners

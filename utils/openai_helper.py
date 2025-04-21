@@ -242,74 +242,118 @@ Your explanation should be comprehensive, explaining both the mathematical conce
     try:
         logger.info(f"Processing image for {subject} explanation")
         
-        # Handle different input formats
-        if isinstance(base64_image, str):
-            # Check if it already has a data URI prefix
-            if base64_image.startswith('data:image/'):
-                logger.info("Using provided data URI directly")
-                image_url = base64_image
-            elif 'base64,' in base64_image:
-                # Extract base64 part from data URI
-                logger.info("Extracting base64 data from URI")
-                image_parts = base64_image.split('base64,')
-                if len(image_parts) > 1:
-                    base64_data = image_parts[1]
-                    image_url = f"data:image/jpeg;base64,{base64_data}"
-                else:
-                    raise ValueError("Invalid data URI format")
-            else:
-                # Assume it's a raw base64 string, add data URI prefix
-                logger.info("Adding data URI prefix to raw base64 data")
-                image_url = f"data:image/jpeg;base64,{base64_image}"
-        else:
-            # Invalid data type
+        # Simplified handling of different input formats with better logging
+        if not isinstance(base64_image, str):
+            logger.error(f"Invalid image data type: {type(base64_image)}")
             raise ValueError(f"Invalid image data type: {type(base64_image)}")
-        
-        # Validate we have a proper URL now
-        if not image_url or len(image_url) < 100:
-            raise ValueError("Image data is too short or empty")
             
-        logger.info(f"Image URL prepared, total length: {len(image_url)}")
+        logger.info(f"Image data length: {len(base64_image)} characters")
         
-        # API call without requiring JSON response format
-        logger.info(f"Calling OpenAI API for explanation with {len(image_url) // 1000}KB image data")
+        # Extract the base64 part from data URI if needed
+        if base64_image.startswith('data:image/'):
+            logger.info("Input has data URI format, extracting base64 portion")
+            try:
+                # Extract base64 part after the "base64," marker
+                image_parts = base64_image.split('base64,')
+                if len(image_parts) < 2:
+                    raise ValueError("Invalid data URI format: missing base64 data")
+                
+                # The second part is the actual base64 data
+                clean_base64 = image_parts[1]
+                logger.info(f"Successfully extracted base64 data: {len(clean_base64)} characters")
+                
+                # Reconstruct the data URI with the extracted part (in case there were format issues)
+                image_url = f"data:image/jpeg;base64,{clean_base64}"
+            except Exception as extract_error:
+                logger.error(f"Failed to extract base64 from data URI: {extract_error}")
+                raise ValueError(f"Invalid data URI format: {extract_error}")
+        else:
+            # Check if it's already a clean base64 string (no data URI prefix)
+            logger.info("Checking if input is a clean base64 string")
+            try:
+                # Validate it's decodable as base64 (just a sample)
+                test_decode = base64.b64decode(base64_image[:100] + "=" * ((4 - len(base64_image[:100]) % 4) % 4))
+                logger.info("Input appears to be clean base64 data")
+                image_url = f"data:image/jpeg;base64,{base64_image}"
+            except Exception as decode_error:
+                logger.error(f"Input is not valid base64 data: {decode_error}")
+                # Last attempt - maybe it has base64, but not at the beginning
+                if 'base64,' in base64_image:
+                    try:
+                        image_parts = base64_image.split('base64,')
+                        clean_base64 = image_parts[1]
+                        image_url = f"data:image/jpeg;base64,{clean_base64}"
+                        logger.info(f"Recovered base64 data from non-standard format: {len(clean_base64)} characters")
+                    except Exception as recovery_error:
+                        logger.error(f"Failed to recover base64 data: {recovery_error}")
+                        raise ValueError("Unable to process the provided image data")
+                else:
+                    raise ValueError("Image data is not in a recognizable format")
+        
+        # Final validation check on the prepared URL
+        if not image_url or len(image_url) < 100:
+            logger.error(f"Final image URL is too short: {len(image_url) if image_url else 0} characters")
+            raise ValueError("Processed image data is too short or empty")
+            
+        logger.info(f"Final image URL prepared, total length: {len(image_url)} characters")
+        
+        # API call with explicit error handling and logging
+        logger.info(f"Calling OpenAI API (GPT-4o) for explanation")
         try:
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
             response = openai.chat.completions.create(
                 model="gpt-4o",  # Using the latest GPT-4o model which supports vision
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": [
-                        {"type": "text", "text": f"Please explain this {subject} question:"},
+                        {"type": "text", "text": f"Please explain this {subject} question in detail:"},
                         {"type": "image_url", "image_url": {"url": image_url}}
                     ]}
                 ],
                 max_tokens=1500,
+                temperature=0.3,  # Lower temperature for more focused responses
                 timeout=90.0  # Increase timeout for longer processing
             )
             
-            # Get the text response directly - no JSON parsing needed anymore
+            # Process the response
             explanation = response.choices[0].message.content
-            logger.info(f"Received explanation: {explanation[:100]}...")
+            if not explanation or len(explanation) < 10:
+                logger.error(f"Received empty or very short explanation from OpenAI: '{explanation}'")
+                raise Exception("The AI returned an empty or insufficient response. Please try again.")
+                
+            logger.info(f"Received explanation of length {len(explanation)} characters")
+            logger.info(f"Explanation preview: {explanation[:100]}...")
             
             return explanation
+            
         except Exception as api_error:
             logger.error(f"OpenAI API call failed: {api_error}")
-            # Provide a more detailed error message
             error_str = str(api_error).lower()
-            if "API key" in error_str:
+            
+            # Provide specific error messages based on different error patterns
+            if "api key" in error_str:
+                logger.error("API key authentication issue detected")
                 raise Exception("OpenAI API key issue. Please check your API key configuration.")
             elif "timeout" in error_str:
+                logger.error("Request timeout detected")
                 raise Exception("The request timed out. The question might be too complex or the server is busy. Please try again.")
-            elif "rate limit" in error_str:
+            elif "rate limit" in error_str or "ratelimit" in error_str:
+                logger.error("Rate limit error detected")
                 raise Exception("OpenAI rate limit reached. Please try again in a few moments.")
-            elif "quota" in error_str or "exceeded" in error_str or "insufficient_quota" in error_str or "429" in error_str:
+            elif any(term in error_str for term in ["quota", "exceeded", "insufficient_quota", "429"]):
+                logger.error("Quota exceeded error detected")
                 raise Exception("The AI service is temporarily unavailable due to exceeding usage limits. The administrator has been notified. Please try again later.")
+            elif "invalid" in error_str and ("format" in error_str or "image" in error_str):
+                logger.error("Invalid image format error detected")
+                raise Exception("The image format is invalid or corrupted. Please try with a different image.")
             else:
+                logger.error(f"Unspecified OpenAI API error: {api_error}")
                 raise Exception(f"OpenAI API error: {str(api_error)}")
         
     except Exception as e:
         logger.error(f"Error generating explanation: {e}")
-        if "OpenAI API error" in str(e):
+        if "OpenAI API error" in str(e) or "API key" in str(e) or "timed out" in str(e):
             # Pass through already formatted OpenAI errors
             raise e
         else:
