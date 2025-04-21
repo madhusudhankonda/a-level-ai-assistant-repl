@@ -325,7 +325,9 @@
             explanationLoading.style.display = 'block';
             explanationContent.innerHTML = '';
             
-            const method = forceRefresh ? 'POST' : 'GET';
+            // Always use POST for first click to force generation of an explanation
+            // This ensures an explanation is generated immediately on first click
+            const method = 'POST';
             
             // Fetch explanation from API using url_for to construct the proper URL
             // The url_for function handles the blueprint prefix (/dashboard) correctly
