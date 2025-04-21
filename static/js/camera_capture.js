@@ -611,10 +611,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.explanation = "The AI generated an explanation, but it was empty. Please try again with a clearer image.";
                 }
                 
-                // Update UI with data
-                elements.explanationContent.innerHTML = data.explanation;
-                elements.feedbackContent.innerHTML = '<div class="alert alert-info">Explanation-only mode: see the full explanation tab for details.</div>';
-                elements.tipsContent.innerHTML = '<div class="alert alert-success">Review the full explanation to understand this question thoroughly.</div>';
+                // Update UI with data - with safer HTML handling
+                try {
+                    // Extra safety check for the explanation content
+                    if (typeof data.explanation === 'string') {
+                        elements.explanationContent.innerHTML = data.explanation;
+                    } else if (data.explanation) {
+                        // If it's not a string but exists, convert it to string
+                        elements.explanationContent.textContent = JSON.stringify(data.explanation);
+                    } else {
+                        // Fallback for missing explanation
+                        elements.explanationContent.innerHTML = '<div class="alert alert-warning">No explanation content was provided. Please try again.</div>';
+                    }
+                    
+                    // Always use simple content for the other tabs
+                    elements.feedbackContent.innerHTML = '<div class="alert alert-info">Explanation-only mode: click the "Full Explanation" tab above for details.</div>';
+                    elements.tipsContent.innerHTML = '<div class="alert alert-success">Review the full explanation to understand this question thoroughly.</div>';
+                    
+                    console.log("UI updated with explanation data");
+                } catch (uiError) {
+                    console.error("Error updating UI with explanation:", uiError);
+                    elements.explanationContent.innerHTML = '<div class="alert alert-danger">Error rendering explanation. Please try again.</div>';
+                }
                 
                 elements.feedbackSubject.textContent = data.subject || 'Mathematics';
                 elements.feedbackScore.style.display = 'none';
@@ -623,8 +641,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const now = new Date();
                 elements.feedbackTimestamp.textContent = `Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
                 
-                // Display captured image
-                displayCapturedImageInFeedback();
+                // Display captured image (if available)
+                try {
+                    displayCapturedImageInFeedback();
+                } catch (imgErr) {
+                    console.error("Failed to display image:", imgErr);
+                }
                 
                 // Try to typeset any math with MathJax if available
                 if (window.MathJax) {
