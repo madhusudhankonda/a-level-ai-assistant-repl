@@ -151,15 +151,18 @@
                             <!-- File Upload -->
                             <div class="tab-pane fade" id="upload-content" role="tabpanel" aria-labelledby="upload-tab">
                                 <div id="upload-container" class="p-4 text-center">
-                                    <div class="upload-area border border-2 rounded p-5 mb-3" 
-                                        id="upload-area"
-                                        style="cursor: pointer; transition: all 0.3s ease; min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                    <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                                         <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
-                                        <p class="mb-3">Drag and drop an image here, or click to browse</p>
-                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
-                                        <button id="browse-btn" class="btn btn-outline-primary">
+                                        <p class="mb-3">Select an image from your device</p>
+                                        
+                                        <!-- Direct file input instead of hidden one -->
+                                        <label for="file-input" class="btn btn-outline-primary mb-3">
                                             <i class="fas fa-folder-open me-1"></i> Browse Files
-                                        </button>
+                                        </label>
+                                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                        
+                                        <!-- Add direct instruction -->
+                                        <p class="text-muted small">Click the button above to select an image</p>
                                     </div>
                                     <p class="text-muted small mb-0">
                                         <i class="fas fa-info-circle me-1"></i> 
@@ -640,49 +643,13 @@
             updateModeUI();
         });
         
-        // Upload area drag enter event
-        uploadArea.addEventListener('dragenter', function(e) {
-            e.preventDefault();
-            uploadArea.classList.add('border-primary');
-        });
-        
-        // Upload area drag leave event
-        uploadArea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            uploadArea.classList.remove('border-primary');
-        });
-        
-        // Upload area dragover event
-        uploadArea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
-        
-        // Upload area drop event
-        uploadArea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            uploadArea.classList.remove('border-primary');
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        });
-        
-        // File input change event
+        // Just use file input change event - simplified approach
         fileInput.addEventListener('change', function() {
+            console.log('File input change event fired');
             if (fileInput.files.length > 0) {
+                console.log('Processing file:', fileInput.files[0].name);
                 processFile(fileInput.files[0]);
             }
-        });
-        
-        // Browse button click event
-        browseBtn.addEventListener('click', function() {
-            fileInput.click();
-        });
-        
-        // Upload area click event (also triggers file browser)
-        uploadArea.addEventListener('click', function() {
-            fileInput.click();
         });
         
         // Capture image
@@ -745,10 +712,7 @@
         // Analyze button (after capturing image)
         
         // Initialize consent modal
-        let aiConsentModal;
-        document.addEventListener('DOMContentLoaded', function() {
-            aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
-        });
+        let aiConsentModal = new bootstrap.Modal(document.getElementById('aiConsentModal'));
         
         analyzeBtn.addEventListener('click', function() {
             console.log("Analyze button clicked");
