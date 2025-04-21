@@ -700,9 +700,63 @@ document.addEventListener('DOMContentLoaded', function() {
                         elements.explanationContent.innerHTML = '<div class="alert alert-warning">No explanation content was provided. Please try again.</div>';
                     }
                     
-                    // Always use simple content for the other tabs
-                    elements.feedbackContent.innerHTML = '<div class="alert alert-info">Explanation-only mode: click the "Full Explanation" tab above for details.</div>';
-                    elements.tipsContent.innerHTML = '<div class="alert alert-success">Review the full explanation to understand this question thoroughly.</div>';
+                    // Generate proper content for all tabs in explanation-only mode
+                    // Feedback tab
+                    elements.feedbackContent.innerHTML = `
+                        <div class="alert alert-info mb-3">
+                            <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Explanation Mode</h5>
+                            <p>You're using the explanation-only mode, which provides a detailed walkthrough of how to solve this question.</p>
+                            <hr>
+                            <p class="mb-0">Click the "Full Explanation" tab above to see the complete step-by-step solution.</p>
+                        </div>
+                    `;
+                    
+                    // Tips tab - Extract or generate some useful tips from the explanation
+                    let tipContent = '';
+                    try {
+                        // Try to extract key points or formulas mentioned in the explanation
+                        const explanation = data.explanation;
+                        
+                        // Look for any sections that might have key concepts
+                        let conceptSection = '';
+                        if (explanation.includes('Key Concepts') || explanation.includes('key concepts')) {
+                            // Try to extract the key concepts section
+                            const conceptMatch = explanation.match(/key concepts[:\s]+([\s\S]+?)(?=##|\n\n\n|$)/i);
+                            if (conceptMatch && conceptMatch[1]) {
+                                conceptSection = conceptMatch[1].trim();
+                            }
+                        }
+                        
+                        // If we found a concept section, use it; otherwise provide generic tips
+                        if (conceptSection) {
+                            tipContent = `
+                                <h5>Key Concepts for this Question:</h5>
+                                <div class="mb-3">${conceptSection}</div>
+                            `;
+                        } else {
+                            tipContent = `
+                                <h5>Study Tips:</h5>
+                                <ul class="mb-3">
+                                    <li>Review the full explanation to understand the solution approach</li>
+                                    <li>Practice similar questions to reinforce your understanding</li>
+                                    <li>Pay attention to the mathematical techniques used in the solution</li>
+                                    <li>Try to solve the problem on your own before reviewing the explanation</li>
+                                </ul>
+                            `;
+                        }
+                    } catch (e) {
+                        console.error('Error generating tips:', e);
+                        tipContent = `
+                            <div class="alert alert-success">
+                                <h5 class="alert-heading"><i class="fas fa-lightbulb me-2"></i>Study Tips</h5>
+                                <p>Review the full explanation to understand this question thoroughly.</p>
+                                <hr>
+                                <p class="mb-0">Try to solve similar problems to practice the concepts demonstrated in the explanation.</p>
+                            </div>
+                        `;
+                    }
+                    
+                    elements.tipsContent.innerHTML = tipContent;
                     
                     console.log("UI updated with explanation data");
                 } catch (uiError) {
