@@ -578,13 +578,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleExplanationResponse(data) {
         console.log("Handling explanation response");
         
+        // First, ensure essential UI elements exist
+        if (!elements.feedbackLoading || !elements.feedbackResult || !elements.feedbackError) {
+            console.error("Critical UI elements missing - check HTML structure");
+            alert("Error: The application is missing important elements. Please refresh the page.");
+            return;
+        }
+        
         try {
             // Hide loading
             elements.feedbackLoading.style.display = 'none';
             
-            // Reset analyze button
-            elements.analyzeBtn.disabled = false;
-            elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Get Explanation</span>';
+            // Reset analyze button (if it exists)
+            if (elements.analyzeBtn) {
+                elements.analyzeBtn.disabled = false;
+                elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Get Explanation</span>';
+            }
             
             // Safety check - ensure we have valid data
             if (!data) {
@@ -597,8 +606,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("Response data keys:", Object.keys(data));
             }
             
+            // Always default to success if the explanation exists
+            const isSuccess = data.success !== false && !!data.explanation;
+            
             // Handle success case
-            if (data.success) {
+            if (isSuccess) {
                 console.log("Successful response - displaying explanation");
                 
                 // Show explanation
