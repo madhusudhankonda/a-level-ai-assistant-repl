@@ -388,14 +388,43 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     const totalTime = (new Date() - startTime) / 1000;
                     console.log(`Analysis completed in ${totalTime} seconds`);
+                    
+                    // Additional safeguards for malformed response data
+                    if (!data) {
+                        throw new Error('No response data received from server');
+                    }
+                    
+                    // Log the actual response for debugging
+                    console.log('Server response:', JSON.stringify(data).substring(0, 200) + '...');
+                    
+                    // Always ensure the response is in the expected format
+                    if (typeof data === 'string') {
+                        try {
+                            // Try to parse if it's a JSON string
+                            data = JSON.parse(data);
+                        } catch (e) {
+                            // If it's not JSON, create a simple wrapper
+                            data = { 
+                                success: true, 
+                                explanation: data,
+                                subject: subject
+                            };
+                        }
+                    }
+                    
                     handleExplanationResponse(data);
                 })
                 .catch(error => {
                     console.error('Error in analyze-captured-image:', error);
                     
                     // Add more context to timeout errors
-                    if (error.message.includes('timed out')) {
+                    if (error.message && error.message.includes('timed out')) {
                         error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
+                    }
+                    
+                    // Check if the error is from JSON parsing
+                    if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+                        error = new Error('Error parsing server response. The server might be overloaded. Please try again.');
                     }
                     
                     handleAnalysisError(error);
@@ -457,63 +486,193 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Display captured image in feedback
     function displayCapturedImageInFeedback() {
-        if (capturedImageData && elements.feedbackImageCanvas) {
+        console.log("Displaying captured image in feedback");
+        
+        if (!capturedImageData) {
+            console.error("No image data to display");
+            return;
+        }
+        
+        if (!elements.feedbackImageCanvas) {
+            console.error("Feedback image canvas element not found");
+            return;
+        }
+        
+        // Try direct image display first
+        try {
+            // Create a new image element
             const img = new Image();
-            img.onload = function() {
-                // Get canvas context
-                const context = elements.feedbackImageCanvas.getContext('2d');
+            
+            // Set up error handling
+            img.onerror = function(err) {
+                console.error("Error loading image:", err);
                 
-                // Set dimensions
-                elements.feedbackImageCanvas.width = img.width;
-                elements.feedbackImageCanvas.height = img.height;
-                
-                // Draw the image
-                context.drawImage(img, 0, 0, img.width, img.height);
+                // Fallback - try to show a visual error indicator
+                try {
+                    const context = elements.feedbackImageCanvas.getContext('2d');
+                    elements.feedbackImageCanvas.width = 400;
+                    elements.feedbackImageCanvas.height = 100;
+                    context.fillStyle = "#f8d7da";
+                    context.fillRect(0, 0, 400, 100);
+                    context.font = "14px Arial";
+                    context.fillStyle = "#842029";
+                    context.fillText("Unable to display image", 20, 50);
+                } catch (canvasErr) {
+                    console.error("Canvas error:", canvasErr);
+                }
             };
             
-            // Set source
+            // Set up successful load handler
+            img.onload = function() {
+                console.log("Image loaded successfully, dimensions:", img.width, "x", img.height);
+                
+                try {
+                    // Get canvas context
+                    const context = elements.feedbackImageCanvas.getContext('2d');
+                    
+                    // Set dimensions - limit to reasonable size if huge
+                    const maxWidth = 1000;
+                    const maxHeight = 800;
+                    
+                    let drawWidth = img.width;
+                    let drawHeight = img.height;
+                    
+                    // Scale down if necessary
+                    if (drawWidth > maxWidth) {
+                        const scale = maxWidth / drawWidth;
+                        drawWidth = maxWidth;
+                        drawHeight = Math.floor(img.height * scale);
+                    }
+                    
+                    if (drawHeight > maxHeight) {
+                        const scale = maxHeight / drawHeight;
+                        drawHeight = maxHeight;
+                        drawWidth = Math.floor(drawWidth * scale);
+                    }
+                    
+                    // Set canvas dimensions
+                    elements.feedbackImageCanvas.width = drawWidth;
+                    elements.feedbackImageCanvas.height = drawHeight;
+                    
+                    // Draw the image
+                    context.drawImage(img, 0, 0, drawWidth, drawHeight);
+                    console.log("Image drawn successfully");
+                    
+                    // Show canvas container
+                    elements.feedbackImageContainer.style.display = 'block';
+                } catch (drawErr) {
+                    console.error("Error drawing image:", drawErr);
+                }
+            };
+            
+            // Set source - this triggers the loading
+            console.log("Setting image source, data length:", capturedImageData.length);
             img.src = capturedImageData;
+            
+        } catch (err) {
+            console.error("Exception in displayCapturedImageInFeedback:", err);
         }
     }
     
     // Handle explanation-only response
     function handleExplanationResponse(data) {
-        // Hide loading
-        elements.feedbackLoading.style.display = 'none';
+        console.log("Handling explanation response");
         
-        // Reset analyze button
-        elements.analyzeBtn.disabled = false;
-        elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Get Explanation</span>';
-        
-        if (data.success) {
-            // Show explanation
-            elements.feedbackResult.style.display = 'block';
-            elements.explanationContent.innerHTML = data.explanation;
-            elements.feedbackContent.innerHTML = '<div class="alert alert-info">Explanation-only mode: see the full explanation tab for details.</div>';
-            elements.tipsContent.innerHTML = '<div class="alert alert-success">Review the full explanation to understand this question thoroughly.</div>';
+        try {
+            // Hide loading
+            elements.feedbackLoading.style.display = 'none';
             
-            elements.feedbackSubject.textContent = data.subject;
-            elements.feedbackScore.style.display = 'none';
+            // Reset analyze button
+            elements.analyzeBtn.disabled = false;
+            elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Get Explanation</span>';
             
-            // Update timestamp
-            const now = new Date();
-            elements.feedbackTimestamp.textContent = `Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+            // Safety check - ensure we have valid data
+            if (!data) {
+                throw new Error("No response data received");
+            }
             
-            // Display image
-            displayCapturedImageInFeedback();
+            // Debug log
+            console.log("Response data type:", typeof data);
+            if (typeof data === 'object') {
+                console.log("Response data keys:", Object.keys(data));
+            }
             
-            // Try to typeset any math with MathJax if available
-            if (window.MathJax) {
-                try {
-                    window.MathJax.typeset();
-                } catch (err) {
-                    console.error('MathJax typesetting failed:', err);
+            // Handle success case
+            if (data.success) {
+                console.log("Successful response - displaying explanation");
+                
+                // Show explanation
+                elements.feedbackResult.style.display = 'block';
+                elements.feedbackError.style.display = 'none';
+                
+                // Safety check for explanation content
+                if (!data.explanation) {
+                    console.warn("Missing explanation in successful response");
+                    data.explanation = "The AI generated an explanation, but it was empty. Please try again with a clearer image.";
+                }
+                
+                // Update UI with data
+                elements.explanationContent.innerHTML = data.explanation;
+                elements.feedbackContent.innerHTML = '<div class="alert alert-info">Explanation-only mode: see the full explanation tab for details.</div>';
+                elements.tipsContent.innerHTML = '<div class="alert alert-success">Review the full explanation to understand this question thoroughly.</div>';
+                
+                elements.feedbackSubject.textContent = data.subject || 'Mathematics';
+                elements.feedbackScore.style.display = 'none';
+                
+                // Update timestamp
+                const now = new Date();
+                elements.feedbackTimestamp.textContent = `Generated on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+                
+                // Display captured image
+                displayCapturedImageInFeedback();
+                
+                // Try to typeset any math with MathJax if available
+                if (window.MathJax) {
+                    try {
+                        window.MathJax.typeset();
+                    } catch (err) {
+                        console.error('MathJax typesetting failed:', err);
+                    }
+                }
+            } else {
+                // Error handling for explicit errors from server
+                console.warn("Error response from server:", data.message || "Unknown error");
+                
+                // Show error
+                elements.feedbackResult.style.display = 'none';
+                elements.feedbackError.style.display = 'block';
+                elements.errorMessage.textContent = data.message || 'An error occurred processing your request. Please try again.';
+                
+                // Add retry button if not already present
+                if (!elements.errorMessage.nextElementSibling || !elements.errorMessage.nextElementSibling.classList.contains('btn')) {
+                    const retryButton = document.createElement('button');
+                    retryButton.className = 'btn btn-outline-primary mt-3';
+                    retryButton.innerHTML = '<i class="fas fa-redo me-1"></i> Try Again';
+                    retryButton.onclick = function() {
+                        elements.captureTab.click();
+                    };
+                    elements.errorMessage.parentNode.appendChild(retryButton);
                 }
             }
-        } else {
+        } catch (error) {
+            // Handle exceptions in response handling
+            console.error("Exception in handleExplanationResponse:", error);
+            
             // Show error
+            elements.feedbackResult.style.display = 'none';
             elements.feedbackError.style.display = 'block';
-            elements.errorMessage.textContent = data.message || 'An error occurred';
+            elements.errorMessage.textContent = 'An error occurred while processing the AI response. Please try again.';
+            
+            // Add retry button
+            if (!elements.errorMessage.nextElementSibling || !elements.errorMessage.nextElementSibling.classList.contains('btn')) {
+                const retryButton = document.createElement('button');
+                retryButton.className = 'btn btn-outline-primary mt-3';
+                retryButton.innerHTML = '<i class="fas fa-redo me-1"></i> Try Again';
+                retryButton.onclick = function() {
+                    elements.captureTab.click();
+                };
+                elements.errorMessage.parentNode.appendChild(retryButton);
+            }
         }
     }
     
