@@ -493,35 +493,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Use Promise.race to implement timeout
                 Promise.race([fetchPromise, timeoutPromise])
-                .then(response => {
-                    const processingTime = (new Date() - startTime) / 1000;
-                    console.log(`Received server response after ${processingTime} seconds`);
-                    
-                    if (!response || !response.ok) {
-                        // Check if it's an authentication error
-                        if (response && (response.status === 401 || response.url.includes('login'))) {
-                            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
-                            throw new Error('Authentication required. Please log in.');
+                    .then(response => {
+                        const processingTime = (new Date() - startTime) / 1000;
+                        console.log(`Received server response after ${processingTime} seconds`);
+                        
+                        if (!response || !response.ok) {
+                            // Check if it's an authentication error
+                            if (response && (response.status === 401 || response.url.includes('login'))) {
+                                window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+                                throw new Error('Authentication required. Please log in.');
+                            }
+                            throw new Error(`HTTP error! Status: ${response ? response.status : 'No response'}`);
                         }
-                        throw new Error(`HTTP error! Status: ${response ? response.status : 'No response'}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    const totalTime = (new Date() - startTime) / 1000;
-                    console.log(`Analysis completed in ${totalTime} seconds`);
-                    handleFeedbackResponse(data);
-                })
-                .catch(error => {
-                    console.error('Error in analyze-answer:', error);
-                    
-                    // Add more context to timeout errors
-                    if (error.message.includes('timed out')) {
-                        error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
-                    }
-                    
-                    handleAnalysisError(error);
-                });
+                        return response.json();
+                    })
+                    .then(data => {
+                        const totalTime = (new Date() - startTime) / 1000;
+                        console.log(`Analysis completed in ${totalTime} seconds`);
+                        handleFeedbackResponse(data);
+                    })
+                    .catch(error => {
+                        console.error('Error in analyze-answer:', error);
+                        
+                        // Add more context to timeout errors
+                        if (error.message.includes('timed out')) {
+                            error = new Error('The analysis request timed out. This usually happens when the AI is taking too long to process the image. Try with a clearer image or a simpler question.');
+                        }
+                        
+                        handleAnalysisError(error);
+                    });
         }
     }
     
