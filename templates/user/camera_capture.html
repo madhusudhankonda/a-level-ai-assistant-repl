@@ -304,11 +304,9 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-    // Create a global variable to store a reference to the modal
-    var aiConsentModal;
-    
-    document.addEventListener('DOMContentLoaded', function() {
+<!-- Load external camera capture JavaScript -->
+<script src="{{ url_for('static', filename='js/camera_capture.js') }}"></script>
+{% endblock %}
         // Step elements
         const captureTab = document.getElementById('capture-tab');
         const feedbackTab = document.getElementById('feedback-tab');

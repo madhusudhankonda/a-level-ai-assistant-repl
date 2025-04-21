@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Student Answer Feedback - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+{% include "user/ai_consent_modal.html" %}
+
+<!-- Toast for notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <div class="ai-sparkle-icon me-2" style="width: 16px; height: 16px;"></div>
+      <strong class="me-auto" id="toast-title">Notification</strong>
+      <small class="text-muted">Just now</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body" id="toast-body">
+      Some notification text.
+    </div>
+  </div>
+</div>
+
+<div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+            <h1 class="display-6 mb-4">
+                <i class="fas fa-camera me-2 text-primary"></i> Capture or Upload Image
+            </h1>
+            
+            <!-- OpenAI API status alert -->
+            <div id="api-status-alert" class="alert alert-warning mb-4" style="display: none;">
+                <i class="fas fa-circle-notch fa-spin me-2"></i>
+                <span id="api-status-message">Checking OpenAI API connection...</span>
+            </div>
+            
+            <!-- Capture/Analyze progress tabs -->
+            <ul class="nav nav-tabs" id="captureTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="capture-tab" data-bs-toggle="tab" data-bs-target="#capture-step" type="button" role="tab" aria-controls="capture-step" aria-selected="true">
+                        <i class="fas fa-camera me-1"></i> Image Capture
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedback-step" type="button" role="tab" aria-controls="feedback-step" aria-selected="false" disabled>
+                        <i class="fas fa-comment-dots me-1"></i> AI Feedback
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content">
+                <!-- Step 1: Capture photo or upload -->
+                <div class="tab-pane fade show active" id="capture-step">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-camera me-2"></i>
+                                    <h5 class="mb-0" id="capture-title">Capture or Upload Question</h5>
+                                </div>
+                                <div>
+                                    <select class="form-select form-select-sm" id="analysis-mode">
+                                        <option value="explanation-only">Explanation Only</option>
+                                        <option value="answer-feedback">Answer Feedback</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="capture-instructions" class="alert alert-info mb-4">
+                                <i class="fas fa-info-circle me-2"></i> 
+                                <span id="instruction-text">Upload or take a clear photo of just the question to get an explanation.</span>
+                            </div>
+                            
+                            <!-- Image source tabs (camera/upload) -->
+                            <nav>
+                                <div class="nav nav-tabs mb-3" id="image-source-tabs" role="tablist">
+                                    <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-content" type="button" role="tab" aria-controls="camera-content" aria-selected="true">
+                                        <i class="fas fa-camera me-1"></i> Camera
+                                    </button>
+                                    <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-content" type="button" role="tab" aria-controls="upload-content" aria-selected="false">
+                                        <i class="fas fa-upload me-1"></i> Upload Image
+                                    </button>
+                                </div>
+                            </nav>
+                            
+                            <div class="tab-content mb-4">
+                                <!-- Camera content -->
+                                <div class="tab-pane fade show active" id="camera-content" role="tabpanel" aria-labelledby="camera-tab">
+                                    <div id="camera-container" class="mb-0 text-center">
+                                        <video id="video" width="100%" autoplay playsinline 
+                                            style="background-color: #000; display: block; max-height: 70vh;"></video>
+                                        <div class="p-3 text-center">
+                                            <button id="capture-btn" class="btn btn-lg btn-primary w-100">
+                                                <i class="fas fa-camera me-1"></i> Capture Image
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Upload content -->
+                                <div class="tab-pane fade" id="upload-content" role="tabpanel" aria-labelledby="upload-tab">
+                                    <div id="upload-container" class="p-4 text-center">
+                                        <div class="border border-2 rounded p-5 mb-3" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                            <i class="fas fa-cloud-upload-alt mb-3" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                                            <p class="mb-3">Select an image from your device</p>
+                                            
+                                            <!-- Direct file input with label trigger -->
+                                            <label for="file-input" class="btn btn-outline-primary mb-3">
+                                                <i class="fas fa-folder-open me-1"></i> Browse Files
+                                            </label>
+                                            <input type="file" id="file-input" accept="image/*" style="display: none;">
+                                            
+                                            <p class="text-muted small">Click the button above to select an image</p>
+                                        </div>
+                                        <p class="text-muted small mb-0">
+                                            <i class="fas fa-info-circle me-1"></i> 
+                                            Supported formats: JPG, PNG, GIF (max 10MB)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Captured image display -->
+                            <div id="capture-result" class="p-3" style="display: none;">
+                                <h6 class="mb-2" id="result-label">Image:</h6>
+                                <div class="mb-3 text-center">
+                                    <canvas id="canvas" width="640" height="480" class="img-fluid border rounded"></canvas>
+                                </div>
+                                
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                                    <button id="retake-btn" class="btn btn-outline-secondary flex-grow-1">
+                                        <i class="fas fa-undo me-1"></i> <span id="retake-btn-text">Try Again</span>
+                                    </button>
+                                    <button id="analyze-btn" class="btn btn-success flex-grow-1">
+                                        <i class="fas fa-robot me-1 text-warning"></i> <span id="analyze-btn-text">Analyze with AI</span>
+                                        <div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-left: 8px;"></div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Feedback -->
+                <div class="tab-pane fade" id="feedback-step">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-robot me-2 text-warning"></i>
+                                <h5 class="mb-0">AI Feedback</h5>
+                                <div class="ai-sparkle-icon ms-2"></div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Loading state -->
+                            <div id="feedback-loading" style="display: none;">
+                                <div class="sparkle-loading my-4">
+                                    <div class="sparkle-dot"></div>
+                                    <div class="sparkle-dot"></div>
+                                    <div class="sparkle-dot"></div>
+                                </div>
+                                <p class="text-center text-muted">Analyzing your answer... This may take a few moments.</p>
+                            </div>
+                            
+                            <!-- Result state -->
+                            <div id="feedback-result" style="display: none;">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                    <div>
+                                        <span class="badge bg-primary px-3 py-2" id="feedback-subject">Subject</span>
+                                        <span class="badge bg-success px-3 py-2 ms-2" id="feedback-score">Score</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted fst-italic" id="feedback-timestamp">Timestamp</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- User's image display -->
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Your submitted work:</h6>
+                                        <button class="btn btn-sm btn-outline-secondary" id="toggle-image-btn">
+                                            <i class="fas fa-expand-alt me-1"></i> <span id="toggle-image-text">Expand Image</span>
+                                        </button>
+                                    </div>
+                                    <div id="feedback-image-container" class="text-center border rounded p-2" style="max-height: 150px; overflow: hidden; transition: max-height 0.3s ease;">
+                                        <canvas id="feedback-image-canvas" class="img-fluid"></canvas>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tabbed feedback results -->
+                                <ul class="nav nav-tabs mb-3" id="feedbackTabs">
+                                    <li class="nav-item">
+                                        <button class="nav-link active" id="feedback-tab" data-bs-toggle="tab" data-bs-target="#feedback-content-tab">Feedback</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="explanation-tab" data-bs-toggle="tab" data-bs-target="#explanation-content-tab">Full Explanation</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="tips-tab" data-bs-toggle="tab" data-bs-target="#tips-content-tab">Improvement Tips</button>
+                                    </li>
+                                </ul>
+                                
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="feedback-content-tab">
+                                        <div id="feedback-content" class="mb-3 feedback-content">
+                                            <!-- Feedback content will be loaded here -->
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="explanation-content-tab">
+                                        <div id="explanation-content" class="mb-3 explanation-content">
+                                            <!-- Explanation content will be loaded here -->
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="tips-content-tab">
+                                        <div id="tips-content" class="mb-3 tips-content">
+                                            <!-- Tips content will be loaded here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Start over button -->
+                                <div class="text-center mt-4">
+                                    <button id="start-over-btn" class="btn btn-primary">
+                                        <i class="fas fa-redo me-1"></i> Start Over
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Empty state -->
+                            <div id="feedback-placeholder">
+                                <div class="text-center my-5 py-5">
+                                    <i class="fas fa-lightbulb text-muted" style="font-size: 3rem;"></i>
+                                    <p class="mt-3 text-muted">Capture your question and answer to get personalized feedback and tips</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Error state with improved styling -->
+                            <div id="feedback-error" class="alert alert-danger" style="display: none;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-exclamation-triangle me-2 fs-4"></i>
+                                    <strong>There was a problem</strong>
+                                </div>
+                                <p id="error-message" class="mb-0">Error message will appear here</p>
+                                <!-- Retry button will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Load external camera capture JavaScript file -->
+<script src="{{ url_for('static', filename='js/camera_capture.js') }}"></script>
+{% endblock %}
