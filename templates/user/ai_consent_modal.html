@@ -132,16 +132,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // After consent is recorded, call the proceedWithAnalysis function directly
                 setTimeout(() => {
-                    // Call the analysis function directly (more reliable than simulating a click)
-                    if (typeof proceedWithAnalysis === 'function') {
-                        proceedWithAnalysis();
+                    // Call the analysis function directly from the window object
+                    if (typeof window.proceedWithAnalysis === 'function') {
+                        window.proceedWithAnalysis();
                     } else {
-                        console.error('proceedWithAnalysis function not found');
-                        // Fallback to clicking the button if function not available
-                        const analyzeBtn = document.getElementById('analyze-btn');
-                        if (analyzeBtn) {
-                            analyzeBtn.click();
-                        }
+                        console.error('proceedWithAnalysis function not found on window object');
+                        // Don't retry by clicking the button to avoid loops
+                        const toastBody = document.getElementById('toast-body');
+                        const toastTitle = document.getElementById('toast-title');
+                        const toast = new bootstrap.Toast(document.getElementById('toast'));
+                        
+                        toastTitle.textContent = "Processing Error";
+                        toastBody.textContent = "Please reload the page and try again.";
+                        toast.show();
                     }
                 }, 1500);
             } else {

@@ -283,8 +283,8 @@ document.addEventListener('DOMContentLoaded', function() {
         elements.analyzeBtn.disabled = true;
     }
     
-    // Proceed with analysis after consent
-    function proceedWithAnalysis() {
+    // Proceed with analysis after consent - make it available globally
+    window.proceedWithAnalysis = function() {
         // Disable the analyze button during processing
         elements.analyzeBtn.disabled = true;
         elements.analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
@@ -499,12 +499,8 @@ document.addEventListener('DOMContentLoaded', function() {
                               error.message.includes('permission'))) {
             errorMsg = 'Permission error: You may need to provide AI consent or purchase more credits.';
             
-            // Show consent modal
-            setTimeout(() => {
-                if (window.aiConsentModal) {
-                    window.aiConsentModal.show();
-                }
-            }, 1000);
+            // Don't show consent modal here to avoid double-showing it
+            console.log("Consent error in analysis - not showing modal to avoid duplicate");
         } else if (error.message && error.message.includes('Failed to fetch')) {
             errorMsg = 'Connection error: Please check your internet connection and try again.';
         }
@@ -643,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.success && data.consent_given) {
                         // User has consent
                         console.log("User has valid AI consent. Proceeding with analysis.");
-                        proceedWithAnalysis();
+                        window.proceedWithAnalysis(); // Call the function on the window object
                     } else {
                         // User needs consent
                         console.log("User needs to provide AI consent. Showing consent modal.");
@@ -673,13 +669,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     toastBody.textContent = "There was an error checking your AI consent status. Please try again.";
                     toast.show();
                     
-                    // Show consent modal as fallback
-                    setTimeout(() => {
-                        console.log("Showing consent modal due to consent check error");
-                        if (window.aiConsentModal) {
-                            window.aiConsentModal.show();
-                        }
-                    }, 1500);
+                    // Log error but don't show consent modal again to avoid double modal issue
+                    console.log("Consent check error - will not show modal to avoid duplicate display");
                 });
         });
     }
