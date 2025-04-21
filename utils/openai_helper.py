@@ -83,7 +83,7 @@ def test_openai_connection():
 
 def generate_answer_feedback(question_image, answer_image, subject):
     """
-    Generate feedback for a student's answer to a question using OpenAI's GPT-4 Vision model
+    Generate feedback for a student's answer to a question using OpenAI's GPT-4o model
     
     Args:
         question_image: Data URI of the question image
@@ -148,7 +148,7 @@ Be encouraging and constructive in your feedback.
         
         # Make the API call to OpenAI without requiring JSON format
         response = openai.chat.completions.create(
-            model="gpt-4-vision-preview",  # Using the reliable vision model that supports image analysis
+            model="gpt-4o",  # Using the latest GPT-4o model which supports vision
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": content}
@@ -213,7 +213,7 @@ Be encouraging and constructive in your feedback.
 
 def generate_explanation(base64_image, subject):
     """
-    Generate an explanation for a question using OpenAI's GPT-4 Vision model
+    Generate an explanation for a question using OpenAI's GPT-4o model
     
     Args:
         base64_image: Base64-encoded image of the question
@@ -275,7 +275,7 @@ Your explanation should be comprehensive, explaining both the mathematical conce
         logger.info(f"Calling OpenAI API for explanation with {len(image_url) // 1000}KB image data")
         try:
             response = openai.chat.completions.create(
-                model="gpt-4-vision-preview",  # Using the reliable vision model that supports image analysis
+                model="gpt-4o",  # Using the latest GPT-4o model which supports vision
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": [
