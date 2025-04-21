@@ -1,5 +1,6 @@
 import os
 import stripe
+import logging
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
@@ -13,6 +14,9 @@ auth_bp = Blueprint('auth', __name__)
 
 # Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Credit pricing options
 CREDIT_PACKAGES = [
