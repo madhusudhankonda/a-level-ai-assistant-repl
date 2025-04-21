@@ -390,6 +390,10 @@ def view_paper(paper_id):
 def get_question_image(question_id):
     """Endpoint to serve question images"""
     try:
+        # Run our sample image creator to ensure all images exist
+        from ensure_samples import ensure_question_sample_images
+        ensure_question_sample_images()
+        
         # Get the question or return a friendly error
         question = Question.query.get(question_id)
         if not question:
@@ -411,6 +415,22 @@ def get_question_image(question_id):
             file_name = os.path.basename(image_path)
             current_app.logger.info(f"Image folder: {folder_name}, filename: {file_name}")
             
+            # First, try to get a sample image based on question number
+            sample_path = None
+            question_number = question.question_number.replace('q', '')
+            try:
+                q_num = int(question_number)
+                if 1 <= q_num <= 12:  # We now have sample images for questions 1-12
+                    sample_path = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
+                    if os.path.isfile(sample_path):
+                        current_app.logger.info(f"Using sample image for q{q_num}: {sample_path}")
+                        response = make_response(send_file(sample_path, mimetype='image/png'))
+                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                        response.headers['X-Is-Sample-Image'] = 'true'
+                        return response
+            except Exception as e:
+                current_app.logger.warning(f"Error using sample image: {str(e)}")
+            
             # Create a list of possible paths to try
             paths_to_try = [
                 image_path,  # Original path from database
@@ -423,8 +443,7 @@ def get_question_image(question_id):
                 os.path.join(os.getcwd(), folder_name, file_name)
             ]
             
-            # Add fallback to default images when image is missing
-            question_number = question.question_number.replace('q', '')
+            # Add fallback to sample images when original image is missing
             try:
                 q_num = int(question_number)
                 if 1 <= q_num <= 12:  # We now have sample images for questions 1-12
