@@ -132,23 +132,28 @@ Your task is to:
 Format your response with these clearly labeled sections:
 
 ## Feedback
-Provide detailed feedback on the student's answer with specific points on what was done well and what needs improvement. Be encouraging but honest.
+Act as a real teacher marking the paper. Allocate specific marks like "You received X/Y marks" based on the marking scheme principles. Explain exactly why marks were deducted. Highlight specific errors in the student's working and what they should have done instead.
+
+Your feedback should include:
+- Precise scoring (e.g., "You received 3/5 because you didn't explain the application of the cosine rule")
+- References to specific parts of their answer (e.g., "In step 2, you correctly identified...")
+- Common A-Level mark scheme considerations (method marks, accuracy marks)
+- What they could have done differently to earn full marks
 
 ## Explanation
 Provide a complete, correct solution to the question with all steps clearly shown. Use proper LaTeX notation for mathematical expressions ($...$ for inline, $$....$$ for display).
 
 ## Tips
-Give 2-3 specific tips for how the student can improve their answer or approach to similar problems in the future.
+Give 2-3 specific tips for how the student can improve their answer or approach to similar problems in the future. Each tip should directly address a weakness in their answer.
 
 ## Score
-Rate the answer from 1-5 stars based on:
-- Correctness (understanding and applying the right concepts)
-- Completeness (answering all parts of the question)
-- Method (showing appropriate working and steps)
-- Clarity (clear presentation and explanation)
+Rate the answer as X/Y marks where Y is the maximum available marks (typically 5-10 for this system). Include a specific breakdown of:
+- Method marks earned vs. available
+- Accuracy marks earned vs. available
+- Communication marks if applicable
 
 Always use proper LaTeX notation for mathematical expressions, formulas and equations.
-Be encouraging and constructive in your feedback.
+Be encouraging but realistic in your feedback, just like a real teacher would mark an A-Level paper.
 """
 
     try:
@@ -202,7 +207,7 @@ Be encouraging and constructive in your feedback.
             'feedback': '',
             'explanation': '',
             'tips': '',
-            'score': '3/5 Stars'  # Default score
+            'score': '3/5 Marks'  # Default score using mark-based grading
         }
         
         # Simple text parsing by section headers
@@ -232,11 +237,12 @@ Be encouraging and constructive in your feedback.
                 section_content.append(line)
                 
                 # Look for a score pattern in the score section
-                if current_section == 'score' and ('/' in line or 'stars' in line.lower() or 'star' in line.lower()):
-                    # Try to extract X/5 pattern
+                if current_section == 'score' and ('/' in line or 'mark' in line.lower() or 'marks' in line.lower()):
+                    # Try to extract X/Y pattern
                     score_match = re.search(r'(\d+)/(\d+)', line)
                     if score_match:
-                        sections['score'] = f"{score_match.group(1)}/5 Stars"
+                        # Display as marks rather than stars to be more like a teacher's marking
+                        sections['score'] = f"{score_match.group(1)}/{score_match.group(2)} Marks"
         
         # Add the last section
         if current_section:

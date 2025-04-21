@@ -888,7 +888,7 @@ def analyze_answer():
             feedback = process_math_notation(response.get('feedback', 'No feedback available'))
             explanation = process_math_notation(response.get('explanation', 'No explanation available'))
             tips = process_math_notation(response.get('tips', 'No tips available'))
-            score = response.get('score', 'N/A')
+            score = response.get('score', '3/5 Marks')  # Default to 3/5 marks if not provided
             
             # Deduct 10 credits for successful AI answer analysis
             if not current_user.use_credits(10):
