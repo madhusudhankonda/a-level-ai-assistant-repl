@@ -855,12 +855,30 @@ def analyze_answer():
                 
             current_app.logger.info(f"OpenAI API key is available (length: {len(OPENAI_API_KEY)})")
             
-            # Create the prompt with both images
-            response = generate_answer_feedback(
-                question_image,  # Question image (data URI)
-                answer_image,    # Answer image (data URI)
-                subject
-            )
+            # Log the mode we're using
+            analysis_mode = request.json.get('mode', 'answer-feedback')
+            current_app.logger.info(f"Answer analysis mode: {analysis_mode}")
+            
+            # Check if both images are identical (likely a combined image with both question and answer)
+            same_image = question_image == answer_image
+            if same_image:
+                current_app.logger.info("Question and answer images are identical - analyzing combined image")
+                
+                # Update the prompt to inform OpenAI that this is a combined image containing both question and answer
+                response = generate_answer_feedback(
+                    question_image,  # Combined image with both question and answer (data URI)
+                    None,           # No separate answer image needed
+                    subject,
+                    combined_image=True
+                )
+            else:
+                # Use regular two-image processing if they're different
+                current_app.logger.info("Processing separate question and answer images")
+                response = generate_answer_feedback(
+                    question_image,  # Question image (data URI)
+                    answer_image,    # Answer image (data URI)
+                    subject
+                )
             
             current_app.logger.info("Received answer analysis from OpenAI")
             

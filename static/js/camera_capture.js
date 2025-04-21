@@ -431,25 +431,64 @@ document.addEventListener('DOMContentLoaded', function() {
                     handleAnalysisError(error);
                 });
         } else {
-            // Answer analysis
-            console.log(`Sending analysis request (answer mode) for subject: ${subject}`);
+            // In Answer Feedback mode, we need to:
+            // 1. Alert the user that we need separate captures for question and answer
+            // 2. Guide them through the process
+
+            // Hide the loading state temporarily
+            elements.feedbackLoading.style.display = 'none';
+
+            // Show an instructional alert to the user
+            const alertHTML = `
+                <div class="alert alert-warning answer-mode-alert mb-3">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Answer Feedback Mode</h5>
+                    <p>To analyze your work, we need to capture <strong>both</strong> the question and your answer.</p>
+                    <hr>
+                    <p class="mb-2">Please make sure your image contains:</p>
+                    <ol>
+                        <li>The original question clearly visible at the top</li>
+                        <li>Your handwritten solution/answer clearly visible below it</li>
+                    </ol>
+                    <p class="mb-0">For best results, ensure both are on the same page and clearly visible.</p>
+                </div>
+                <div class="text-center">
+                    <button id="confirm-answer-mode" class="btn btn-primary">
+                        <i class="fas fa-check me-1"></i> I've Included Both Question and Answer
+                    </button>
+                </div>
+            `;
             
-            // Send the actual analysis request with a timeout for safety
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Request timed out after 60 seconds')), 60000);
-            });
+            // Show the alert in the feedback area
+            elements.feedbackPlaceholder.innerHTML = alertHTML;
+            elements.feedbackPlaceholder.style.display = 'block';
             
-            const fetchPromise = fetch('/api/analyze-answer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    question_image: capturedImageData, // Same image for both
-                    answer_image: capturedImageData,
-                    subject: subject
-                })
-            });
+            // Add event listener to the confirm button
+            document.getElementById('confirm-answer-mode').addEventListener('click', function() {
+                // Hide the placeholder and show loading again
+                elements.feedbackPlaceholder.style.display = 'none';
+                elements.feedbackLoading.style.display = 'block';
+                
+                console.log(`Sending analysis request (answer mode) for subject: ${subject}`);
+                
+                // Send the actual analysis request with a timeout for safety
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Request timed out after 90 seconds')), 90000); // Longer timeout for answer analysis
+                });
+                
+                // Now send the request with the combined image
+                // The OpenAI system prompt will guide the AI to look for both question and answer in the image
+                const fetchPromise = fetch('/api/analyze-answer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question_image: capturedImageData,
+                        answer_image: capturedImageData, // Using same image, but the AI will analyze both parts
+                        subject: subject,
+                        mode: 'answer-feedback'
+                    })
+                });
             
             // Use Promise.race to implement timeout
             Promise.race([fetchPromise, timeoutPromise])

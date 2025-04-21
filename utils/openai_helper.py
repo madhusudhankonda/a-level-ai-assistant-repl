@@ -81,31 +81,54 @@ def test_openai_connection():
         logger.error(f"OpenAI test failed: {error_message}")
         return False, f"OpenAI connection failed: {error_message}"
 
-def generate_answer_feedback(question_image, answer_image, subject):
+def generate_answer_feedback(question_image, answer_image, subject, combined_image=False):
     """
     Generate feedback for a student's answer to a question using OpenAI's GPT-4o model
     
     Args:
-        question_image: Data URI of the question image
-        answer_image: Data URI of the student's answer image
+        question_image: Data URI of the question image (or combined image with both question and answer)
+        answer_image: Data URI of the student's answer image (None if combined_image=True)
         subject: Subject of the question (e.g., "Mathematics", "Physics")
+        combined_image: Boolean indicating if question_image contains both question and answer
     
     Returns:
         Dictionary containing feedback, explanation, tips, and score
     """
     subject = subject.lower().strip()
+    logger.info(f"Generating answer feedback for {subject} {'from combined image' if combined_image else 'from separate images'}")
     
     # Create a system prompt for analyzing student answers
-    system_prompt = f"""
+    base_prompt = f"""
 You are an expert A-Level {subject.capitalize()} tutor who evaluates student answers.
+"""
+
+    # Add specific instructions based on whether we're using a combined image or separate images
+    if combined_image:
+        system_prompt = base_prompt + f"""
+The uploaded image contains BOTH the question and the student's handwritten answer.
+Carefully analyze the image - typically the question will be at the top and the student's answer below it.
+
+Your task is to:
+1. First identify and understand the question portion of the image
+2. Then identify and evaluate the student's handwritten answer portion
+3. Provide constructive feedback on the student's work
+4. Score the answer on a scale of 1-5 stars
+
+Be very careful to distinguish between the printed question and the student's handwritten answer.
+"""
+    else:
+        system_prompt = base_prompt + f"""
 Analyze both the question image and the student's handwritten answer image provided.
 
 Your task is to:
-1. Understand the question and what it's asking for
-2. Evaluate the student's answer for correctness, completeness, and approach
+1. Understand the question from the first image
+2. Evaluate the student's answer (from the second image) for correctness, completeness, and approach
 3. Provide constructive feedback
 4. Score the answer on a scale of 1-5 stars
+"""
 
+    # The rest of the prompt is the same for both cases
+    system_prompt += f"""
 Format your response with these clearly labeled sections:
 
 ## Feedback
@@ -131,20 +154,34 @@ Be encouraging and constructive in your feedback.
     try:
         logger.info(f"Processing student answer for {subject} feedback")
         
-        # Validate the images
-        if not question_image or not answer_image:
-            raise ValueError("Both question and answer images are required")
-        
-        # Create the content array with both images
-        content = [
-            {"type": "text", "text": f"Please analyze this {subject} question and the student's handwritten answer:"},
-            {"type": "text", "text": "QUESTION IMAGE:"},
-            {"type": "image_url", "image_url": {"url": question_image}},
-            {"type": "text", "text": "STUDENT'S ANSWER:"},
-            {"type": "image_url", "image_url": {"url": answer_image}}
-        ]
-        
-        logger.info("Calling OpenAI API with both images")
+        # Prepare content array based on whether we have a combined image or separate images
+        if combined_image:
+            # For combined image mode, we only need to validate question_image
+            if not question_image:
+                raise ValueError("Question image (combined with answer) is required")
+                
+            # Create content array with just the combined image
+            content = [
+                {"type": "text", "text": f"Please analyze this {subject} question and the student's handwritten answer in this single image:"},
+                {"type": "image_url", "image_url": {"url": question_image}}
+            ]
+            
+            logger.info("Calling OpenAI API with combined question and answer image")
+        else:
+            # For separate images mode, validate both images
+            if not question_image or not answer_image:
+                raise ValueError("Both question and answer images are required for separate image mode")
+            
+            # Create content array with both images
+            content = [
+                {"type": "text", "text": f"Please analyze this {subject} question and the student's handwritten answer:"},
+                {"type": "text", "text": "QUESTION IMAGE:"},
+                {"type": "image_url", "image_url": {"url": question_image}},
+                {"type": "text", "text": "STUDENT'S ANSWER:"},
+                {"type": "image_url", "image_url": {"url": answer_image}}
+            ]
+            
+            logger.info("Calling OpenAI API with separate question and answer images")
         
         # Make the API call to OpenAI without requiring JSON format
         response = openai.chat.completions.create(
