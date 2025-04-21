@@ -1046,10 +1046,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // File input change
     if (elements.fileInput) {
-        elements.fileInput.addEventListener('change', function() {
+        elements.fileInput.addEventListener('change', function(event) {
             console.log('File input change detected');
             if (this.files.length > 0) {
                 console.log('Processing file:', this.files[0].name);
+                // Process the file
                 processFile(this.files[0]);
             }
         });
