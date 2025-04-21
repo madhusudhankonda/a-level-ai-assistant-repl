@@ -66,6 +66,54 @@ def test_openai_api():
         'message': message
     })
 
+@user_bp.route('/api/test-image-analysis', methods=['GET'])
+@login_required
+def test_image_analysis():
+    """Test endpoint for the image analysis functionality"""
+    try:
+        current_app.logger.info(f"Test image analysis endpoint called by user {current_user.id}")
+        
+        # Import the OpenAI helper
+        from utils.openai_helper import generate_explanation
+        
+        # Path to a sample image to test with
+        sample_image_path = "./data/questions/paper_1/question_q1_703866-q1.png"
+        
+        # If the image exists, process it
+        if os.path.exists(sample_image_path):
+            # Read and encode the image
+            with open(sample_image_path, "rb") as img_file:
+                img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                
+            # Call the explanation function directly
+            try:
+                result = generate_explanation(img_data, "Mathematics")
+                
+                # If successful, return the explanation
+                return jsonify({
+                    'success': True,
+                    'explanation': result[:200] + "..." if len(result) > 200 else result,
+                    'message': 'Image analysis test successful'
+                })
+            except Exception as api_error:
+                current_app.logger.error(f"API error in test: {str(api_error)}")
+                return jsonify({
+                    'success': False,
+                    'message': f'API error: {str(api_error)}'
+                }), 500
+        else:
+            # If the sample image doesn't exist
+            return jsonify({
+                'success': False,
+                'message': f'Sample image not found at {sample_image_path}'
+            }), 404
+    except Exception as e:
+        current_app.logger.error(f"Error in test image analysis: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Test error: {str(e)}'
+        }), 500
+
 @user_bp.route('/api/check-ai-consent', methods=['GET'])
 @login_required
 def check_ai_consent():
@@ -449,7 +497,6 @@ def process_math_notation(text):
 def analyze_captured_image():
     """API endpoint to analyze a captured image of a question"""
     current_app.logger.info(f"analyze-captured-image endpoint called by user {current_user.id}")
-    """API endpoint to analyze a question image captured with the camera"""
     try:
         current_app.logger.info("Received image analysis request")
         

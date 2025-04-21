@@ -309,63 +309,107 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mode === 'explanation-only') {
             // Question-only analysis
             console.log(`Sending analysis request (explanation mode) for subject: ${subject}`);
-            fetch('/api/analyze-captured-image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    image_data: capturedImageData,
-                    subject: subject,
-                    mode: 'question-only'
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    // Check if it's an authentication error
-                    if (response.status === 401 || response.url.includes('login')) {
-                        window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
-                        throw new Error('Authentication required. Please log in.');
+            
+            // Check if we have valid image data
+            if (!capturedImageData) {
+                handleAnalysisError(new Error('No image data available. Please capture or upload an image first.'));
+                return;
+            }
+            
+            console.log(`Image data length: ${capturedImageData.length} characters`);
+            
+            // First test endpoint to ensure OpenAI is working
+            fetch('/api/test-openai')
+                .then(response => response.json())
+                .then(testData => {
+                    if (!testData.success) {
+                        console.error('OpenAI test failed:', testData.message);
+                        throw new Error(`OpenAI connection failed: ${testData.message}`);
                     }
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => handleExplanationResponse(data))
-            .catch(error => {
-                console.error('Error in analyze-captured-image:', error);
-                handleAnalysisError(error);
-            });
+                    
+                    console.log('OpenAI connection confirmed, proceeding with analysis');
+                    
+                    // Now send the actual analysis request
+                    return fetch('/api/analyze-captured-image', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            image_data: capturedImageData,
+                            subject: subject,
+                            mode: 'question-only'
+                        })
+                    });
+                })
+                .then(response => {
+                    if (!response || !response.ok) {
+                        // Check if it's an authentication error
+                        if (response && (response.status === 401 || response.url.includes('login'))) {
+                            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+                            throw new Error('Authentication required. Please log in.');
+                        }
+                        throw new Error(`HTTP error! Status: ${response ? response.status : 'No response'}`);
+                    }
+                    return response.json();
+                })
+                .then(data => handleExplanationResponse(data))
+                .catch(error => {
+                    console.error('Error in analyze-captured-image:', error);
+                    handleAnalysisError(error);
+                });
         } else {
             // Answer analysis
             console.log(`Sending analysis request (answer mode) for subject: ${subject}`);
-            fetch('/api/analyze-answer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    question_image: capturedImageData, // Same image for both
-                    answer_image: capturedImageData,
-                    subject: subject
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    // Check if it's an authentication error
-                    if (response.status === 401 || response.url.includes('login')) {
-                        window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
-                        throw new Error('Authentication required. Please log in.');
+            
+            // Check if we have valid image data
+            if (!capturedImageData) {
+                handleAnalysisError(new Error('No image data available. Please capture or upload an image first.'));
+                return;
+            }
+            
+            console.log(`Image data length: ${capturedImageData.length} characters`);
+            
+            // First test endpoint to ensure OpenAI is working
+            fetch('/api/test-openai')
+                .then(response => response.json())
+                .then(testData => {
+                    if (!testData.success) {
+                        console.error('OpenAI test failed:', testData.message);
+                        throw new Error(`OpenAI connection failed: ${testData.message}`);
                     }
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => handleFeedbackResponse(data))
-            .catch(error => {
-                console.error('Error in analyze-answer:', error);
-                handleAnalysisError(error);
-            });
+                    
+                    console.log('OpenAI connection confirmed, proceeding with answer analysis');
+                    
+                    // Now send the actual analysis request
+                    return fetch('/api/analyze-answer', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            question_image: capturedImageData, // Same image for both
+                            answer_image: capturedImageData,
+                            subject: subject
+                        })
+                    });
+                })
+                .then(response => {
+                    if (!response || !response.ok) {
+                        // Check if it's an authentication error
+                        if (response && (response.status === 401 || response.url.includes('login'))) {
+                            window.location.href = '/auth/login?next=' + encodeURIComponent(window.location.pathname);
+                            throw new Error('Authentication required. Please log in.');
+                        }
+                        throw new Error(`HTTP error! Status: ${response ? response.status : 'No response'}`);
+                    }
+                    return response.json();
+                })
+                .then(data => handleFeedbackResponse(data))
+                .catch(error => {
+                    console.error('Error in analyze-answer:', error);
+                    handleAnalysisError(error);
+                });
         }
     }
     
