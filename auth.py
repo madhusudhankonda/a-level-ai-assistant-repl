@@ -311,37 +311,70 @@ def webhook():
     """Stripe webhook to handle successful payments"""
     payload = request.get_data(as_text=True)
     sig_header = request.headers.get('Stripe-Signature')
+    webhook_secret = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    
+    logger.info(f"Received Stripe webhook with signature: {sig_header[:10]}...")
+    
+    if not webhook_secret:
+        logger.error("STRIPE_WEBHOOK_SECRET is not configured properly")
+        return jsonify({'status': 'error', 'message': 'Webhook secret not configured'}), 500
 
     try:
         event = stripe.Webhook.construct_event(
-            payload, sig_header, os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+            payload, sig_header, webhook_secret
         )
     except ValueError as e:
-        # Invalid payload
-        return jsonify({'status': 'error', 'message': str(e)}), 400
-    except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        return jsonify({'status': 'error', 'message': str(e)}), 400
+        logger.error(f"Invalid payload in Stripe webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Invalid payload'}), 400
+    except Exception as e:
+        # This catches all Stripe exceptions including SignatureVerificationError
+        logger.error(f"Error verifying Stripe webhook: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Verification error'}), 400
 
+    # Log the event type
+    logger.info(f"Processing Stripe event: {event['type']} with ID: {event['id']}")
+    
     # Handle the checkout.session.completed event
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
+        session_id = session.get('id')
         
-        # Add credits to the user's account
-        user_id = session['metadata']['user_id']
-        credits = int(session['metadata']['credits'])
-        
-        user = User.query.get(user_id)
-        if user:
+        try:
+            # Check for idempotency - don't process the same payment twice
+            existing_transaction = CreditTransaction.query.filter_by(stripe_payment_id=session_id).first()
+            if existing_transaction:
+                logger.info(f"Payment {session_id} already processed. Skipping.")
+                return jsonify({'status': 'success', 'message': 'Payment already processed'}), 200
+            
+            # Add credits to the user's account
+            user_id = session['metadata'].get('user_id')
+            credits = int(session['metadata'].get('credits', 0))
+            
+            if not user_id or not credits:
+                logger.error(f"Missing metadata in Stripe session: {session_id}")
+                return jsonify({'status': 'error', 'message': 'Missing metadata'}), 400
+            
+            user = User.query.get(user_id)
+            if not user:
+                logger.error(f"User not found for ID: {user_id}")
+                return jsonify({'status': 'error', 'message': 'User not found'}), 404
+            
+            # Create the transaction and add credits
             transaction = CreditTransaction(
                 user_id=user_id,
                 amount=credits,
                 transaction_type='purchase',
-                stripe_payment_id=session['id']
+                stripe_payment_id=session_id
             )
             user.credits += credits
             db.session.add(transaction)
             db.session.commit()
+            
+            logger.info(f"Added {credits} credits to user {user_id} via webhook")
+        except Exception as e:
+            logger.error(f"Error processing payment {session_id}: {str(e)}")
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': f'Error processing payment: {str(e)}'}), 500
     
     return jsonify({'status': 'success'})
 
@@ -350,34 +383,65 @@ def webhook():
 def payment_success():
     """Successful payment page"""
     session_id = request.args.get('session_id')
-    if session_id:
-        try:
-            # Verify the session with Stripe
-            checkout_session = stripe.checkout.Session.retrieve(session_id)
-            if checkout_session and checkout_session.payment_status == 'paid':
-                # Check if this payment was already processed via webhook
-                transaction = CreditTransaction.query.filter_by(stripe_payment_id=session_id).first()
-                if not transaction:
-                    # Webhook hasn't processed this yet, do it manually
-                    credits = int(checkout_session.metadata.credits)
-                    transaction = CreditTransaction(
-                        user_id=current_user.id,
-                        amount=credits,
-                        transaction_type='purchase',
-                        stripe_payment_id=session_id
-                    )
-                    current_user.credits += credits
-                    db.session.add(transaction)
-                    db.session.commit()
-                    
-                flash(f'Payment successful! {credits} credits have been added to your account.', 'success')
-                return render_template('auth/payment_success.html', credits=credits)
-        except Exception as e:
-            flash(f'Error verifying payment: {str(e)}', 'danger')
     
-    # If we get here, either there was no session ID or verification failed
-    flash('Your payment is being processed. Credits will be added to your account shortly.', 'info')
-    return render_template('auth/payment_success.html')
+    if not session_id:
+        logger.warning(f"Payment success page accessed without session_id by user {current_user.id}")
+        flash('No payment session found. If you completed a payment, it may still be processing.', 'info')
+        return render_template('auth/payment_success.html')
+        
+    logger.info(f"Payment success page accessed with session_id: {session_id} by user {current_user.id}")
+    
+    try:
+        # First check if this payment was already processed
+        existing_transaction = CreditTransaction.query.filter_by(stripe_payment_id=session_id).first()
+        
+        if existing_transaction:
+            # Already processed by webhook or previous visit
+            logger.info(f"Payment {session_id} already processed for user {current_user.id}")
+            credits = existing_transaction.amount
+            flash(f'Payment successful! {credits} credits have been added to your account.', 'success')
+            return render_template('auth/payment_success.html', credits=credits)
+            
+        # If not processed yet, verify with Stripe
+        checkout_session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Verify the payment belongs to this user
+        if str(checkout_session.metadata.get('user_id')) != str(current_user.id):
+            logger.warning(f"User {current_user.id} attempted to access payment for user {checkout_session.metadata.get('user_id')}")
+            flash('This payment does not belong to your account.', 'danger')
+            return redirect(url_for('auth.profile'))
+            
+        if checkout_session and checkout_session.payment_status == 'paid':
+            # Process payment if webhook hasn't done it yet
+            credits = int(checkout_session.metadata.get('credits', 0))
+            
+            # Create transaction record
+            transaction = CreditTransaction(
+                user_id=current_user.id,
+                amount=credits,
+                transaction_type='purchase',
+                stripe_payment_id=session_id
+            )
+            
+            # Add credits to user account
+            current_user.credits += credits
+            db.session.add(transaction)
+            db.session.commit()
+            
+            logger.info(f"Added {credits} credits to user {current_user.id} via success page")
+            flash(f'Payment successful! {credits} credits have been added to your account.', 'success')
+            return render_template('auth/payment_success.html', credits=credits)
+        else:
+            # Payment exists but isn't paid
+            logger.warning(f"Unpaid session accessed: {session_id}, status: {checkout_session.payment_status}")
+            flash('Your payment is still being processed. Please check back shortly.', 'info')
+            return render_template('auth/payment_success.html')
+            
+    except Exception as e:
+        logger.error(f"Error processing payment session {session_id}: {str(e)}")
+        db.session.rollback()
+        flash('There was an issue verifying your payment. If you completed a payment but don\'t see credits added, please contact support.', 'warning')
+        return render_template('auth/payment_success.html')
 
 @auth_bp.route('/payment-cancel')
 @login_required
