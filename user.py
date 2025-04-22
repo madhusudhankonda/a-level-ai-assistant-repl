@@ -1549,6 +1549,41 @@ def unfavorite_query(query_id):
         flash('An error occurred. Please try again.', 'danger')
         return redirect(url_for('auth.query_history'))
 
+@user_bp.route('/api/question-data/<int:question_id>', methods=['GET'])
+@login_required
+def api_get_question_data(question_id):
+    """API endpoint to get question data including image URL"""
+    try:
+        question = Question.query.get(question_id)
+        if not question:
+            current_app.logger.error(f"Question with ID {question_id} not found")
+            return jsonify({
+                'success': False,
+                'message': f'Question with ID {question_id} not found'
+            }), 404
+        
+        # Return question data, including the image URL if available
+        question_data = {
+            'id': question.id,
+            'question_number': question.question_number,
+            'paper_id': question.paper_id,
+            'image_path': question.image_path,
+            'success': True
+        }
+        
+        # Include the image_url if available
+        if question.image_url:
+            question_data['image_url'] = question.image_url
+        
+        return jsonify(question_data)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error getting question data: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error retrieving question data: {str(e)}'
+        }), 500
+
 @user_bp.route('/api/delete-question/<int:question_id>', methods=['POST'])
 @login_required
 def api_delete_question(question_id):
