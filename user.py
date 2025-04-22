@@ -466,15 +466,14 @@ def get_question_image(question_id):
             response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             return response
             
-        # If we still don't have an image and it's an appropriate paper, try the sample images
-        # Only for paper_id < 57 as these are likely to be test/demo papers
+        # If we still don't have an image, use sample images as fallback
         if use_fallback_samples and question_num and question_num.startswith('q'):
             try:
                 # Extract question number (q1, q2, etc) and try to find a sample image
                 question_number = question_num.replace('q', '')
                 q_num = int(question_number)
                 
-                # Allow fallback for any paper when the actual images don't exist
+                # Allow sample fallback for any paper ID when actual images don't exist
                 if q_num > 0 and q_num <= 12:
                     sample_file = f"703866-q{q_num}.png"
                     sample_path = os.path.join('./attached_assets', sample_file)
@@ -483,7 +482,29 @@ def get_question_image(question_id):
                         current_app.logger.info(f"Using sample image as fallback: {sample_path}")
                         response = make_response(send_file(sample_path, mimetype='image/png'))
                         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                        response.headers['Pragma'] = 'no-cache'
+                        response.headers['Expires'] = '0'
+                        response.headers['X-Timestamp'] = str(datetime.now().timestamp())
+                        response.headers['Access-Control-Allow-Origin'] = '*'
                         return response
+                        
+                    # Try additional fallback locations for sample images
+                    alt_sample_paths = [
+                        f"./attached_assets/q{q_num}.png",
+                        f"./attached_assets/question{q_num}.png",
+                        f"./static/images/sample_q{q_num}.png"
+                    ]
+                    
+                    for alt_path in alt_sample_paths:
+                        if os.path.isfile(alt_path):
+                            current_app.logger.info(f"Using alternative sample image: {alt_path}")
+                            response = make_response(send_file(alt_path, mimetype='image/png'))
+                            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                            response.headers['Pragma'] = 'no-cache'
+                            response.headers['Expires'] = '0'
+                            response.headers['X-Timestamp'] = str(datetime.now().timestamp())
+                            response.headers['Access-Control-Allow-Origin'] = '*'
+                            return response
             except Exception as sample_error:
                 current_app.logger.warning(f"Error using sample image: {str(sample_error)}")
         

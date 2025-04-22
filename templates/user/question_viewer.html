@@ -308,17 +308,43 @@
             // Add timestamp to prevent browser caching
             const timestamp = new Date().getTime();
             // Try to get the image URL from the database or fall back to the image endpoint
-            fetch(`/api/question-data/${questionId}`)
-                .then(response => response.json())
+            const directImageUrl = "{{ url_for('user.get_question_image', question_id=0) }}".replace('0', questionId) + "?t=" + timestamp;
+            
+            // First check if the direct image URL works by making a HEAD request
+            fetch(directImageUrl, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        // Image exists, use it directly
+                        return { image_url: directImageUrl, success: true };
+                    } else {
+                        // Try the API endpoint
+                        return fetch(`/api/question-data/${questionId}`)
+                            .then(apiResponse => {
+                                if (apiResponse.ok) {
+                                    return apiResponse.json();
+                                } else {
+                                    throw new Error('API request failed');
+                                }
+                            });
+                    }
+                })
                 .then(data => {
+                    // Use either the direct image URL or the one from API
                     const imgUrl = data.image_url 
                         ? data.image_url + "?t=" + timestamp
-                        : "{{ url_for('user.get_question_image', question_id=0) }}".replace('0', questionId) + "?t=" + timestamp;
+                        : directImageUrl;
                     
                     const imgEl = document.createElement('img');
                     imgEl.src = imgUrl;
                     imgEl.className = 'img-fluid question-image mb-3';
                     imgEl.alt = 'Question image';
+                    
+                    // Handle image load errors
+                    imgEl.onerror = function() {
+                        // If one URL fails, try the other directly
+                        console.log("Image failed to load, trying fallback");
+                        this.src = directImageUrl;
+                    };
                     
                     // Clear previous content and add the image
                     displayEl.innerHTML = '';
@@ -328,11 +354,10 @@
                     continueQuestionLoad(imgEl, imgUrl, questionId, displayEl);
                 })
                 .catch(error => {
-                    console.error("Error fetching question data:", error);
-                    // Fallback to original method if API fails
-                    const imgUrl = "{{ url_for('user.get_question_image', question_id=0) }}".replace('0', questionId) + "?t=" + timestamp;
+                    console.error("Error checking image headers:", error);
+                    // Fallback to direct image access if API fails
                     const imgEl = document.createElement('img');
-                    imgEl.src = imgUrl;
+                    imgEl.src = directImageUrl;
                     imgEl.className = 'img-fluid question-image mb-3';
                     imgEl.alt = 'Question image';
                     
@@ -341,7 +366,7 @@
                     displayEl.appendChild(imgEl);
                     
                     // Add content after image is loaded
-                    continueQuestionLoad(imgEl, imgUrl, questionId, displayEl);
+                    continueQuestionLoad(imgEl, directImageUrl, questionId, displayEl);
                 });
                 
             // Return early as the image is loaded asynchronously
