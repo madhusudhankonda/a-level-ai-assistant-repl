@@ -280,6 +280,22 @@
         const applyFilters = document.getElementById('applyFilters');
         const feedbackItems = document.querySelectorAll('.feedback-item');
         
+        // Elements for the detail modal
+        const feedbackModal = document.getElementById('feedbackModal');
+        const feedbackDetails = document.getElementById('feedbackDetails');
+        const updateStatusBtn = document.getElementById('updateStatusBtn');
+        
+        // Elements for status update modal
+        const statusModal = document.getElementById('statusModal');
+        const feedbackIdInput = document.getElementById('feedbackId');
+        const feedbackStatusSelect = document.getElementById('feedbackStatus');
+        const adminNotesTextarea = document.getElementById('adminNotes');
+        const adminResponseTextarea = document.getElementById('adminResponse');
+        const saveStatusBtn = document.getElementById('saveStatus');
+        
+        // Current feedback ID for operations
+        let currentFeedbackId = null;
+        
         // Apply filters
         applyFilters.addEventListener('click', function() {
             const typeValue = filterType.value;

@@ -1783,3 +1783,99 @@ def admin_feedback():
     feedback_entries = UserFeedback.query.order_by(UserFeedback.created_at.desc()).all()
     
     return render_template('admin/feedback_management.html', feedback_entries=feedback_entries)
+
+
+@user_bp.route('/api/admin/feedback/<int:feedback_id>', methods=['GET'])
+@login_required
+def get_feedback_details(feedback_id):
+    """API endpoint to get details for a specific feedback entry"""
+    # Only admins can access this
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        feedback = UserFeedback.query.get_or_404(feedback_id)
+        
+        # Format the data for response
+        feedback_data = {
+            'id': feedback.id,
+            'type': feedback.feedback_type,
+            'subject': feedback.subject,
+            'text': feedback.feedback_text,
+            'impact_level': feedback.impact_level,
+            'browser_info': feedback.browser_info,
+            'page_url': feedback.page_url,
+            'created_at': feedback.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'status': feedback.status,
+            'admin_notes': feedback.admin_notes,
+            'admin_response': feedback.admin_response,
+            'has_screenshot': bool(feedback.screenshot_path),
+            'screenshot_url': url_for('user.feedback_screenshot', feedback_id=feedback.id) if feedback.screenshot_path else None,
+            'user': {
+                'username': feedback.user.username,
+                'email': feedback.user.email
+            } if feedback.user else None
+        }
+        
+        return jsonify(feedback_data)
+    except Exception as e:
+        current_app.logger.error(f"Error getting feedback details: {str(e)}")
+        return jsonify({'error': f'Error loading feedback: {str(e)}'}), 500
+
+
+@user_bp.route('/api/admin/feedback/<int:feedback_id>/update', methods=['POST'])
+@login_required
+def update_feedback_status(feedback_id):
+    """API endpoint to update the status and notes for a feedback entry"""
+    # Only admins can access this
+    if not current_user.is_admin:
+        return jsonify({'error': 'Unauthorized access'}), 403
+    
+    try:
+        feedback = UserFeedback.query.get_or_404(feedback_id)
+        
+        # Get data from request
+        data = request.json
+        
+        # Update feedback entry
+        if 'status' in data:
+            feedback.status = data['status']
+        if 'admin_notes' in data:
+            feedback.admin_notes = data['admin_notes']
+        if 'admin_response' in data:
+            feedback.admin_response = data['admin_response']
+            
+        # Save changes
+        db.session.commit()
+        
+        # You could implement email notification here if needed
+        
+        return jsonify({
+            'success': True,
+            'message': 'Feedback updated successfully'
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error updating feedback: {str(e)}")
+        return jsonify({'error': f'Error updating feedback: {str(e)}'}), 500
+
+
+@user_bp.route('/admin/feedback/<int:feedback_id>/screenshot')
+@login_required
+def feedback_screenshot(feedback_id):
+    """Serve the screenshot for a feedback entry"""
+    # Only admins can access this
+    if not current_user.is_admin:
+        flash("You do not have permission to access this resource.", "danger")
+        return redirect(url_for('user.index'))
+    
+    try:
+        feedback = UserFeedback.query.get_or_404(feedback_id)
+        
+        if not feedback.screenshot_path or not os.path.exists(feedback.screenshot_path):
+            return "Screenshot not found", 404
+            
+        return send_file(feedback.screenshot_path, mimetype='image/png')
+    except Exception as e:
+        current_app.logger.error(f"Error serving feedback screenshot: {str(e)}")
+        return "Error loading screenshot", 500
