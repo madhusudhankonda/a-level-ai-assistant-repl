@@ -429,19 +429,6 @@ def get_question_image(question_id):
             os.path.join(os.getcwd(), folder_name, file_name)
         ]
         
-        # Special handling for paper_id 57, which has a specific structure
-        if paper_id == 57:
-            # Add paper_57-specific paths to try first
-            paper57_paths = [
-                f"./data/paper_57/{question_num}_{file_name}",
-                f"./data/paper_57/{question_num}.png",
-                f"./paper_57/{question_num}.png",
-                os.path.join(os.getcwd(), 'data', 'paper_57', f"{question_num}.png"),
-                os.path.join(os.getcwd(), 'data', 'paper_57', f"{question_num}_{file_name}")
-            ]
-            # Insert these at the beginning of the list to try first
-            paths_to_try = paper57_paths + paths_to_try
-        
         # Try each path
         for path in paths_to_try:
             current_app.logger.info(f"Trying path: {path}")
