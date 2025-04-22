@@ -399,27 +399,20 @@ def get_question_image(question_id):
                 'message': f'Question with ID {question_id} not found'
             }), 404
         
-        # First check if we have paper-specific images in attached_assets directory
+        # Get the question paper ID and number for reference
         paper_id = question.paper_id
         question_num = question.question_number
         
-        # Try to find the appropriate image for this specific question
-        question_number = question_num.replace('q', '')
-        try:
-            q_num = int(question_number)
-            # Look for images like 703866-q1.png for specific question numbers
-            specific_file = f"703866-q{q_num}.png"
-            assets_path = os.path.join('./attached_assets', specific_file)
-            if os.path.isfile(assets_path):
-                current_app.logger.info(f"Found specific question image: {assets_path}")
-                response = make_response(send_file(assets_path, mimetype='image/png'))
-                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                return response
-        except Exception as e:
-            current_app.logger.warning(f"Error parsing question number: {str(e)}")
-        
-        # Get the image path from the database record
+        # Get the image path from the database record - First priority
         image_path = question.image_path
+        
+        # Priority order for images:
+        # 1. First, try with the image_path from the database (authentic exam content)
+        # 2. Only if that fails, fall back to sample images
+        
+        # Use fallback samples ONLY for test papers (not for real exam papers)
+        # Paper 57 has its own real images we should be accessing
+        use_fallback_samples = paper_id < 57
         current_app.logger.info(f"Attempting to serve image at path: {image_path}")
         
         # Extract folder name and filename for path construction
@@ -436,6 +429,19 @@ def get_question_image(question_id):
             os.path.join(os.getcwd(), 'data', folder_name, file_name),
             os.path.join(os.getcwd(), folder_name, file_name)
         ]
+        
+        # Special handling for paper_id 57, which has a specific structure
+        if paper_id == 57:
+            # Add paper_57-specific paths to try first
+            paper57_paths = [
+                f"./data/paper_57/{question_num}_{file_name}",
+                f"./data/paper_57/{question_num}.png",
+                f"./paper_57/{question_num}.png",
+                os.path.join(os.getcwd(), 'data', 'paper_57', f"{question_num}.png"),
+                os.path.join(os.getcwd(), 'data', 'paper_57', f"{question_num}_{file_name}")
+            ]
+            # Insert these at the beginning of the list to try first
+            paths_to_try = paper57_paths + paths_to_try
         
         # Try each path
         for path in paths_to_try:
@@ -460,6 +466,27 @@ def get_question_image(question_id):
             response = make_response(send_file(debug_path, mimetype='image/png'))
             response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             return response
+            
+        # If we still don't have an image and it's an appropriate paper, try the sample images
+        # Only for paper_id < 57 as these are likely to be test/demo papers
+        if use_fallback_samples and question_num and question_num.startswith('q'):
+            try:
+                # Extract question number (q1, q2, etc) and try to find a sample image
+                question_number = question_num.replace('q', '')
+                q_num = int(question_number)
+                
+                # Only if it's a paper that should use sample images (not a real exam paper)
+                if paper_id < 57 and q_num > 0 and q_num <= 12:
+                    sample_file = f"703866-q{q_num}.png"
+                    sample_path = os.path.join('./attached_assets', sample_file)
+                    
+                    if os.path.isfile(sample_path):
+                        current_app.logger.info(f"Using sample image as fallback: {sample_path}")
+                        response = make_response(send_file(sample_path, mimetype='image/png'))
+                        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                        return response
+            except Exception as sample_error:
+                current_app.logger.warning(f"Error using sample image: {str(sample_error)}")
         
         # Create a text-based image with question information
         # This is a last resort when no image is found
