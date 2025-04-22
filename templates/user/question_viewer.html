@@ -308,7 +308,7 @@
             // Add timestamp to prevent browser caching
             const timestamp = new Date().getTime();
             // Try to get the image URL from the database or fall back to the image endpoint
-            fetch(`/user/api/question-data/${questionId}`)
+            fetch(`/api/question-data/${questionId}`)
                 .then(response => response.json())
                 .then(data => {
                     const imgUrl = data.image_url 

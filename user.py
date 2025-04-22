@@ -1570,9 +1570,14 @@ def api_get_question_data(question_id):
             'success': True
         }
         
-        # Include the image_url if available
+        # Always include an image_url - either from database or direct access endpoint
         if question.image_url:
             question_data['image_url'] = question.image_url
+        else:
+            # Generate a URL for the image_url directly to question image endpoint
+            domain = current_app.config.get('SERVER_NAME') or request.host
+            question_data['image_url'] = url_for('user.get_question_image', question_id=question.id, _external=True)
+            current_app.logger.info(f"Generated image URL: {question_data['image_url']}")
         
         return jsonify(question_data)
         
