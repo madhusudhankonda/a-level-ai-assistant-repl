@@ -394,143 +394,83 @@ def get_question_image(question_id):
         question = Question.query.get(question_id)
         if not question:
             current_app.logger.error(f"Question with ID {question_id} not found")
-            # Return a placeholder image or error message
             return jsonify({
                 'success': False,
                 'message': f'Question with ID {question_id} not found'
             }), 404
         
-        # Special handling for paper 57 questions 5-12 where we don't have original images 
-        # and need to show an appropriate message instead of Q1's image
+        # Get the image path from the database record
+        image_path = question.image_path
+        current_app.logger.info(f"Attempting to serve image at path: {image_path}")
+        
+        # Extract folder name and filename for path construction
+        folder_name = os.path.basename(os.path.dirname(image_path))
+        file_name = os.path.basename(image_path)
+        current_app.logger.info(f"Image folder: {folder_name}, filename: {file_name}")
+        
+        # Create a list of possible paths to try, without hardcoding paper or question IDs
+        paths_to_try = [
+            image_path,  # Original path from database
+            image_path.replace('/home/runner/workspace/', './'),  # Relative path
+            f"./data/{folder_name}/{file_name}",  # Local data folder
+            f"./{folder_name}/{file_name}",  # Direct folder access
+            
+            # Try storage in other formats
+            os.path.join(os.getcwd(), 'data', folder_name, file_name),
+            os.path.join(os.getcwd(), folder_name, file_name)
+        ]
+        
+        # Check for files in attached_assets that match the question's filename pattern
         paper_id = question.paper_id
         question_num = question.question_number
-        if paper_id == 57 and question_num in ['q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12']:
-            # For paper 57 questions 5-12, we need to use their actual images
-            question_number = int(question_num.replace('q', ''))
-            current_app.logger.info(f"Special handling for paper 57, question {question_num}")
-            
-            # For question 7, we need to use the image_1745269580538.png
-            if question_num == 'q7':
-                # This is the triangle question image you shared
-                img_path = './attached_assets/image_1745269580538.png'
-                if os.path.isfile(img_path):
-                    current_app.logger.info(f"Using specific image for q7: {img_path}")
-                    response = make_response(send_file(img_path, mimetype='image/png'))
-                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                    return response
         
-        # Return the image file
-        try:
-            # Get paths to try
-            image_path = question.image_path
-            current_app.logger.info(f"Attempting to serve image at path: {image_path}")
+        # Check attached_assets directory for any matching images
+        attached_assets_dir = './attached_assets'
+        if os.path.isdir(attached_assets_dir):
+            # Look for files that might correspond to this question
+            for filename in os.listdir(attached_assets_dir):
+                # Add any images that seem related to paths_to_try
+                if filename.endswith('.png') or filename.endswith('.jpg'):
+                    paths_to_try.append(os.path.join(attached_assets_dir, filename))
+        
+        # Try each path
+        for path in paths_to_try:
+            current_app.logger.info(f"Trying path: {path}")
+            if os.path.isfile(path):
+                current_app.logger.info(f"Found image at: {path}")
+                # Add a timestamp to prevent browser caching
+                response = make_response(send_file(path, mimetype='image/png'))
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+                # Add a timestamp as query param to force fresh load
+                response.headers['X-Timestamp'] = str(datetime.now().timestamp())
+                return response
             
-            # Extract folder name and filename
-            folder_name = os.path.basename(os.path.dirname(image_path))
-            file_name = os.path.basename(image_path)
-            current_app.logger.info(f"Image folder: {folder_name}, filename: {file_name}")
+        # If we get here, we need to check if we can find an image with a debug suffix
+        debug_path = os.path.join(
+            os.getcwd(), 'data', f'paper_{paper_id}', 
+            f"{question_num}_debug.png"
+        )
+        if os.path.isfile(debug_path):
+            current_app.logger.info(f"Using debug image at: {debug_path}")
+            response = make_response(send_file(debug_path, mimetype='image/png'))
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            return response
             
-            # Get the question number for fallback purposes
-            question_number = question.question_number.replace('q', '')
-            try:
-                q_num = int(question_number)
-            except Exception as e:
-                current_app.logger.warning(f"Could not parse question number: {str(e)}")
-                q_num = 1
-            
-            # Create a list of possible paths to try - prioritize actual uploaded images 
-            # from the attached_assets directory
-            
-            # First, try the original uploaded question files, prioritizing original authentic assets
-            if 1 <= q_num <= 4:
-                # First priority - use the original images we have for questions 1-4
-                original_image_path = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
-                if os.path.isfile(original_image_path):
-                    current_app.logger.info(f"Using original uploaded image for q{q_num}")
-                    response = make_response(send_file(original_image_path, mimetype='image/png'))
-                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                    return response
-            
-            # Try database paths as fallback
-            paths_to_try = [
-                image_path,  # Original path from database
-                image_path.replace('/home/runner/workspace/', './'),  # Relative path
-                f"./data/{folder_name}/{file_name}",  # Local data folder
-                f"./{folder_name}/{file_name}",  # Direct folder access
-                
-                # Try storage in other formats
-                os.path.join(os.getcwd(), 'data', folder_name, file_name),
-                os.path.join(os.getcwd(), folder_name, file_name)
-            ]
-            
-            # Add the original image path if it exists
-            if 1 <= q_num <= 4:  # We have originals for q1-q4
-                # Include the original image path as the first option
-                paths_to_try.insert(0, f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png")
-            elif 1 <= q_num <= 12:  # For other questions, use q1 as fallback
-                paths_to_try.append(f"./data/questions/paper_1/question_q1_703866-q1.png")
-            else:
-                # Fallback to q1 if we can't determine the question number
-                paths_to_try.append(f"./data/questions/paper_1/question_q1_703866-q1.png")
-            
-            # Try each path
-            for path in paths_to_try:
-                current_app.logger.info(f"Trying path: {path}")
-                if os.path.isfile(path):
-                    current_app.logger.info(f"Found image at: {path}")
-                    # Add a timestamp to prevent browser caching
-                    response = make_response(send_file(path, mimetype='image/png'))
-                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                    response.headers['Pragma'] = 'no-cache'
-                    response.headers['Expires'] = '0'
-                    # Add a timestamp as query param to force fresh load
-                    response.headers['X-Timestamp'] = str(datetime.now().timestamp())
-                    return response
-            
-            # If we get here, no image was found
-            current_app.logger.error(f"Image file not found in any of these locations: {', '.join(paths_to_try)}")
-            
-            # Return a placeholder or default image instead of error
-            # Let's check if we have any sample images to use
-            
-            # Determine which uploaded question file to use based on the question number
-            # Use the original uploaded images as the primary source
-            original_image = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
-            
-            # Use the original images you uploaded for all questions
-            current_app.logger.info(f"Looking for original image: {original_image}")
-            
-            sample_paths = [
-                original_image,  # Try the specific question's original image first
-                "./data/questions/paper_1/question_q1_703866-q1.png",  # Fallback to q1 original if specific not found
-                "./data/papers/sample_math_paper.png"  # Final fallback
-            ]
-            
-            for path in sample_paths:
-                if os.path.isfile(path):
-                    current_app.logger.warning(f"Using sample image instead: {path}")
-                    # Set a cookie to indicate this is a fallback image
-                    response = make_response(send_file(path, mimetype='image/png'))
-                    response.headers['X-Is-Fallback-Image'] = 'true'
-                    return response
-            
-            # If all attempts fail, log the error
-            return jsonify({
-                'success': False,
-                'message': 'Image file not found'
-            }), 404
-        except Exception as e:
-            current_app.logger.error(f"Error serving question image: {str(e)}")
-            return jsonify({
-                'success': False,
-                'message': f'Error retrieving image: {str(e)}'
-            }), 404
-    except Exception as outer_e:
-        current_app.logger.error(f"Unexpected error in get_question_image: {str(outer_e)}")
+        # If all attempts fail, log the error
+        current_app.logger.error(f"Image file not found in any of these locations: {paths_to_try}")
         return jsonify({
             'success': False,
-            'message': 'An unexpected error occurred'
-        }), 500
+            'message': 'Image file not found'
+        }), 404
+            
+    except Exception as e:
+        current_app.logger.error(f"Error serving question image: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'Error retrieving image: {str(e)}'
+        }), 404
 
 def process_math_notation(text):
     """Process mathematical notation in explanation text to ensure proper rendering"""
