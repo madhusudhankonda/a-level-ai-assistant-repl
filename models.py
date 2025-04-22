@@ -74,6 +74,7 @@ class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     question_number = db.Column(db.String(20), nullable=False)
     image_path = db.Column(db.String(255), nullable=False)
+    image_url = db.Column(db.String(255), nullable=True)  # URL-based storage reference
     paper_id = db.Column(db.Integer, db.ForeignKey('question_paper.id'), nullable=False)
     difficulty_level = db.Column(db.Integer, nullable=True)  # 1-5 scale
     marks = db.Column(db.Integer, nullable=True)  # Number of marks for the question

@@ -293,10 +293,14 @@ def add_question(paper_id):
                 flash(f"Error saving image: {str(save_error)}", "danger")
                 return redirect(url_for('admin.add_question', paper_id=paper_id))
             
+            # Generate a URL for the image
+            domain = os.environ.get('REPLIT_DEV_DOMAIN') or os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
+            
             # Create question in database
             question = Question(
                 question_number=question_number,
                 image_path=image_path,
+                image_url=f"https://{domain}/user/question-image/",  # Will be updated with ID after creation
                 paper_id=paper_id
             )
             
@@ -316,7 +320,13 @@ def add_question(paper_id):
             try:
                 db.session.add(question)
                 db.session.commit()
+                
+                # Update the image_url with the question ID now that we have it
+                question.image_url = f"{question.image_url}{question.id}"
+                db.session.commit()
+                
                 current_app.logger.info(f"Question {question_number} added successfully to paper {paper_id}")
+                current_app.logger.info(f"Image URL set to: {question.image_url}")
                 
                 flash(f'Question {question_number} added successfully', 'success')
                 return redirect(url_for('admin.manage_questions', paper_id=paper_id))

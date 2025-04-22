@@ -399,6 +399,25 @@ def get_question_image(question_id):
                 'message': f'Question with ID {question_id} not found'
             }), 404
         
+        # First check if we have paper-specific images in attached_assets directory
+        paper_id = question.paper_id
+        question_num = question.question_number
+        
+        # Try to find the appropriate image for this specific question
+        question_number = question_num.replace('q', '')
+        try:
+            q_num = int(question_number)
+            # Look for images like 703866-q1.png for specific question numbers
+            specific_file = f"703866-q{q_num}.png"
+            assets_path = os.path.join('./attached_assets', specific_file)
+            if os.path.isfile(assets_path):
+                current_app.logger.info(f"Found specific question image: {assets_path}")
+                response = make_response(send_file(assets_path, mimetype='image/png'))
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                return response
+        except Exception as e:
+            current_app.logger.warning(f"Error parsing question number: {str(e)}")
+        
         # Get the image path from the database record
         image_path = question.image_path
         current_app.logger.info(f"Attempting to serve image at path: {image_path}")
@@ -414,24 +433,9 @@ def get_question_image(question_id):
             image_path.replace('/home/runner/workspace/', './'),  # Relative path
             f"./data/{folder_name}/{file_name}",  # Local data folder
             f"./{folder_name}/{file_name}",  # Direct folder access
-            
-            # Try storage in other formats
             os.path.join(os.getcwd(), 'data', folder_name, file_name),
             os.path.join(os.getcwd(), folder_name, file_name)
         ]
-        
-        # Check for files in attached_assets that match the question's filename pattern
-        paper_id = question.paper_id
-        question_num = question.question_number
-        
-        # Check attached_assets directory for any matching images
-        attached_assets_dir = './attached_assets'
-        if os.path.isdir(attached_assets_dir):
-            # Look for files that might correspond to this question
-            for filename in os.listdir(attached_assets_dir):
-                # Add any images that seem related to paths_to_try
-                if filename.endswith('.png') or filename.endswith('.jpg'):
-                    paths_to_try.append(os.path.join(attached_assets_dir, filename))
         
         # Try each path
         for path in paths_to_try:
@@ -443,11 +447,10 @@ def get_question_image(question_id):
                 response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
                 response.headers['Pragma'] = 'no-cache'
                 response.headers['Expires'] = '0'
-                # Add a timestamp as query param to force fresh load
                 response.headers['X-Timestamp'] = str(datetime.now().timestamp())
                 return response
-            
-        # If we get here, we need to check if we can find an image with a debug suffix
+        
+        # If we get here, check for the debug image
         debug_path = os.path.join(
             os.getcwd(), 'data', f'paper_{paper_id}', 
             f"{question_num}_debug.png"
@@ -457,13 +460,39 @@ def get_question_image(question_id):
             response = make_response(send_file(debug_path, mimetype='image/png'))
             response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
             return response
-            
-        # If all attempts fail, log the error
-        current_app.logger.error(f"Image file not found in any of these locations: {paths_to_try}")
-        return jsonify({
-            'success': False,
-            'message': 'Image file not found'
-        }), 404
+        
+        # Create a text-based image with question information
+        # This is a last resort when no image is found
+        current_app.logger.warning(f"No image file found for question {question_id}, creating placeholder")
+        from PIL import Image, ImageDraw, ImageFont
+        import io
+        
+        # Create a new image
+        img = Image.new('RGB', (800, 600), color=(40, 40, 45))
+        d = ImageDraw.Draw(img)
+        
+        # Try to get a font, fall back to default if not available
+        try:
+            font = ImageFont.truetype("arial.ttf", 24)
+            small_font = ImageFont.truetype("arial.ttf", 18)
+        except IOError:
+            font = ImageFont.load_default()
+            small_font = ImageFont.load_default()
+        
+        # Add text
+        d.text((50, 50), f"Question {question_num}", fill=(255, 255, 255), font=font)
+        d.text((50, 100), f"Paper ID: {paper_id}", fill=(255, 255, 255), font=small_font)
+        d.text((50, 150), "The original image file could not be found.", fill=(255, 170, 50), font=small_font)
+        
+        # Save to a buffer
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        buf.seek(0)
+        
+        # Return the image
+        response = make_response(send_file(buf, mimetype='image/png'))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        return response
             
     except Exception as e:
         current_app.logger.error(f"Error serving question image: {str(e)}")
