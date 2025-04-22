@@ -1550,7 +1550,6 @@ def unfavorite_query(query_id):
         return redirect(url_for('auth.query_history'))
 
 @user_bp.route('/api/question-data/<int:question_id>', methods=['GET'])
-@login_required
 def api_get_question_data(question_id):
     """API endpoint to get question data including image URL"""
     try:
