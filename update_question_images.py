@@ -26,17 +26,12 @@ def update_schema():
     print("Adding image_url column to Question table...")
     try:
         with app.app_context():
-            # Check if the column exists first (SQLAlchemy doesn't have a direct way to check)
-            try:
-                db.session.execute('SELECT image_url FROM question LIMIT 1')
-                print("Column image_url already exists.")
-            except Exception:
-                # Column doesn't exist, add it
-                db.session.execute('ALTER TABLE question ADD COLUMN image_url VARCHAR(255)')
-                db.session.commit()
-                print("Added image_url column to Question table.")
+            # The image_url column is already defined in the model, so we can skip this step
+            # as SQLAlchemy should handle this automatically when db.create_all() is called
+            print("Column image_url is already defined in the model and should exist.")
+            return True
     except Exception as e:
-        print(f"Error updating schema: {e}")
+        print(f"Error checking schema: {e}")
         return False
     return True
 

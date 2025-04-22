@@ -644,6 +644,11 @@ def edit_question(question_id):
                         
                         # Update the question with the new image path
                         question.image_path = file_path
+                        
+                        # Update the image URL to point to the new image
+                        domain = os.environ.get('REPLIT_DEV_DOMAIN') or os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
+                        question.image_url = f"https://{domain}/user/question-image/{question.id}"
+                        current_app.logger.info(f"Updated image URL to: {question.image_url}")
                     else:
                         current_app.logger.error(f"Error: File was not found at {file_path} after saving!")
                         flash("Error: Question image was not saved correctly. Please try again.", "danger")
@@ -670,6 +675,12 @@ def edit_question(question_id):
             except ValueError:
                 flash('Invalid marks value. Please provide a number.', 'danger')
                 return redirect(url_for('admin.edit_question', question_id=question_id))
+        
+        # Update or generate image_url if needed
+        if not question.image_url:
+            domain = os.environ.get('REPLIT_DEV_DOMAIN') or os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
+            question.image_url = f"https://{domain}/user/question-image/{question.id}"
+            current_app.logger.info(f"Generated missing image URL: {question.image_url}")
         
         try:
             db.session.commit()
