@@ -410,9 +410,8 @@ def get_question_image(question_id):
         # 1. First, try with the image_path from the database (authentic exam content)
         # 2. Only if that fails, fall back to sample images
         
-        # Use fallback samples ONLY for test papers (not for real exam papers)
-        # Paper 57 has its own real images we should be accessing
-        use_fallback_samples = paper_id < 57
+        # Always allow fallback samples as a last resort, but prioritize real images
+        use_fallback_samples = True
         current_app.logger.info(f"Attempting to serve image at path: {image_path}")
         
         # Extract folder name and filename for path construction
@@ -475,8 +474,8 @@ def get_question_image(question_id):
                 question_number = question_num.replace('q', '')
                 q_num = int(question_number)
                 
-                # Only if it's a paper that should use sample images (not a real exam paper)
-                if paper_id < 57 and q_num > 0 and q_num <= 12:
+                # Allow fallback for any paper when the actual images don't exist
+                if q_num > 0 and q_num <= 12:
                     sample_file = f"703866-q{q_num}.png"
                     sample_path = os.path.join('./attached_assets', sample_file)
                     
