@@ -168,6 +168,14 @@
                             const option = document.createElement('option');
                             option.value = board.id;
                             option.textContent = board.name;
+                            
+                            // Grey out AQA and Edexcel (no papers available yet)
+                            if (board.name === 'AQA' || board.name === 'Edexcel') {
+                                option.disabled = true;
+                                option.textContent = board.name + ' (coming soon)';
+                                option.style.color = '#6c757d';
+                            }
+                            
                             boardSelect.appendChild(option);
                         });
                     })
