@@ -8,12 +8,16 @@ from datetime import datetime
 from flask_login import login_required, current_user
 from models import (
     db, Subject, ExamBoard, PaperCategory, QuestionPaper, 
-    Question, Explanation, User, UserQuery, StudentAnswer, QuestionTopic, UserProfile
+    Question, Explanation, User, UserQuery, StudentAnswer, QuestionTopic, UserProfile, UserFeedback
 )
 from utils.openai_helper import generate_explanation, generate_answer_feedback, test_openai_connection
 
 # Create user blueprint
 user_bp = Blueprint('user', __name__, template_folder='templates/user')
+
+# Define folder for uploads
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @user_bp.route('/')
 def index():
@@ -1737,7 +1741,7 @@ def feedback():
             if form.screenshot.data:
                 # Generate a unique filename
                 filename = f"feedback_{uuid.uuid4()}.png"
-                filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
                 
                 # Save the file
                 form.screenshot.data.save(filepath)
