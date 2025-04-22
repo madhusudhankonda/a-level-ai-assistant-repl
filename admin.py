@@ -3,7 +3,7 @@ from datetime import datetime
 import os
 import uuid
 from werkzeug.utils import secure_filename
-from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory, QuestionTopic, Explanation, UserQuery, StudentAnswer
+from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory, QuestionTopic, Explanation, UserQuery, StudentAnswer, UserFeedback
 from flask_login import login_required, current_user
 
 # Create admin blueprint
@@ -48,7 +48,15 @@ def index():
         papers = QuestionPaper.query.order_by(QuestionPaper.exam_period.desc()).all()
     
     subjects = Subject.query.all()
-    return render_template('admin/index.html', papers=papers, subjects=subjects, current_sort=sort_by)
+    
+    # Get user feedback count
+    user_feedback = UserFeedback.query.all()
+    
+    return render_template('admin/index.html', 
+                          papers=papers, 
+                          subjects=subjects, 
+                          user_feedback=user_feedback,
+                          current_sort=sort_by)
 
 @admin_bp.route('/paper/create', methods=['GET', 'POST'])
 @login_required
