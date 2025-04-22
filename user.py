@@ -1708,3 +1708,74 @@ def api_delete_question(question_id):
             'success': False,
             'message': 'An unexpected error occurred'
         }), 500
+
+
+@user_bp.route('/feedback', methods=['GET', 'POST'])
+def feedback():
+    """Page for users to submit feedback, issues, and feature requests"""
+    from forms import UserFeedbackForm
+    
+    # Create the feedback form
+    form = UserFeedbackForm()
+    
+    # Handle form submission
+    if form.validate_on_submit():
+        try:
+            # Create a new feedback entry
+            new_feedback = UserFeedback(
+                user_id=current_user.id if current_user.is_authenticated else None,
+                feedback_type=form.feedback_type.data,
+                subject=form.subject.data,
+                feedback_text=form.feedback_text.data,
+                impact_level=form.impact_level.data if form.impact_level.data else None,
+                browser_info=form.browser_info.data or request.headers.get('User-Agent', 'Not provided'),
+                page_url=request.referrer,
+                created_at=datetime.utcnow()
+            )
+            
+            # Handle screenshot upload if provided
+            if form.screenshot.data:
+                # Generate a unique filename
+                filename = f"feedback_{uuid.uuid4()}.png"
+                filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                
+                # Save the file
+                form.screenshot.data.save(filepath)
+                new_feedback.screenshot_path = filepath
+            
+            # Save to database
+            db.session.add(new_feedback)
+            db.session.commit()
+            
+            # Thank the user
+            flash("Thank you for your feedback! We appreciate your help in improving our platform.", "success")
+            return redirect(url_for('user.feedback_success'))
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Error saving feedback: {str(e)}")
+            flash("An error occurred while submitting your feedback. Please try again.", "danger")
+    
+    # GET request or form validation failed
+    return render_template('user/feedback.html', form=form)
+
+
+@user_bp.route('/feedback/success')
+def feedback_success():
+    """Success page after submitting feedback"""
+    return render_template('user/feedback_success.html')
+
+
+@user_bp.route('/admin/feedback')
+@login_required
+def admin_feedback():
+    """Admin page for viewing and managing user feedback"""
+    # Only admins can access this page
+    if not current_user.is_admin:
+        flash("You do not have permission to access this page.", "danger")
+        return redirect(url_for('user.index'))
+    
+    # Get all feedback entries, newest first
+    feedback_entries = UserFeedback.query.order_by(UserFeedback.created_at.desc()).all()
+    
+    return render_template('admin/feedback_management.html', feedback_entries=feedback_entries)

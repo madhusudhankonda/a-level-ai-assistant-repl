@@ -316,3 +316,33 @@ class StudentAnswer(db.Model):
         if self.score is None or self.max_score is None or self.max_score == 0:
             return None
         return (self.score / self.max_score) * 100
+
+
+class UserFeedback(db.Model):
+    """Model for capturing user feedback, issues, and feature requests"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Optional, anonymous feedback allowed
+    feedback_type = db.Column(db.String(50), nullable=False)  # 'issue', 'feature', 'general'
+    subject = db.Column(db.String(200), nullable=False)  # Brief subject/title
+    feedback_text = db.Column(db.Text, nullable=False)  # The actual feedback content
+    
+    # Optional fields
+    impact_level = db.Column(db.String(50), nullable=True)  # 'low', 'medium', 'high', 'critical'
+    page_url = db.Column(db.String(255), nullable=True)  # Where the feedback was submitted from
+    browser_info = db.Column(db.String(255), nullable=True)  # Browser/device information
+    screenshot_path = db.Column(db.String(255), nullable=True)  # Path to attached screenshot if any
+    
+    # Status tracking fields for admins
+    status = db.Column(db.String(50), default='new')  # 'new', 'in-review', 'planned', 'implemented', 'declined'
+    admin_notes = db.Column(db.Text, nullable=True)  # Internal notes for admins
+    admin_response = db.Column(db.Text, nullable=True)  # Response to send to the user
+    
+    # Tracking fields
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='feedback')
+    
+    def __repr__(self):
+        return f'<UserFeedback {self.feedback_type} - {self.subject}>'

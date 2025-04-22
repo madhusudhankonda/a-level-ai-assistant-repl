@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, BooleanField, SelectField, SelectMultipleField, TextAreaField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional
 
@@ -56,3 +57,39 @@ class ProfileEditForm(FlaskForm):
         ('Chemistry', 'Chemistry'),
         ('Biology', 'Biology')
     ], validators=[Optional()])
+
+
+class UserFeedbackForm(FlaskForm):
+    """Form for collecting user feedback"""
+    feedback_type = SelectField('Feedback Type', choices=[
+        ('issue', 'Report an Issue'),
+        ('feature', 'Request a Feature'),
+        ('general', 'General Feedback')
+    ], validators=[DataRequired()])
+    
+    subject = StringField('Subject', validators=[
+        DataRequired(),
+        Length(min=3, max=200, message="Subject must be between 3 and 200 characters")
+    ])
+    
+    feedback_text = TextAreaField('Your Feedback', validators=[
+        DataRequired(),
+        Length(min=10, message="Please provide more details (minimum 10 characters)")
+    ])
+    
+    impact_level = SelectField('Impact Level', choices=[
+        ('', 'Select Impact Level (Optional)'),
+        ('low', 'Low - Minor inconvenience'),
+        ('medium', 'Medium - Affects workflow'),
+        ('high', 'High - Makes a feature difficult to use'),
+        ('critical', 'Critical - Prevents using a key feature')
+    ], validators=[Optional()])
+    
+    screenshot = FileField('Attach Screenshot (Optional)', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'png', 'jpeg', 'gif'], 'Images only!')
+    ])
+    
+    browser_info = StringField('Browser/Device Information', validators=[Optional()])
+    
+    email_notification = BooleanField('Email me when this feedback is addressed')
