@@ -400,6 +400,25 @@ def get_question_image(question_id):
                 'message': f'Question with ID {question_id} not found'
             }), 404
         
+        # Special handling for paper 57 questions 5-12 where we don't have original images 
+        # and need to show an appropriate message instead of Q1's image
+        paper_id = question.paper_id
+        question_num = question.question_number
+        if paper_id == 57 and question_num in ['q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12']:
+            # For paper 57 questions 5-12, we need to use their actual images
+            question_number = int(question_num.replace('q', ''))
+            current_app.logger.info(f"Special handling for paper 57, question {question_num}")
+            
+            # For question 7, we need to use the image_1745269580538.png
+            if question_num == 'q7':
+                # This is the triangle question image you shared
+                img_path = './attached_assets/image_1745269580538.png'
+                if os.path.isfile(img_path):
+                    current_app.logger.info(f"Using specific image for q7: {img_path}")
+                    response = make_response(send_file(img_path, mimetype='image/png'))
+                    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+                    return response
+        
         # Return the image file
         try:
             # Get paths to try
@@ -423,8 +442,8 @@ def get_question_image(question_id):
             # from the attached_assets directory
             
             # First, try the original uploaded question files, prioritizing original authentic assets
-            if 1 <= q_num <= 12:
-                # First priority - use the original images you uploaded
+            if 1 <= q_num <= 4:
+                # First priority - use the original images we have for questions 1-4
                 original_image_path = f"./data/questions/paper_1/question_q{q_num}_703866-q{q_num}.png"
                 if os.path.isfile(original_image_path):
                     current_app.logger.info(f"Using original uploaded image for q{q_num}")
