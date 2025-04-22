@@ -1605,7 +1605,13 @@ def api_get_question_data(question_id):
             question_data['image_url'] = url_for('user.get_question_image', question_id=question.id, _external=True)
             current_app.logger.info(f"Generated image URL: {question_data['image_url']}")
         
-        return jsonify(question_data)
+        # Create the response with appropriate headers to avoid caching issues
+        response = jsonify(question_data)
+        response.headers.add('Access-Control-Allow-Origin', '*')  # Allow cross-origin requests
+        response.headers.add('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        response.headers.add('Pragma', 'no-cache')
+        response.headers.add('Expires', '0')
+        return response
         
     except Exception as e:
         current_app.logger.error(f"Error getting question data: {str(e)}")
