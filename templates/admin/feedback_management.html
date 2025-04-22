@@ -317,84 +317,348 @@
         
         // View feedback details
         const viewButtons = document.querySelectorAll('.view-feedback');
-        const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
-        const feedbackDetails = document.getElementById('feedbackDetails');
+        const bsModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
         
         viewButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const feedbackId = this.dataset.id;
-                // Placeholder for AJAX call to get feedback details
-                // In a real implementation, this would fetch the feedback details from the server
+                currentFeedbackId = feedbackId;
+                
+                // Show loading spinner
                 feedbackDetails.innerHTML = `
-                    <div class="mb-4">
-                        <h4 class="mb-3">Feedback #${feedbackId}</h4>
-                        <p class="text-muted">Placeholder for feedback details that would be loaded via AJAX.</p>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h5>Feedback Type</h5>
-                            <p>Issue</p>
+                    <div class="d-flex justify-content-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
-                        <div class="col-md-6">
-                            <h5>Impact Level</h5>
-                            <p>High</p>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <h5>Subject</h5>
-                        <p>Example subject for feedback #${feedbackId}</p>
-                    </div>
-                    <div class="mb-3">
-                        <h5>Feedback Text</h5>
-                        <p>This is a placeholder for the feedback text that would be loaded from the server. The actual feedback would be displayed here.</p>
-                    </div>
-                    <div class="mb-3">
-                        <h5>User Information</h5>
-                        <p>Username: example_user</p>
-                        <p>Email: user@example.com</p>
-                    </div>
-                    <div class="mb-3">
-                        <h5>Browser Information</h5>
-                        <p class="text-muted small">Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36</p>
-                    </div>
-                    <div class="mb-3">
-                        <h5>Screenshot</h5>
-                        <p class="text-muted">No screenshot provided</p>
                     </div>
                 `;
                 
-                feedbackModal.show();
+                // Show the modal while loading data
+                bsModal.show();
+                
+                // Fetch feedback details from API
+                fetch(`/api/admin/feedback/${feedbackId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Format the feedback type for display
+                        let typeDisplay = '';
+                        if (data.type === 'issue') {
+                            typeDisplay = '<span class="badge bg-danger">Issue</span>';
+                        } else if (data.type === 'feature') {
+                            typeDisplay = '<span class="badge bg-success">Feature Request</span>';
+                        } else {
+                            typeDisplay = '<span class="badge bg-info">General Feedback</span>';
+                        }
+                        
+                        // Format the impact level for display
+                        let impactDisplay = '';
+                        if (data.impact_level === 'critical') {
+                            impactDisplay = '<span class="badge bg-danger">Critical</span>';
+                        } else if (data.impact_level === 'high') {
+                            impactDisplay = '<span class="badge bg-warning">High</span>';
+                        } else if (data.impact_level === 'medium') {
+                            impactDisplay = '<span class="badge bg-primary">Medium</span>';
+                        } else if (data.impact_level === 'low') {
+                            impactDisplay = '<span class="badge bg-secondary">Low</span>';
+                        } else {
+                            impactDisplay = '<span class="text-muted">Not specified</span>';
+                        }
+                        
+                        // Format the status for display
+                        let statusDisplay = '';
+                        if (data.status === 'new') {
+                            statusDisplay = '<span class="badge bg-info">New</span>';
+                        } else if (data.status === 'in-review') {
+                            statusDisplay = '<span class="badge bg-warning">In Review</span>';
+                        } else if (data.status === 'planned') {
+                            statusDisplay = '<span class="badge bg-primary">Planned</span>';
+                        } else if (data.status === 'implemented') {
+                            statusDisplay = '<span class="badge bg-success">Implemented</span>';
+                        } else if (data.status === 'declined') {
+                            statusDisplay = '<span class="badge bg-secondary">Declined</span>';
+                        } else {
+                            statusDisplay = '<span class="badge bg-light text-dark">Unknown</span>';
+                        }
+                        
+                        // Build the user info section
+                        let userInfo = '';
+                        if (data.user) {
+                            userInfo = `
+                                <div class="mb-3">
+                                    <h5>User Information</h5>
+                                    <p><strong>Username:</strong> ${data.user.username}</p>
+                                    <p><strong>Email:</strong> ${data.user.email}</p>
+                                </div>
+                            `;
+                        } else {
+                            userInfo = `
+                                <div class="mb-3">
+                                    <h5>User Information</h5>
+                                    <p class="text-muted">Anonymous feedback</p>
+                                </div>
+                            `;
+                        }
+                        
+                        // Build the screenshot section
+                        let screenshotSection = '';
+                        if (data.has_screenshot) {
+                            screenshotSection = `
+                                <div class="mb-3">
+                                    <h5>Screenshot</h5>
+                                    <div class="mt-2 border rounded">
+                                        <img src="${data.screenshot_url}" alt="User submitted screenshot" 
+                                            class="img-fluid rounded" style="max-height: 300px;">
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            screenshotSection = `
+                                <div class="mb-3">
+                                    <h5>Screenshot</h5>
+                                    <p class="text-muted">No screenshot provided</p>
+                                </div>
+                            `;
+                        }
+                        
+                        // Build the notes section
+                        let notesSection = '';
+                        if (data.admin_notes) {
+                            notesSection = `
+                                <div class="mb-3">
+                                    <h5>Admin Notes</h5>
+                                    <div class="p-3 bg-light rounded">
+                                        <p class="mb-0">${data.admin_notes}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // Build the response section
+                        let responseSection = '';
+                        if (data.admin_response) {
+                            responseSection = `
+                                <div class="mb-3">
+                                    <h5>Response to User</h5>
+                                    <div class="p-3 bg-light rounded">
+                                        <p class="mb-0">${data.admin_response}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // Update the modal content
+                        feedbackDetails.innerHTML = `
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h4 class="mb-0">Feedback #${data.id}</h4>
+                                    <div>${statusDisplay}</div>
+                                </div>
+                                <p class="text-muted small">Submitted on ${data.created_at}</p>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h5>Feedback Type</h5>
+                                    <p>${typeDisplay}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Impact Level</h5>
+                                    <p>${impactDisplay}</p>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <h5>Subject</h5>
+                                <p class="lead">${data.subject}</p>
+                            </div>
+                            <div class="mb-3">
+                                <h5>Feedback Text</h5>
+                                <div class="p-3 bg-light rounded">
+                                    <p>${data.text.replace(/\n/g, '<br>')}</p>
+                                </div>
+                            </div>
+                            ${userInfo}
+                            <div class="mb-3">
+                                <h5>Additional Information</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Page URL:</strong> ${data.page_url || 'Not provided'}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Browser Info:</strong> <span class="text-muted small">${data.browser_info || 'Not provided'}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                            ${screenshotSection}
+                            ${notesSection}
+                            ${responseSection}
+                        `;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching feedback details:', error);
+                        feedbackDetails.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Error loading feedback details. Please try again.
+                            </div>
+                        `;
+                    });
             });
         });
         
-        // Update status
+        // Update status button handlers
         const updateButtons = document.querySelectorAll('.update-status');
-        const updateStatusBtn = document.getElementById('updateStatusBtn');
-        const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
-        const feedbackIdInput = document.getElementById('feedbackId');
+        const bsStatusModal = new bootstrap.Modal(document.getElementById('statusModal'));
         
+        // Open status modal from list view
         updateButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const feedbackId = this.dataset.id;
+                currentFeedbackId = feedbackId;
                 feedbackIdInput.value = feedbackId;
-                statusModal.show();
+                
+                // Fetch the current status data to pre-populate the form
+                fetch(`/api/admin/feedback/${feedbackId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Set current values in the form
+                        feedbackStatusSelect.value = data.status || 'new';
+                        adminNotesTextarea.value = data.admin_notes || '';
+                        adminResponseTextarea.value = data.admin_response || '';
+                        
+                        // Show the modal
+                        bsStatusModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching feedback data:', error);
+                        alert('Error loading feedback data. Please try again.');
+                    });
             });
         });
         
+        // Open status modal from detail view
         updateStatusBtn.addEventListener('click', function() {
-            const feedbackId = feedbackDetails.querySelector('h4').textContent.split('#')[1];
-            feedbackIdInput.value = feedbackId;
-            feedbackModal.hide();
-            statusModal.show();
+            if (currentFeedbackId) {
+                // Use the current feedback ID from the detail view
+                feedbackIdInput.value = currentFeedbackId;
+                
+                // Get current feedback data
+                fetch(`/api/admin/feedback/${currentFeedbackId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Set current values in the form
+                        feedbackStatusSelect.value = data.status || 'new';
+                        adminNotesTextarea.value = data.admin_notes || '';
+                        adminResponseTextarea.value = data.admin_response || '';
+                        
+                        // Hide detail modal and show status modal
+                        const feedbackModalElement = document.getElementById('feedbackModal');
+                        const feedbackModalInstance = bootstrap.Modal.getInstance(feedbackModalElement);
+                        feedbackModalInstance.hide();
+                        
+                        // Show the status modal
+                        bsStatusModal.show();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching feedback data:', error);
+                        alert('Error loading feedback data. Please try again.');
+                    });
+            }
         });
         
         // Save status changes
-        const saveStatusBtn = document.getElementById('saveStatus');
         saveStatusBtn.addEventListener('click', function() {
-            // Placeholder for AJAX call to update status
-            // In a real implementation, this would send the form data to the server
-            alert('Status update functionality would be implemented with AJAX');
-            statusModal.hide();
+            const feedbackId = feedbackIdInput.value;
+            if (!feedbackId) {
+                alert('Error: Feedback ID is missing');
+                return;
+            }
+            
+            // Get form data
+            const status = feedbackStatusSelect.value;
+            const adminNotes = adminNotesTextarea.value;
+            const adminResponse = adminResponseTextarea.value;
+            
+            // Show loading state
+            saveStatusBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+            saveStatusBtn.disabled = true;
+            
+            // Send update request
+            fetch(`/api/admin/feedback/${feedbackId}/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: status,
+                    admin_notes: adminNotes,
+                    admin_response: adminResponse
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    alert('Feedback status updated successfully');
+                    
+                    // Update status in the table
+                    const tableRow = document.querySelector(`.feedback-item[data-id="${feedbackId}"]`);
+                    if (tableRow) {
+                        const statusCell = tableRow.querySelector('td:nth-child(7)');
+                        if (statusCell) {
+                            // Update the status badge
+                            let statusBadge = '';
+                            if (status === 'new') {
+                                statusBadge = '<span class="badge bg-info">New</span>';
+                            } else if (status === 'in-review') {
+                                statusBadge = '<span class="badge bg-warning">In Review</span>';
+                            } else if (status === 'planned') {
+                                statusBadge = '<span class="badge bg-primary">Planned</span>';
+                            } else if (status === 'implemented') {
+                                statusBadge = '<span class="badge bg-success">Implemented</span>';
+                            } else if (status === 'declined') {
+                                statusBadge = '<span class="badge bg-secondary">Declined</span>';
+                            }
+                            
+                            // Update the status cell
+                            statusCell.innerHTML = statusBadge;
+                            
+                            // Update the data attribute for filtering
+                            tableRow.dataset.status = status;
+                        }
+                    }
+                    
+                    // Close the modal
+                    bsStatusModal.hide();
+                    
+                    // Reset form state
+                    saveStatusBtn.innerHTML = 'Save Changes';
+                    saveStatusBtn.disabled = false;
+                } else {
+                    // Show error message
+                    alert('Error updating feedback status: ' + (data.message || 'Unknown error'));
+                    
+                    // Reset button state
+                    saveStatusBtn.innerHTML = 'Save Changes';
+                    saveStatusBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error updating feedback status:', error);
+                alert('Error updating feedback status. Please try again.');
+                
+                // Reset button state
+                saveStatusBtn.innerHTML = 'Save Changes';
+                saveStatusBtn.disabled = false;
+            });
         });
     });
 </script>
