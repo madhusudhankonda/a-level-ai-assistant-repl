@@ -188,6 +188,43 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show the video stream
             elements.video.srcObject = stream;
             
+            // Start playing the video - critical step to view camera feed
+            elements.video.onloadedmetadata = function() {
+                // Wait for metadata to be loaded before playing
+                elements.video.play()
+                    .then(() => {
+                        console.log("Camera stream started successfully");
+                    })
+                    .catch(playError => {
+                        console.error("Error playing video:", playError);
+                        // Show a specific error for autoplay issues
+                        if (playError.name === "NotAllowedError") {
+                            elements.cameraContainer.innerHTML = 
+                                '<div class="alert alert-warning">' +
+                                '<i class="fas fa-exclamation-triangle me-2"></i>' +
+                                'Autoplay prevented. Please click the video area to enable the camera.' +
+                                '</div>' +
+                                '<div class="text-center mt-2 mb-3">' +
+                                '<button class="btn btn-primary" id="enable-camera-btn">' +
+                                '<i class="fas fa-video me-1"></i> Enable Camera</button>' +
+                                '</div>';
+                                
+                            // Add event listener to the enable button
+                            document.getElementById('enable-camera-btn').addEventListener('click', function() {
+                                elements.video.play()
+                                    .then(() => {
+                                        // Restore UI after successful play
+                                        elements.cameraContainer.style.display = 'block';
+                                        elements.captureBtn.disabled = false;
+                                    })
+                                    .catch(err => {
+                                        console.error("Still cannot play video:", err);
+                                    });
+                            });
+                        }
+                    });
+            };
+            
             // Show camera UI
             elements.cameraContainer.style.display = 'block';
             elements.captureBtn.disabled = false;
