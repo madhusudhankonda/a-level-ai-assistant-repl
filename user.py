@@ -333,6 +333,17 @@ def view_paper(paper_id):
             flash(f"Paper with ID {paper_id} not found.", "warning")
             return redirect(url_for('user.index'))
         
+        # Copyright check: Block access to OCR papers that are not Practice/Mock Papers
+        if 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
+            flash("Due to copyright restrictions, OCR examination papers are not directly viewable. Please use the Capture/Upload functionality to analyze your own questions.", "warning")
+            
+            # If we have category information, redirect to category view
+            if paper.category_id:
+                return redirect(url_for('user.view_category', category_id=paper.category_id))
+            
+            # Otherwise redirect to subjects
+            return redirect(url_for('user.index'))
+        
         # Get all questions for this paper and log them for debugging
         questions = Question.query.filter_by(paper_id=paper_id).all()
         current_app.logger.info(f"Found {len(questions)} questions for paper ID {paper_id}")
@@ -430,6 +441,47 @@ def get_question_image(question_id):
                 'success': False,
                 'message': f'Question with ID {question_id} not found'
             }), 404
+            
+        # Check if this question belongs to an OCR paper that's not a Practice/Mock Paper
+        paper = QuestionPaper.query.get(question.paper_id)
+        if paper and 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
+            current_app.logger.warning(f"Blocked access to copyrighted OCR question image: Question ID {question_id}")
+            
+            # Create a copyright notice image
+            from PIL import Image, ImageDraw, ImageFont
+            import io
+            
+            # Create a new image with copyright notice
+            img = Image.new('RGB', (800, 600), color=(245, 245, 245))
+            d = ImageDraw.Draw(img)
+            
+            # Try to get a font, fall back to default if not available
+            try:
+                font = ImageFont.truetype("arial.ttf", 24)
+                small_font = ImageFont.truetype("arial.ttf", 18)
+            except IOError:
+                font = ImageFont.load_default()
+                small_font = ImageFont.load_default()
+            
+            # Add copyright notice text
+            d.text((50, 50), "Copyright Protected Content", fill=(200, 0, 0), font=font)
+            d.text((50, 100), "Due to copyright restrictions, this OCR exam content", fill=(0, 0, 0), font=small_font)
+            d.text((50, 130), "cannot be displayed directly.", fill=(0, 0, 0), font=small_font)
+            d.text((50, 180), "Please use the Capture/Upload functionality to analyze", fill=(0, 0, 0), font=small_font)
+            d.text((50, 210), "your own question materials.", fill=(0, 0, 0), font=small_font)
+            
+            # Save to a buffer
+            buf = io.BytesIO()
+            img.save(buf, format='PNG')
+            buf.seek(0)
+            
+            # Return the image with appropriate headers
+            response = make_response(send_file(buf, mimetype='image/png'))
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            response.headers['X-Is-Copyright-Notice'] = 'true'
+            return response
         
         # Get the question paper ID and number for reference
         paper_id = question.paper_id
@@ -1650,6 +1702,16 @@ def api_get_question_data(question_id):
                 'success': False,
                 'message': f'Question with ID {question_id} not found'
             }), 404
+        
+        # Check if this question belongs to an OCR paper that's not a Practice/Mock Paper
+        paper = QuestionPaper.query.get(question.paper_id)
+        if paper and 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
+            current_app.logger.warning(f"Blocked API access to copyrighted OCR question data: Question ID {question_id}")
+            return jsonify({
+                'success': False,
+                'message': 'Due to copyright restrictions, this question cannot be accessed directly. Please use the Capture/Upload functionality.',
+                'copyright_restricted': True
+            }), 403
         
         # Return question data, including the image URL if available
         question_data = {
