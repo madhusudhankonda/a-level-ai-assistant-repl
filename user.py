@@ -333,10 +333,8 @@ def view_paper(paper_id):
             flash(f"Paper with ID {paper_id} not found.", "warning")
             return redirect(url_for('user.index'))
             
-        # Check if paper is active - if not, only admins can view it
-        if not paper.is_active and not (current_user.is_authenticated and current_user.is_admin):
-            flash(f"This paper is currently inactive and not available for viewing.", "warning")
-            return redirect(url_for('user.index'))
+        # Set flag for inactive paper - no need to block viewing, just disable AI features
+        is_inactive_paper = not paper.is_active
         
         # Flag for OCR papers to disable AI features
         is_ocr_paper = 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title)
@@ -415,6 +413,11 @@ def view_paper(paper_id):
         copyright_notice = None
         if is_ocr_paper:
             copyright_notice = "This content is copyright protected by OCR. The 'Explain AI' feature has been disabled for copyright compliance. You can view questions but cannot request AI explanations for them."
+        
+        # If paper is inactive, add a notice to inform users
+        inactive_notice = None
+        if is_inactive_paper:
+            inactive_notice = "This paper is currently set to inactive status. You can view questions but AI explanations are not available."
             
         return render_template(
             'user/question_viewer.html', 
@@ -424,7 +427,9 @@ def view_paper(paper_id):
             board=board,
             subject=subject,
             is_ocr_paper=is_ocr_paper,
-            copyright_notice=copyright_notice
+            is_inactive_paper=is_inactive_paper,
+            copyright_notice=copyright_notice,
+            inactive_notice=inactive_notice
         )
     except Exception as e:
         # Log the error for debugging
