@@ -41,8 +41,8 @@ def index():
     else:
         # Fall back to the old interface if no subjects are found
         try:
-            # Get all active papers with at least one question
-            papers = QuestionPaper.query.filter_by(is_active=True).all()
+            # Get all papers with at least one question
+            papers = QuestionPaper.query.all()
             return render_template('user/index.html', papers=papers)
         except Exception as e:
             # If there's an error, just show an empty list
@@ -249,7 +249,7 @@ def view_board_exams(board_id):
     
     # For each category, get the papers and organize by exam period
     for category in categories:
-        papers = QuestionPaper.query.filter_by(category_id=category.id, is_active=True).all()
+        papers = QuestionPaper.query.filter_by(category_id=category.id).all()
         for paper in papers:
             period = paper.exam_period or "Unknown"
             if period not in papers_by_period:
@@ -309,7 +309,7 @@ def view_category(category_id):
             return redirect(url_for('user.index'))
             
         # Get papers for this category
-        papers = QuestionPaper.query.filter_by(category_id=category_id, is_active=True).all()
+        papers = QuestionPaper.query.filter_by(category_id=category_id).all()
         
         return render_template(
             'user/category_view.html',
@@ -332,12 +332,6 @@ def view_paper(paper_id):
         if not paper:
             flash(f"Paper with ID {paper_id} not found.", "warning")
             return redirect(url_for('user.index'))
-            
-        # Set flag for inactive paper - no need to block viewing, just disable AI features
-        is_inactive_paper = not paper.is_active
-        
-        # Flag for OCR papers to disable AI features
-        is_ocr_paper = 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title)
         
         # Get all questions for this paper and log them for debugging
         questions = Question.query.filter_by(paper_id=paper_id).all()
@@ -409,27 +403,13 @@ def view_paper(paper_id):
         if not questions:
             flash("This paper does not have any questions yet.", "info")
         
-        # Show copyright notice if it's an OCR paper
-        copyright_notice = None
-        if is_ocr_paper:
-            copyright_notice = "This content is copyright protected by OCR. The 'Explain AI' feature has been disabled for copyright compliance. You can view questions but cannot request AI explanations for them."
-        
-        # If paper is inactive, add a notice to inform users
-        inactive_notice = None
-        if is_inactive_paper:
-            inactive_notice = "This paper is currently set to inactive status. You can view questions but AI explanations are not available."
-            
         return render_template(
             'user/question_viewer.html', 
             paper=paper, 
             questions=questions,
             category=category,
             board=board,
-            subject=subject,
-            is_ocr_paper=is_ocr_paper,
-            is_inactive_paper=is_inactive_paper,
-            copyright_notice=copyright_notice,
-            inactive_notice=inactive_notice
+            subject=subject
         )
     except Exception as e:
         # Log the error for debugging
@@ -450,13 +430,6 @@ def get_question_image(question_id):
                 'success': False,
                 'message': f'Question with ID {question_id} not found'
             }), 404
-            
-        # Flag if this question belongs to an OCR paper that's not a Practice/Mock Paper
-        is_ocr_paper = False
-        paper = QuestionPaper.query.get(question.paper_id)
-        if paper and 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
-            is_ocr_paper = True
-            current_app.logger.info(f"Serving OCR question image with copyright notice: Question ID {question_id}")
         
         # Get the question paper ID and number for reference
         paper_id = question.paper_id
@@ -1095,24 +1068,6 @@ def api_get_explanation(question_id):
                 'success': False,
                 'message': 'The paper associated with this question could not be found'
             }), 404
-            
-        # Check if this is an inactive paper or an OCR paper that's not a Practice/Mock Paper
-        if not paper.is_active:
-            current_app.logger.warning(f"Blocked AI explanation request for inactive paper (question ID: {question_id})")
-            return jsonify({
-                'success': False,
-                'message': 'This paper is currently inactive, and AI explanations are not available. Please contact an administrator if you believe this is an error.',
-                'paper_inactive': True
-            }), 403
-            
-        # Check if this is an OCR paper that's not a Practice/Mock Paper
-        if 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
-            current_app.logger.warning(f"Blocked AI explanation request for OCR question: {question_id}")
-            return jsonify({
-                'success': False,
-                'message': 'Due to copyright restrictions, AI explanations are not available for OCR examination questions. Please use the Capture/Upload functionality to analyze your own questions.',
-                'copyright_restricted': True
-            }), 403
         
         # Check if user is authenticated - needed for all operations
         if not current_user.is_authenticated:
@@ -1695,16 +1650,6 @@ def api_get_question_data(question_id):
                 'success': False,
                 'message': f'Question with ID {question_id} not found'
             }), 404
-        
-        # Check if this question belongs to an OCR paper that's not a Practice/Mock Paper
-        paper = QuestionPaper.query.get(question.paper_id)
-        if paper and 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
-            current_app.logger.warning(f"Blocked API access to copyrighted OCR question data: Question ID {question_id}")
-            return jsonify({
-                'success': False,
-                'message': 'Due to copyright restrictions, this question cannot be accessed directly. Please use the Capture/Upload functionality.',
-                'copyright_restricted': True
-            }), 403
         
         # Return question data, including the image URL if available
         question_data = {

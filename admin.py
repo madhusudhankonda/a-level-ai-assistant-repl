@@ -97,28 +97,14 @@ def create_paper():
         
         current_app.logger.info(f"Creating paper: {title}, Subject ID: {subject_id}, Subject Name: {subject_name}, Board ID: {board_id}, Category ID: {category_id}")
         
-        # Check if this is an OCR paper (other than a Practice/Mock Paper)
-        is_ocr_paper = 'OCR' in title and not ('Practice Paper' in title or 'Mock Paper' in title)
-        
-        # Get form active status - OCR papers override this 
-        is_active = request.form.get('is_active') == 'on'
-        
-        # OCR papers are forced to inactive for copyright compliance
-        if is_ocr_paper:
-            is_active = False
-            current_app.logger.info(f"Creating OCR paper as inactive (copyright compliance): {title}")
-        
         # Create new paper in the database
         paper = QuestionPaper(
             title=title,
             subject=subject_name,
             exam_period=exam_period,
             paper_type=paper_type,
-            description=description,
-            is_active=is_active
+            description=description
         )
-        
-        current_app.logger.info(f"Setting paper active status to: {is_active}")
         
         # Set category_id if provided
         if category_id and category_id.strip():
@@ -465,11 +451,6 @@ def edit_paper(paper_id):
         paper.exam_period = exam_period
         paper.paper_type = paper_type
         paper.description = description
-        
-        # Handle is_active status
-        is_active = request.form.get('is_active') == 'on'
-        paper.is_active = is_active
-        current_app.logger.info(f"Setting paper active status to: {is_active}")
         
         # Set category_id if provided
         if category_id and category_id.strip():
