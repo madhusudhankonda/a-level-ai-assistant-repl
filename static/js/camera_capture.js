@@ -33,8 +33,9 @@ document.addEventListener('DOMContentLoaded', function() {
         captureTitle: document.getElementById('capture-title'),
         resultLabel: document.getElementById('result-label'),
         
-        // Subject selection
+        // Subject and board selection
         subjectSelect: document.getElementById('subject'),
+        examBoardSelect: document.getElementById('exam-board'),
         
         // File upload
         fileInput: document.getElementById('file-input'),
@@ -391,20 +392,24 @@ document.addEventListener('DOMContentLoaded', function() {
         // Stop camera if running
         stopCameraStream();
         
-        // Get subject and mode - with fallbacks in case elements are undefined
+        // Get subject, exam board, and mode - with fallbacks in case elements are undefined
         let subject = 'Mathematics';
+        let examBoard = 'general';
         let mode = 'question-only';
         
         try {
             if (elements.subjectSelect) {
                 subject = elements.subjectSelect.value;
             }
+            if (elements.examBoardSelect) {
+                examBoard = elements.examBoardSelect.value;
+            }
             if (elements.analysisMode) {
                 mode = elements.analysisMode.value;
             }
-            console.log('Using subject: ' + subject + ', mode: ' + mode);
+            console.log('Using subject: ' + subject + ', exam board: ' + examBoard + ', mode: ' + mode);
         } catch (error) {
-            console.error("Error getting subject or mode:", error);
+            console.error("Error getting subject, exam board, or mode:", error);
         }
         
         // Validate image data
@@ -447,6 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const payload = {
                 image_data: capturedImageData,
                 subject: subject,
+                exam_board: examBoard,
                 mode: 'question-only'
             };
             
@@ -519,6 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     question_image: capturedImageData,
                     answer_image: capturedImageData, // Using same image, but the AI will analyze both parts
                     subject: subject,
+                    exam_board: examBoard,
                     mode: 'answer-feedback',
                     combined_image: true
                 })

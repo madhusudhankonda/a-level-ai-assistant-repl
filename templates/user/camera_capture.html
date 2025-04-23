@@ -54,25 +54,43 @@
     </div>
 </div>
 
-<!-- Subject Selection and Mode Selection - Mobile-friendly at the top -->
+<!-- Subject Selection, Board Selection, and Mode Selection - Mobile-friendly at the top -->
 <div class="card mb-3">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-sliders-h me-2"></i> Image Analysis Settings
+        </h5>
+    </div>
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label for="subject" class="form-label">Select Subject:</label>
                 <select class="form-select" id="subject">
                     <option value="Mathematics">Mathematics</option>
-                    <option value="Physics">Physics</option>
-                    <option value="Chemistry">Chemistry</option>
-                    <option value="Biology">Biology</option>
+                    <option value="Physics" disabled>Physics (Coming Soon)</option>
+                    <option value="Chemistry" disabled>Chemistry (Coming Soon)</option>
+                    <option value="Biology" disabled>Biology (Coming Soon)</option>
                 </select>
+                <div class="form-text">Choose the subject for this question</div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+                <label for="exam-board" class="form-label">Exam Board:</label>
+                <select class="form-select" id="exam-board">
+                    <option value="general">General (No specific board)</option>
+                    <option value="mock">Mock Exams</option>
+                    <option value="aqa" disabled>AQA (Coming Soon)</option>
+                    <option value="edexcel" disabled>Edexcel (Coming Soon)</option>
+                    <option value="ocr" disabled>OCR (Coming Soon)</option>
+                </select>
+                <div class="form-text">Select the relevant exam board</div>
+            </div>
+            <div class="col-md-4">
                 <label for="analysis-mode" class="form-label">Analysis Mode:</label>
                 <select class="form-select" id="analysis-mode">
-                    <option value="answer-feedback">Get Answer Feedback</option>
                     <option value="explanation-only">Get Explanation Only</option>
+                    <option value="answer-feedback">Get Answer Feedback</option>
                 </select>
+                <div class="form-text">How would you like the AI to analyze your image?</div>
             </div>
         </div>
     </div>
