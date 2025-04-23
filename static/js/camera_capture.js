@@ -177,67 +177,130 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start camera
     async function startCamera() {
         try {
-            // Try to access the camera
+            console.log("Starting camera initialization...");
+            
+            // Check if MediaDevices API is available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error("Your browser doesn't support camera access. Please try a different browser.");
+            }
+            
+            // Stop any existing streams
+            if (stream) {
+                stopCameraStream();
+            }
+            
+            // Try to access the camera with specific constraints
+            console.log("Requesting camera access...");
             stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment', // Use back camera if available
                     width: { ideal: 1280 },
                     height: { ideal: 720 }
-                }
+                },
+                audio: false
             });
             
+            console.log("Camera access granted, setting up video element");
+            
+            // Reset video element
+            const video = elements.video;
+            video.srcObject = null;
+            
+            // Important: set these attributes again programmatically
+            video.setAttribute('autoplay', '');
+            video.setAttribute('playsinline', '');
+            video.setAttribute('muted', '');
+            
             // Show the video stream
-            elements.video.srcObject = stream;
+            video.srcObject = stream;
             
-            // Start playing the video - critical step to view camera feed
-            elements.video.onloadedmetadata = function() {
-                // Wait for metadata to be loaded before playing
-                elements.video.play()
-                    .then(() => {
-                        console.log("Camera stream started successfully");
-                    })
-                    .catch(playError => {
-                        console.error("Error playing video:", playError);
-                        // Show a specific error for autoplay issues
-                        if (playError.name === "NotAllowedError") {
-                            elements.cameraContainer.innerHTML = 
-                                '<div class="alert alert-warning">' +
-                                '<i class="fas fa-exclamation-triangle me-2"></i>' +
-                                'Autoplay prevented. Please click the video area to enable the camera.' +
-                                '</div>' +
-                                '<div class="text-center mt-2 mb-3">' +
-                                '<button class="btn btn-primary" id="enable-camera-btn">' +
-                                '<i class="fas fa-video me-1"></i> Enable Camera</button>' +
-                                '</div>';
-                                
-                            // Add event listener to the enable button
-                            document.getElementById('enable-camera-btn').addEventListener('click', function() {
-                                elements.video.play()
-                                    .then(() => {
-                                        // Restore UI after successful play
-                                        elements.cameraContainer.style.display = 'block';
-                                        elements.captureBtn.disabled = false;
-                                    })
-                                    .catch(err => {
-                                        console.error("Still cannot play video:", err);
-                                    });
-                            });
-                        }
+            // Try different methods to start video playback
+            console.log("Attempting to play video...");
+            
+            try {
+                // Method 1: Direct play
+                await video.play();
+                console.log("Camera stream started successfully (direct play)");
+            } catch (playError) {
+                console.error("Direct play failed:", playError);
+                
+                try {
+                    // Method 2: Using onloadedmetadata
+                    await new Promise((resolve, reject) => {
+                        video.onloadedmetadata = async () => {
+                            try {
+                                await video.play();
+                                console.log("Camera stream started successfully (onloadedmetadata)");
+                                resolve();
+                            } catch (err) {
+                                reject(err);
+                            }
+                        };
+                        
+                        // Timeout if metadata doesn't load
+                        setTimeout(() => reject(new Error("Video metadata load timeout")), 5000);
                     });
-            };
+                } catch (metadataError) {
+                    console.error("Play after metadata failed:", metadataError);
+                    
+                    // Show a specific error for autoplay issues
+                    if (metadataError.name === "NotAllowedError") {
+                        elements.cameraContainer.innerHTML = 
+                            '<div class="alert alert-warning">' +
+                            '<i class="fas fa-exclamation-triangle me-2"></i>' +
+                            'Autoplay prevented. Please click the button below to enable the camera.' +
+                            '</div>' +
+                            '<div class="text-center mt-2 mb-3">' +
+                            '<button class="btn btn-primary" id="enable-camera-btn">' +
+                            '<i class="fas fa-video me-1"></i> Enable Camera</button>' +
+                            '</div>';
+                            
+                        // Add event listener to the enable button
+                        document.getElementById('enable-camera-btn').addEventListener('click', function() {
+                            video.play()
+                                .then(() => {
+                                    console.log("Camera enabled via user action");
+                                    // Restore UI after successful play
+                                    elements.cameraContainer.style.display = 'block';
+                                    elements.captureBtn.disabled = false;
+                                })
+                                .catch(err => {
+                                    console.error("Still cannot play video:", err);
+                                    elements.cameraContainer.innerHTML = `
+                                        <div class="alert alert-danger">
+                                            <i class="fas fa-exclamation-circle me-2"></i>
+                                            <strong>Camera Error:</strong> Still unable to access camera after user permission.
+                                            <p class="mt-2 mb-0">Please try using the "Upload Image" tab instead.</p>
+                                        </div>`;
+                                });
+                        });
+                        return;
+                    } else {
+                        throw metadataError;
+                    }
+                }
+            }
             
-            // Show camera UI
+            // Make sure elements are visible
+            video.style.display = 'block';
             elements.cameraContainer.style.display = 'block';
             elements.captureBtn.disabled = false;
+            
+            console.log("Camera initialization complete");
         } catch (err) {
             console.error('Error accessing camera:', err);
             elements.cameraContainer.innerHTML = 
                 '<div class="alert alert-danger">' +
                 '<i class="fas fa-exclamation-circle me-2"></i>' +
-                'Unable to access camera: ' + err.message +
-                '</div>' +
-                '<p class="mt-3">Make sure your browser has permission to access the camera and try again.</p>';
+                '<strong>Camera Error:</strong> ' + err.message +
+                '<p class="mt-2 mb-0">You can still use the "Upload Image" tab to analyze your work.</p>' +
+                '</div>';
             elements.captureBtn.disabled = true;
+            
+            // Automatically switch to file upload tab if camera fails
+            setTimeout(() => {
+                document.getElementById('upload-tab').click();
+            }, 1500);
         }
     }
     
