@@ -1091,6 +1091,14 @@ def api_get_explanation(question_id):
                 'message': 'The paper associated with this question could not be found'
             }), 404
             
+        # Check if this is an inactive paper or an OCR paper that's not a Practice/Mock Paper
+        if not paper.is_active:
+            current_app.logger.warning(f"Blocked AI explanation request for inactive paper (question ID: {question_id})")
+            return jsonify({
+                'success': False,
+                'message': 'This paper is currently inactive, and AI explanations are not available. Please contact an administrator if you believe this is an error.',
+            }), 403
+            
         # Check if this is an OCR paper that's not a Practice/Mock Paper
         if 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
             current_app.logger.warning(f"Blocked AI explanation request for OCR question: {question_id}")
