@@ -1085,6 +1085,15 @@ def api_get_explanation(question_id):
                 'success': False,
                 'message': 'The paper associated with this question could not be found'
             }), 404
+            
+        # Check if this is an OCR paper that's not a Practice/Mock Paper
+        if 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title):
+            current_app.logger.warning(f"Blocked AI explanation request for OCR question: {question_id}")
+            return jsonify({
+                'success': False,
+                'message': 'Due to copyright restrictions, AI explanations are not available for OCR examination questions. Please use the Capture/Upload functionality to analyze your own questions.',
+                'copyright_restricted': True
+            }), 403
         
         # Check if user is authenticated - needed for all operations
         if not current_user.is_authenticated:
