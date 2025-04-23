@@ -72,9 +72,8 @@ def root():
     from flask import redirect, url_for
     from flask_login import current_user
     
-    if current_user.is_authenticated:
-        return redirect(url_for('user.index'))
-    return redirect(url_for('auth.login'))
+    # Redirect to landing page with landing=true parameter
+    return redirect(url_for('landing', landing='true'))
 
 # Landing page route
 @app.route('/home')
