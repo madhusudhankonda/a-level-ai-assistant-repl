@@ -786,13 +786,25 @@ def analyze_captured_image():
             error_message = str(ai_error)
             current_app.logger.error(f"OpenAI API error: {error_message}")
             
-            # Provide user-friendly error messages
+            # Provide more robust and user-friendly error messages
             if "pattern" in error_message.lower():
                 message = "Image format error: There was an issue with the captured image. Please try again with a clearer picture."
-            elif "api key" in error_message.lower():
+            elif "api key" in error_message.lower() or "authentication" in error_message.lower():
                 message = "API configuration error. Please contact support."
+            elif "timeout" in error_message.lower():
+                message = "The AI service is taking longer than expected to respond. Please try again in a moment."
+            elif "rate limit" in error_message.lower() or "ratelimit" in error_message.lower():
+                message = "The AI service is experiencing high demand. Please try again in a few moments."
+            elif "quota" in error_message.lower() or "capacity" in error_message.lower() or "maximum" in error_message.lower():
+                message = "The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later."
+            elif "model" in error_message.lower() and "overloaded" in error_message.lower():
+                message = "The AI service is currently at capacity. Please try again in a few minutes."
+            elif "invalid" in error_message.lower() and "format" in error_message.lower():
+                message = "There was an issue processing the image format. Please try a different image or capture method."
             else:
-                message = f"Error generating explanation: {error_message}"
+                # Log the full error for diagnostic purposes but show a simplified message to the user
+                current_app.logger.error(f"Unhandled OpenAI error: {error_message}")
+                message = "The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later."
                 
             return jsonify({
                 'success': False,
@@ -998,13 +1010,25 @@ def analyze_answer():
             error_message = str(ai_error)
             current_app.logger.error(f"OpenAI API error: {error_message}")
             
-            # Provide user-friendly error messages
+            # Provide more robust and user-friendly error messages
             if "pattern" in error_message.lower():
                 message = "Image format error: There was an issue with the captured images. Please try again with clearer pictures."
-            elif "api key" in error_message.lower():
+            elif "api key" in error_message.lower() or "authentication" in error_message.lower():
                 message = "API configuration error. Please contact support."
+            elif "timeout" in error_message.lower():
+                message = "The AI service is taking longer than expected to respond. Please try again in a moment."
+            elif "rate limit" in error_message.lower() or "ratelimit" in error_message.lower():
+                message = "The AI service is experiencing high demand. Please try again in a few moments."
+            elif "quota" in error_message.lower() or "capacity" in error_message.lower() or "maximum" in error_message.lower():
+                message = "The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later."
+            elif "model" in error_message.lower() and "overloaded" in error_message.lower():
+                message = "The AI service is currently at capacity. Please try again in a few minutes."
+            elif "invalid" in error_message.lower() and "format" in error_message.lower():
+                message = "There was an issue processing the image format. Please try a different image or capture method."
             else:
-                message = f"Error analyzing answer: {error_message}"
+                # Log the full error for diagnostic purposes but show a simplified message to the user
+                current_app.logger.error(f"Unhandled OpenAI error: {error_message}")
+                message = "The AI service is temporarily unavailable. Our team has been notified and is working to restore service. Please try again later."
                 
             return jsonify({
                 'success': False,

@@ -191,15 +191,56 @@ Be encouraging but realistic in your feedback, just like a real teacher would ma
             
             logger.info("Calling OpenAI API with separate question and answer images")
         
-        # Make the API call to OpenAI without requiring JSON format
-        response = openai.chat.completions.create(
-            model="gpt-4o",  # Using the latest GPT-4o model which supports vision
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": content}
-            ],
-            max_tokens=1500
-        )
+        # Make the API call to OpenAI with retry logic for rate limiting and timeouts
+        max_retries = 3
+        retry_count = 0
+        backoff_time = 2.0  # Initial backoff time in seconds
+        response = None
+        
+        while retry_count < max_retries:
+            try:
+                # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+                # do not change this unless explicitly requested by the user
+                response = openai.chat.completions.create(
+                    model="gpt-4o",  # Using the latest GPT-4o model which supports vision
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": content}
+                    ],
+                    max_tokens=1500,
+                    temperature=0.3  # Lower temperature for more consistent responses
+                )
+                # If we reach here, the request was successful
+                break
+                
+            except Exception as retry_error:
+                retry_count += 1
+                error_message = str(retry_error).lower()
+                
+                # Only retry on certain error types
+                if (retry_count < max_retries and 
+                    ("rate limit" in error_message or 
+                     "ratelimit" in error_message or
+                     "timeout" in error_message or
+                     "capacity" in error_message or
+                     "overloaded" in error_message)):
+                    
+                    logger.warning(f"OpenAI API request failed (attempt {retry_count}/{max_retries}): {error_message}")
+                    logger.info(f"Retrying in {backoff_time} seconds...")
+                    time.sleep(backoff_time)
+                    backoff_time *= 2  # Exponential backoff
+                    continue
+                else:
+                    # Either we've reached max retries or this is not a retryable error
+                    if retry_count >= max_retries:
+                        logger.error(f"Maximum retries ({max_retries}) exceeded: {error_message}")
+                    else:
+                        logger.error(f"Non-retryable error: {error_message}")
+                    raise  # Re-raise the last exception
+        
+        # Check if we got a response
+        if not response:
+            raise Exception("Failed to get a response from OpenAI after multiple attempts")
         
         # Get the text response without JSON parsing
         response_text = response.choices[0].message.content
@@ -346,21 +387,55 @@ Your explanation should be comprehensive, explaining both the mathematical conce
         # API call with explicit error handling and logging
         logger.info(f"Calling OpenAI API (GPT-4o) for explanation")
         try:
-            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-            # do not change this unless explicitly requested by the user
-            response = openai.chat.completions.create(
-                model="gpt-4o",  # Using the latest GPT-4o model which supports vision
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": [
-                        {"type": "text", "text": f"Please explain this {subject} question in detail:"},
-                        {"type": "image_url", "image_url": {"url": image_url}}
-                    ]}
-                ],
-                max_tokens=1500,
-                temperature=0.3,  # Lower temperature for more focused responses
-                timeout=90.0  # Increase timeout for longer processing
-            )
+            # Implement an exponential backoff retry mechanism for rate limits and timeouts
+            max_retries = 3
+            retry_count = 0
+            backoff_time = 2.0  # Initial backoff time in seconds
+            
+            while retry_count < max_retries:
+                try:
+                    # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+                    # do not change this unless explicitly requested by the user
+                    response = openai.chat.completions.create(
+                        model="gpt-4o",  # Using the latest GPT-4o model which supports vision
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": [
+                                {"type": "text", "text": f"Please explain this {subject} question in detail:"},
+                                {"type": "image_url", "image_url": {"url": image_url}}
+                            ]}
+                        ],
+                        max_tokens=1500,
+                        temperature=0.3,  # Lower temperature for more focused responses
+                        timeout=90.0  # Increase timeout for longer processing
+                    )
+                    # If we get here, the request was successful
+                    break
+                    
+                except Exception as retry_error:
+                    retry_count += 1
+                    error_message = str(retry_error).lower()
+                    
+                    # Only retry on rate limit or timeout errors
+                    if (retry_count < max_retries and 
+                        ("rate limit" in error_message or 
+                         "ratelimit" in error_message or
+                         "timeout" in error_message or
+                         "capacity" in error_message or
+                         "overloaded" in error_message)):
+                        
+                        logger.warning(f"OpenAI API request failed (attempt {retry_count}/{max_retries}): {error_message}")
+                        logger.info(f"Retrying in {backoff_time} seconds...")
+                        time.sleep(backoff_time)
+                        backoff_time *= 2  # Exponential backoff
+                        continue
+                    else:
+                        # Either we've reached max retries or this is not a retryable error
+                        if retry_count >= max_retries:
+                            logger.error(f"Maximum retries ({max_retries}) exceeded: {error_message}")
+                        else:
+                            logger.error(f"Non-retryable error: {error_message}")
+                        raise  # Re-raise the last exception
             
             # Process the response
             explanation = response.choices[0].message.content
