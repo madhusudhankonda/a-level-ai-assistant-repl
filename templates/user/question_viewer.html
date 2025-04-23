@@ -257,11 +257,11 @@
             const explainBtn = document.createElement('button');
             explainBtn.className = 'btn btn-primary mb-2';
             
-            {% if is_ocr_paper %}
+            {% if is_ocr_paper or not paper.is_active %}
                 explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain Not Available';
                 explainBtn.disabled = true;
                 explainBtn.className = 'btn btn-secondary mb-2';
-                explainBtn.title = 'Due to copyright restrictions, AI explanation is not available for OCR exam questions.';
+                explainBtn.title = '{% if not paper.is_active %}This paper is currently inactive and AI explanations are not available.{% else %}Due to copyright restrictions, AI explanation is not available for OCR exam questions.{% endif %}';
             {% elif current_user.is_authenticated %}
                 explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain this question';
                 explainBtn.addEventListener('click', function() {
