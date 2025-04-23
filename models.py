@@ -346,3 +346,36 @@ class UserFeedback(db.Model):
     
     def __repr__(self):
         return f'<UserFeedback {self.feedback_type} - {self.subject}>'
+
+
+class MockStudentAnswer(db.Model):
+    """Model for storing mock student answers to demonstrate the system's feedback capabilities"""
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
+    
+    # The mock student answer can be stored as an image path or as text
+    answer_image_path = db.Column(db.String(255), nullable=True)
+    answer_text = db.Column(db.Text, nullable=True)
+    
+    # Pre-generated AI feedback
+    feedback = db.Column(db.Text, nullable=False)
+    
+    # Assessment information
+    score = db.Column(db.Integer, nullable=True)  # Score given to this answer (e.g., 7 out of 10)
+    max_score = db.Column(db.Integer, nullable=True)  # Maximum possible score
+    
+    # Level of the answer (for demonstration purposes)
+    level = db.Column(db.String(20), nullable=False)  # 'excellent', 'good', 'average', 'needs_improvement'
+    
+    # Display order (to show multiple examples in a specific order)
+    display_order = db.Column(db.Integer, default=1)
+    
+    # Timestamps
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Define relationship with Question model
+    question = db.relationship('Question', backref=db.backref('mock_answers', lazy=True))
+    
+    def __repr__(self):
+        return f'<MockStudentAnswer {self.id} for Question {self.question_id}>'
