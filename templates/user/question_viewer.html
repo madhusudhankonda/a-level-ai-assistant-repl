@@ -38,6 +38,12 @@
         <h1>{{ paper.title }}</h1>
         <h5 class="text-muted">{{ paper.subject }}</h5>
         <p>{{ paper.description }}</p>
+        {% if copyright_notice %}
+        <div class="alert alert-warning mb-3">
+            <i class="fas fa-copyright me-2"></i>
+            <strong>Copyright Notice:</strong> {{ copyright_notice }}
+        </div>
+        {% endif %}
         <div class="mb-3">
             <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Papers
@@ -251,7 +257,12 @@
             const explainBtn = document.createElement('button');
             explainBtn.className = 'btn btn-primary mb-2';
             
-            {% if current_user.is_authenticated %}
+            {% if is_ocr_paper %}
+                explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain Not Available';
+                explainBtn.disabled = true;
+                explainBtn.className = 'btn btn-secondary mb-2';
+                explainBtn.title = 'Due to copyright restrictions, AI explanation is not available for OCR exam questions.';
+            {% elif current_user.is_authenticated %}
                 explainBtn.innerHTML = '<div class="ai-sparkle-icon" style="width: 20px; height: 20px; display: inline-block; vertical-align: middle; margin-right: 8px;"></div> Explain this question';
                 explainBtn.addEventListener('click', function() {
                     fetchExplanation(questionId);
