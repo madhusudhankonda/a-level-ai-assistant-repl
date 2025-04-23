@@ -97,14 +97,21 @@ def create_paper():
         
         current_app.logger.info(f"Creating paper: {title}, Subject ID: {subject_id}, Subject Name: {subject_name}, Board ID: {board_id}, Category ID: {category_id}")
         
+        # Check if this is an OCR paper (other than a Practice/Mock Paper)
+        is_ocr_paper = 'OCR' in title and not ('Practice Paper' in title or 'Mock Paper' in title)
+        
         # Create new paper in the database
         paper = QuestionPaper(
             title=title,
             subject=subject_name,
             exam_period=exam_period,
             paper_type=paper_type,
-            description=description
+            description=description,
+            is_active=not is_ocr_paper  # OCR papers default to inactive, others to active
         )
+        
+        if is_ocr_paper:
+            current_app.logger.info(f"Creating OCR paper as inactive: {title}")
         
         # Set category_id if provided
         if category_id and category_id.strip():

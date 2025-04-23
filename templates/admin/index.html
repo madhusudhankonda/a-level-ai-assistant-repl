@@ -163,7 +163,12 @@
                     <tbody>
                         {% for paper in papers %}
                         <tr>
-                            <td>{{ paper.title }}</td>
+                            <td>
+                                {{ paper.title }}
+                                {% if not paper.is_active %}
+                                <span class="badge bg-danger ms-1" title="This paper is hidden from students">Inactive</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <span class="badge 
                                     {% if paper.subject == 'Mathematics' %}bg-primary
