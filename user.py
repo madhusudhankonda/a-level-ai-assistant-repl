@@ -259,8 +259,36 @@ def view_board_exams(board_id):
             paper.category_name = category.name
             papers_by_period[period].append(paper)
     
-    # Sort the periods (typically these would be like "June 2023", "November 2022", etc.)
-    sorted_periods = sorted(papers_by_period.keys(), reverse=True)
+    # Sort the periods by year, then by month (typically these would be like "June 2023", "November 2022", etc.)
+    def period_sort_key(period):
+        """Extract year and month for proper sorting"""
+        import re
+        # Default values if we can't extract year/month
+        year = 0 
+        month_order = 0
+        
+        # Try to find a year (4 digits)
+        year_match = re.search(r'(\d{4})', period)
+        if year_match:
+            year = int(year_match.group(1))
+        
+        # Create a month ordering (January = 1, February = 2, etc.)
+        months = {
+            "January": 1, "February": 2, "March": 3, "April": 4, 
+            "May": 5, "June": 6, "July": 7, "August": 8,
+            "September": 9, "October": 10, "November": 11, "December": 12
+        }
+        
+        # Find month in the period string
+        for month, order in months.items():
+            if month in period:
+                month_order = order
+                break
+        
+        # Return a tuple that will sort newest first (higher year first, and for same year, later month first)
+        return (-year, -month_order)
+    
+    sorted_periods = sorted(papers_by_period.keys(), key=period_sort_key)
     
     return render_template(
         'user/board_exams_view.html',
