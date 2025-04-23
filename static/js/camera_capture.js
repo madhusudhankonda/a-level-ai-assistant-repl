@@ -247,6 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update the retake button text for uploads
                 elements.retakeBtnText.textContent = 'Upload Different Image';
+                
+                // Show the subject modal after capturing
+                showSubjectModal();
             };
             
             // Set the image source
@@ -1226,6 +1229,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show captured image
             elements.cameraContainer.style.display = 'none';
             elements.captureResult.style.display = 'block';
+            
+            // Show the subject modal after capturing
+            showSubjectModal();
         });
     }
     
