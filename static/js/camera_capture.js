@@ -71,6 +71,52 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Functions
     
+    // Validate form fields for image analysis
+    function validateImageAnalysisForm() {
+        // Check if subject and board are selected
+        const subject = elements.subjectSelect ? elements.subjectSelect.value : null;
+        const examBoard = elements.examBoardSelect ? elements.examBoardSelect.value : null;
+        
+        let isValid = true;
+        let errorMessage = '';
+        
+        // Validate subject
+        if (!subject) {
+            isValid = false;
+            errorMessage = 'Please select a subject';
+        }
+        
+        // Return validation result
+        return {
+            isValid: isValid,
+            message: errorMessage
+        };
+    }
+    
+    // Update analyze button state based on form validation
+    function updateAnalyzeButtonState() {
+        if (!elements.analyzeBtn) return;
+        
+        const validation = validateImageAnalysisForm();
+        
+        if (!validation.isValid) {
+            elements.analyzeBtn.disabled = true;
+            elements.analyzeBtn.title = validation.message;
+            
+            // Show toast with validation message if button is clicked
+            const btnText = elements.analyzeBtn.querySelector('#analyze-btn-text');
+            if (btnText) {
+                btnText.textContent = 'Please Select Required Fields';
+            }
+        } else {
+            elements.analyzeBtn.disabled = false;
+            elements.analyzeBtn.title = '';
+            
+            // Reset button text based on mode
+            updateModeUI();
+        }
+    }
+    
     // Update UI based on selected mode
     function updateModeUI() {
         const mode = elements.analysisMode.value;
@@ -1072,10 +1118,23 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Subject and board selection
+    if (elements.subjectSelect) {
+        elements.subjectSelect.addEventListener('change', updateAnalyzeButtonState);
+    }
+    
+    if (elements.examBoardSelect) {
+        elements.examBoardSelect.addEventListener('change', updateAnalyzeButtonState);
+    }
+    
     // Mode change
     if (elements.analysisMode) {
         elements.analysisMode.addEventListener('change', updateModeUI);
+        elements.analysisMode.addEventListener('change', updateAnalyzeButtonState);
     }
+    
+    // Run initial validation
+    updateAnalyzeButtonState();
     
     // File input change
     if (elements.fileInput) {
@@ -1157,6 +1216,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (elements.analyzeBtn) {
         elements.analyzeBtn.addEventListener('click', function() {
             console.log("Analyze button clicked");
+            
+            // Validate required fields
+            const validation = validateImageAnalysisForm();
+            if (!validation.isValid) {
+                // Show error message as a toast
+                showToast('Form Validation', validation.message, 'warning');
+                
+                // Highlight required fields
+                updateAnalyzeButtonState();
+                return;
+            }
             
             // Ensure we have an image to analyze
             if (!capturedImageData) {
