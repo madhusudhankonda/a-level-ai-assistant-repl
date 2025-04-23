@@ -56,7 +56,7 @@ def camera_capture():
     subjects = db.session.query(QuestionPaper.subject).distinct().all()
     subjects = [s[0] for s in subjects]
     
-    return render_template('user/camera_capture_new.html', subjects=subjects)
+    return render_template('user/camera_capture.html', subjects=subjects)
 
 @user_bp.route('/api/test-openai', methods=['GET'])
 def test_openai_api():
