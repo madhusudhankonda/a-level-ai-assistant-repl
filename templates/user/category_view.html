@@ -29,6 +29,21 @@
             </div>
             
             <!-- Papers list -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Copyright Notice</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-copyright me-2"></i> <strong>Copyright Notice:</strong> 
+                        Due to copyright restrictions, official OCR examination papers are not directly viewable. 
+                        These papers are marked as "Restricted" below. Please use the <a href="{{ url_for('user.camera_capture') }}?mode=explanation-only" class="alert-link">Capture Question</a> 
+                        or <a href="{{ url_for('user.camera_capture') }}?mode=answer-feedback" class="alert-link">Upload Your Answer</a> 
+                        functionality to analyze your own questions and receive AI assistance.
+                    </div>
+                </div>
+            </div>
+            
             <div class="card">
                 <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">Select a Past Paper</h5>
@@ -57,9 +72,17 @@
                                     </td>
                                     <td>{{ paper.questions|length }}</td>
                                     <td>
-                                        <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye me-1"></i> View
-                                        </a>
+                                        {% if 'OCR' in paper.title and not ('Practice Paper' in paper.title or 'Mock Paper' in paper.title) %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled 
+                                                data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                title="Due to copyright restrictions, please use the Capture/Upload functionality to analyze your own questions">
+                                                <i class="fas fa-eye-slash me-1"></i> Restricted
+                                            </button>
+                                        {% else %}
+                                            <a href="{{ url_for('user.view_paper', paper_id=paper.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </a>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -82,3 +105,15 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock scripts %}
