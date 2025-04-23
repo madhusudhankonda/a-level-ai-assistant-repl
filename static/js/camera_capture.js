@@ -1238,6 +1238,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Upload New Image button
+    if (elements.newUploadBtn) {
+        elements.newUploadBtn.addEventListener('click', function() {
+            // Clear previous capture
+            capturedImageData = null;
+            
+            // Reset UI while keeping feedback hidden
+            elements.feedbackResult.style.display = 'none';
+            
+            // Show upload display
+            document.getElementById('upload-container').style.display = 'block';
+            
+            // Reset analyze button
+            elements.analyzeBtn.disabled = false;
+            elements.analyzeBtn.innerHTML = '<i class="fas fa-lightbulb me-1"></i> <span id="analyze-btn-text">Analyze with AI</span>';
+            
+            // Reset capture result
+            elements.captureResult.style.display = 'none';
+            
+            // Go back to capture step but stay on upload tab
+            elements.captureTab.click();
+            document.getElementById('upload-tab').click();
+        });
+    }
+    
     // Toggle image expand/collapse
     if (elements.toggleImageBtn) {
         elements.toggleImageBtn.addEventListener('click', function() {
