@@ -202,8 +202,8 @@
                     option.value = board.id;
                     option.textContent = board.name;
                     
-                    // Grey out AQA and Edexcel (no papers available yet)
-                    if (board.name === 'AQA' || board.name === 'Edexcel') {
+                    // Grey out AQA, Edexcel, and OCR (no papers available yet)
+                    if (board.name === 'AQA' || board.name === 'Edexcel' || board.name === 'OCR') {
                         option.disabled = true;
                         option.textContent = board.name + ' (coming soon)';
                         option.style.color = '#6c757d';
