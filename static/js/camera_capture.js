@@ -71,6 +71,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Functions
     
+    // Show toast notification
+    function showToast(title, message, type = 'info') {
+        const toast = document.getElementById('toast');
+        const toastTitle = document.getElementById('toast-title');
+        const toastBody = document.getElementById('toast-body');
+        
+        if (!toast || !toastTitle || !toastBody) {
+            console.error('Toast elements not found');
+            alert(message); // Fallback to alert if toast elements are missing
+            return;
+        }
+        
+        // Set toast content
+        toastTitle.textContent = title;
+        toastBody.textContent = message;
+        
+        // Set toast style based on type
+        toast.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-info');
+        toastTitle.classList.remove('text-white');
+        
+        switch (type) {
+            case 'success':
+                toast.classList.add('bg-success', 'text-white');
+                break;
+            case 'warning':
+                toast.classList.add('bg-warning');
+                break;
+            case 'error':
+                toast.classList.add('bg-danger', 'text-white');
+                break;
+            default:
+                toast.classList.add('bg-info', 'text-white');
+        }
+        
+        // Initialize and show toast
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+    }
+    
     // Validate form fields for image analysis
     function validateImageAnalysisForm() {
         // Check if subject and board are selected
