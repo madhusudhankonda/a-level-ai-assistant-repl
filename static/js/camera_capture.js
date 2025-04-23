@@ -33,9 +33,13 @@ document.addEventListener('DOMContentLoaded', function() {
         captureTitle: document.getElementById('capture-title'),
         resultLabel: document.getElementById('result-label'),
         
-        // Subject and board selection
+        // Subject and board selection - hidden fields and modal elements
         subjectSelect: document.getElementById('subject'),
         examBoardSelect: document.getElementById('exam-board'),
+        modalSubject: document.getElementById('modal-subject'),
+        modalExamBoard: document.getElementById('modal-exam-board'),
+        confirmSubjectBtn: document.getElementById('confirm-subject-btn'),
+        subjectModal: document.getElementById('subjectModal'),
         
         // File upload
         fileInput: document.getElementById('file-input'),
@@ -181,6 +185,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 elements.feedbackScore.style.display = 'inline-block';
             }
         }
+    }
+    
+    // Show the subject and exam board selection modal
+    function showSubjectModal() {
+        // Initialize the modal if it doesn't exist
+        if (!window.subjectModal) {
+            window.subjectModal = new bootstrap.Modal(elements.subjectModal);
+        }
+        
+        // Pre-populate the modal selects with the current values
+        if (elements.modalSubject && elements.subjectSelect) {
+            // Default to Mathematics
+            elements.modalSubject.value = elements.subjectSelect.value || 'Mathematics';
+        }
+        
+        if (elements.modalExamBoard && elements.examBoardSelect) {
+            // Default to general
+            elements.modalExamBoard.value = elements.examBoardSelect.value || 'general';
+        }
+        
+        // Show the modal
+        window.subjectModal.show();
     }
     
     // Process the selected file
@@ -1463,6 +1489,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 elements.toggleImageText.textContent = 'Expand Image';
                 this.querySelector('i').classList.remove('fa-compress-alt');
                 this.querySelector('i').classList.add('fa-expand-alt');
+            }
+        });
+    }
+    
+    // Set up the subject modal confirm button
+    if (elements.confirmSubjectBtn) {
+        elements.confirmSubjectBtn.addEventListener('click', function() {
+            if (elements.modalSubject && elements.modalExamBoard) {
+                // Validate selections
+                if (!elements.modalSubject.value) {
+                    showToast('Required Field', 'Please select a subject', 'warning');
+                    return;
+                }
+                
+                // Update the hidden form fields with modal values
+                if (elements.subjectSelect) {
+                    elements.subjectSelect.value = elements.modalSubject.value;
+                }
+                
+                if (elements.examBoardSelect) {
+                    elements.examBoardSelect.value = elements.modalExamBoard.value || 'general';
+                }
+                
+                // Hide the modal
+                window.subjectModal.hide();
+                
+                // Update the analyze button state
+                updateAnalyzeButtonState();
+                
+                // Show success toast
+                showToast('Settings Updated', 'Subject and exam board have been set', 'success');
             }
         });
     }
