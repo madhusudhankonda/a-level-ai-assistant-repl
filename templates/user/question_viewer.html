@@ -519,6 +519,24 @@
                                     </div>
                                 </div>
                             `;
+                        } else if (data.copyright_restricted) {
+                            explanationContent.innerHTML = `
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-copyright"></i> Copyright Notice</h5>
+                                    <p>${data.message}</p>
+                                    <p>Due to copyright restrictions, AI explanations are not available for OCR examination questions.
+                                    You can view the question but cannot request AI explanations for it.</p>
+                                </div>
+                            `;
+                        } else if (data.paper_inactive) {
+                            explanationContent.innerHTML = `
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-ban"></i> Paper Inactive</h5>
+                                    <p>${data.message}</p>
+                                    <p>This paper is currently set to inactive status. 
+                                    You can view questions but AI explanations are not available.</p>
+                                </div>
+                            `;
                         } else {
                             // Check if we have an admin message (for admin users only)
                             const adminMsg = data.admin_message ? `<div class="mt-2 text-muted small">Admin details: ${data.admin_message}</div>` : '';

@@ -1097,6 +1097,7 @@ def api_get_explanation(question_id):
             return jsonify({
                 'success': False,
                 'message': 'This paper is currently inactive, and AI explanations are not available. Please contact an administrator if you believe this is an error.',
+                'paper_inactive': True
             }), 403
             
         # Check if this is an OCR paper that's not a Practice/Mock Paper
