@@ -249,7 +249,7 @@ def view_board_exams(board_id):
     
     # For each category, get the papers and organize by exam period
     for category in categories:
-        papers = QuestionPaper.query.filter_by(category_id=category.id).all()
+        papers = QuestionPaper.query.filter_by(category_id=category.id, is_active=True).all()
         for paper in papers:
             period = paper.exam_period or "Unknown"
             if period not in papers_by_period:
@@ -309,7 +309,7 @@ def view_category(category_id):
             return redirect(url_for('user.index'))
             
         # Get papers for this category
-        papers = QuestionPaper.query.filter_by(category_id=category_id).all()
+        papers = QuestionPaper.query.filter_by(category_id=category_id, is_active=True).all()
         
         return render_template(
             'user/category_view.html',
@@ -331,6 +331,11 @@ def view_paper(paper_id):
         paper = QuestionPaper.query.get(paper_id)
         if not paper:
             flash(f"Paper with ID {paper_id} not found.", "warning")
+            return redirect(url_for('user.index'))
+            
+        # Check if paper is active - if not, only admins can view it
+        if not paper.is_active and not (current_user.is_authenticated and current_user.is_admin):
+            flash(f"This paper is currently inactive and not available for viewing.", "warning")
             return redirect(url_for('user.index'))
         
         # Flag for OCR papers to disable AI features

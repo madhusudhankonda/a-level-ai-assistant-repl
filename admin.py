@@ -452,6 +452,11 @@ def edit_paper(paper_id):
         paper.paper_type = paper_type
         paper.description = description
         
+        # Handle is_active status
+        is_active = request.form.get('is_active') == 'on'
+        paper.is_active = is_active
+        current_app.logger.info(f"Setting paper active status to: {is_active}")
+        
         # Set category_id if provided
         if category_id and category_id.strip():
             try:
