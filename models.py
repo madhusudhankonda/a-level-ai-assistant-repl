@@ -60,6 +60,7 @@ class QuestionPaper(db.Model):
     exam_period = db.Column(db.String(50), nullable=True, default="Unknown")  # e.g., "June 2023", "Nov 2022"
     paper_type = db.Column(db.String(50), nullable=True, default="QP")  # QP, MS (mark scheme), etc.
     description = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)  # Used for soft delete functionality
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship with Question

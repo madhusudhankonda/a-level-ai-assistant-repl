@@ -41,8 +41,8 @@ def index():
     else:
         # Fall back to the old interface if no subjects are found
         try:
-            # Get all papers with at least one question
-            papers = QuestionPaper.query.all()
+            # Get all active papers with at least one question
+            papers = QuestionPaper.query.filter_by(is_active=True).all()
             return render_template('user/index.html', papers=papers)
         except Exception as e:
             # If there's an error, just show an empty list
