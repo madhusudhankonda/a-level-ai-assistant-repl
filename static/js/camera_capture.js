@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
         feedbackTimestamp: document.getElementById('feedback-timestamp'),
         errorMessage: document.getElementById('error-message'),
         startOverBtn: document.getElementById('start-over-btn'),
+        newUploadBtn: document.getElementById('new-upload-btn'),
         
         // Feedback image
         feedbackImageCanvas: document.getElementById('feedback-image-canvas'),
