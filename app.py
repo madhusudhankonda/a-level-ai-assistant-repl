@@ -69,11 +69,10 @@ app.register_blueprint(auth_bp, url_prefix='/')
 # Root route - redirect to login or dashboard
 @app.route('/')
 def root():
-    from flask import redirect, url_for
-    from flask_login import current_user
+    from flask import redirect
     
-    # Redirect to landing page with landing=true parameter
-    return redirect(url_for('landing', landing='true'))
+    # Use direct URL redirection instead of url_for to avoid any routing issues
+    return redirect('/home?landing=true')
 
 # Landing page route
 @app.route('/home')
