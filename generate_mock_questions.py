@@ -53,9 +53,22 @@ def create_mock_question(source_question_path, question_number, output_path, tra
         Path to the new mock question image
     """
     try:
-        # Load the source question image
-        source_img = Image.open(source_question_path)
-        width, height = source_img.size
+        # Check if source file exists
+        if not os.path.exists(source_question_path):
+            logger.error(f"Source question file does not exist: {source_question_path}")
+            # Create a default image instead
+            width, height = 800, 1000
+            source_img = None
+        else:
+            # Load the source question image
+            try:
+                source_img = Image.open(source_question_path)
+                width, height = source_img.size
+            except Exception as e:
+                logger.error(f"Error opening source image {source_question_path}: {str(e)}")
+                # Create a default size
+                width, height = 800, 1000
+                source_img = None
         
         # Create a new blank image with padding
         new_img = Image.new('RGB', (width, height), (255, 255, 255))
@@ -413,6 +426,10 @@ def generate_mock_paper(source_paper_id, mock_paper_name, num_questions=5, trans
             # Generate unique filenames
             q_filename = f"mock_q{question_number}_{uuid.uuid4().hex}.png"
             q_path = os.path.join(paper_dir, q_filename)
+            
+            # Log the source path
+            logger.info(f"Source question path: {source_question.image_path}")
+            logger.info(f"Destination path: {q_path}")
             
             # Create mock question
             question_path = create_mock_question(
