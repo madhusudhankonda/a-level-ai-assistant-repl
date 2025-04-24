@@ -1,0 +1,122 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Generate Mock Questions - {{ paper.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.index') }}">Admin Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}">{{ paper.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Generate Mock Questions</li>
+        </ol>
+    </nav>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Generate Mock Questions</h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-4">
+                <h6 class="card-subtitle mb-3 text-muted">Source Paper: {{ paper.title }}</h6>
+                <p>
+                    This tool will generate mock questions based on the source paper's questions.
+                    The generated questions will have similar structure but different values, 
+                    making them perfect for additional practice.
+                </p>
+                <div class="alert alert-info">
+                    <strong>Note:</strong> The AI-generated mock questions will include appropriate disclaimers 
+                    and should be reviewed by teachers before use with students.
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.generate_mock', paper_id=paper.id) }}">
+                <div class="mb-3">
+                    <label for="mock_paper_name" class="form-label">Mock Paper Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="mock_paper_name" name="mock_paper_name" 
+                        placeholder="e.g., OCR Pure Maths Mock 2025-1" required>
+                    <div class="form-text">Choose a descriptive name for the new mock paper</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="num_questions" class="form-label">Number of Questions</label>
+                            <select class="form-select" id="num_questions" name="num_questions">
+                                {% for i in range(1, 16) %}
+                                <option value="{{ i }}" {% if i == 5 %}selected{% endif %}>{{ i }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">How many questions to generate (max 15)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="transform_level" class="form-label">Transformation Level</label>
+                            <select class="form-select" id="transform_level" name="transform_level">
+                                <option value="1">Level 1 - Minimal changes</option>
+                                <option value="2" selected>Level 2 - Moderate changes</option>
+                                <option value="3">Level 3 - Significant changes</option>
+                                <option value="4">Level 4 - Major redesign</option>
+                                <option value="5">Level 5 - Complete transformation</option>
+                            </select>
+                            <div class="form-text">Higher levels create more different questions</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="include_mark_scheme" name="include_mark_scheme" checked>
+                        <label class="form-check-label" for="include_mark_scheme">
+                            Generate mark schemes for each question
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="markSchemeOptions" class="mb-3">
+                    <label for="source_mark_scheme_paper_id" class="form-label">Mark Scheme Source (Optional)</label>
+                    <select class="form-select" id="source_mark_scheme_paper_id" name="source_mark_scheme_paper_id">
+                        <option value="">Generate from scratch</option>
+                        {% for ms_paper in all_papers %}
+                        <option value="{{ ms_paper.id }}">{{ ms_paper.title }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">If selected, mark schemes will be based on this paper's format</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('admin.manage_questions', paper_id=paper.id) }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Generate Mock Questions
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const includeMarkSchemeCheckbox = document.getElementById('include_mark_scheme');
+        const markSchemeOptions = document.getElementById('markSchemeOptions');
+        
+        // Function to toggle mark scheme options visibility
+        function toggleMarkSchemeOptions() {
+            markSchemeOptions.style.display = includeMarkSchemeCheckbox.checked ? 'block' : 'none';
+        }
+        
+        // Set initial state
+        toggleMarkSchemeOptions();
+        
+        // Add event listener
+        includeMarkSchemeCheckbox.addEventListener('change', toggleMarkSchemeOptions);
+    });
+</script>
+{% endblock %}

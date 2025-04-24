@@ -5,6 +5,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory, QuestionTopic, Explanation, UserQuery, StudentAnswer, UserFeedback
 from flask_login import login_required, current_user
+from generate_mock_questions import generate_mock_paper
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
@@ -233,7 +234,85 @@ def manage_questions(paper_id):
     paper = QuestionPaper.query.get_or_404(paper_id)
     questions = Question.query.filter_by(paper_id=paper_id).order_by(Question.question_number).all()
     
-    return render_template('admin/manage_questions.html', paper=paper, questions=questions)
+    # Get all papers for mock generation dropdown
+    all_papers = QuestionPaper.query.order_by(QuestionPaper.title).all()
+    
+    return render_template('admin/manage_questions.html', paper=paper, questions=questions, all_papers=all_papers)
+
+@admin_bp.route('/paper/<int:paper_id>/generate-mock', methods=['GET', 'POST'])
+@login_required
+def generate_mock(paper_id):
+    """Generate mock questions based on an existing paper"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        flash('You do not have permission to access the admin area.', 'danger')
+        return redirect(url_for('user.index'))
+    
+    source_paper = QuestionPaper.query.get_or_404(paper_id)
+    
+    # Get all papers for marking scheme source dropdown
+    all_papers = QuestionPaper.query.filter(QuestionPaper.id != paper_id).order_by(QuestionPaper.title).all()
+    
+    if request.method == 'POST':
+        mock_paper_name = request.form.get('mock_paper_name')
+        num_questions = request.form.get('num_questions', '5')
+        transform_level = request.form.get('transform_level', '2')
+        include_mark_scheme = request.form.get('include_mark_scheme') == 'on'
+        source_mark_scheme_paper_id = request.form.get('source_mark_scheme_paper_id')
+        
+        # Validate inputs
+        if not mock_paper_name:
+            flash('Mock paper name is required', 'danger')
+            return redirect(url_for('admin.generate_mock', paper_id=paper_id))
+        
+        try:
+            num_questions = int(num_questions)
+            if num_questions < 1 or num_questions > 15:
+                flash('Number of questions must be between 1 and 15', 'danger')
+                return redirect(url_for('admin.generate_mock', paper_id=paper_id))
+        except ValueError:
+            flash('Invalid number of questions', 'danger')
+            return redirect(url_for('admin.generate_mock', paper_id=paper_id))
+        
+        try:
+            transform_level = int(transform_level)
+            if transform_level < 1 or transform_level > 5:
+                flash('Transform level must be between 1 and 5', 'danger')
+                return redirect(url_for('admin.generate_mock', paper_id=paper_id))
+        except ValueError:
+            flash('Invalid transform level', 'danger')
+            return redirect(url_for('admin.generate_mock', paper_id=paper_id))
+        
+        # Convert source_mark_scheme_paper_id to int if provided
+        ms_paper_id = None
+        if source_mark_scheme_paper_id and source_mark_scheme_paper_id.strip():
+            try:
+                ms_paper_id = int(source_mark_scheme_paper_id)
+            except ValueError:
+                flash('Invalid marking scheme paper selected', 'warning')
+                # Continue without marking scheme
+        
+        # Generate the mock paper
+        current_app.logger.info(f"Generating mock paper based on paper ID {paper_id}")
+        result = generate_mock_paper(
+            source_paper_id=paper_id,
+            mock_paper_name=mock_paper_name,
+            num_questions=num_questions,
+            transform_level=transform_level,
+            include_mark_scheme=include_mark_scheme,
+            source_mark_scheme_paper_id=ms_paper_id
+        )
+        
+        if result['success']:
+            current_app.logger.info(f"Successfully generated mock paper: {result}")
+            flash(f"Successfully created mock paper '{mock_paper_name}' with {result['questions_created']} questions and {result['mark_schemes_created']} mark schemes", 'success')
+            return redirect(url_for('admin.manage_questions', paper_id=result['paper_id']))
+        else:
+            current_app.logger.error(f"Error generating mock paper: {result['error']}")
+            flash(f"Error generating mock paper: {result['error']}", 'danger')
+            return redirect(url_for('admin.generate_mock', paper_id=paper_id))
+    
+    return render_template('admin/generate_mock.html', paper=source_paper, all_papers=all_papers)
 
 @admin_bp.route('/paper/<int:paper_id>/question/add', methods=['GET', 'POST'])
 @login_required
