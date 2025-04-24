@@ -39,6 +39,9 @@
                 <a href="{{ url_for('admin.add_question', paper_id=paper.id) }}" class="btn btn-light btn-sm">
                     <i class="fas fa-plus"></i> Add Question
                 </a>
+                <a href="{{ url_for('admin.generate_mock', paper_id=paper.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-magic"></i> Generate Mock Questions
+                </a>
             </div>
         </div>
         <div class="card-body">
