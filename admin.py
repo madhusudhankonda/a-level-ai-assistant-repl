@@ -253,6 +253,16 @@ def generate_mock(paper_id):
     # Get all papers for marking scheme source dropdown
     all_papers = QuestionPaper.query.filter(QuestionPaper.id != paper_id).order_by(QuestionPaper.title).all()
     
+    # Find papers with questions to show as dropdown options
+    papers_with_questions = []
+    for p in QuestionPaper.query.order_by(QuestionPaper.title).all():
+        question_count = Question.query.filter_by(paper_id=p.id).count()
+        if question_count > 0:
+            papers_with_questions.append((p, question_count))
+    
+    # Get the question count for the current paper to display a warning if needed
+    current_paper_question_count = Question.query.filter_by(paper_id=paper_id).count()
+    
     if request.method == 'POST':
         mock_paper_name = request.form.get('mock_paper_name')
         num_questions = request.form.get('num_questions', '5')
@@ -312,7 +322,11 @@ def generate_mock(paper_id):
             flash(f"Error generating mock paper: {result['error']}", 'danger')
             return redirect(url_for('admin.generate_mock', paper_id=paper_id))
     
-    return render_template('admin/generate_mock.html', paper=source_paper, all_papers=all_papers)
+    return render_template('admin/generate_mock.html', 
+                       paper=source_paper, 
+                       all_papers=all_papers,
+                       papers_with_questions=papers_with_questions,
+                       current_paper_question_count=current_paper_question_count)
 
 @admin_bp.route('/paper/<int:paper_id>/question/add', methods=['GET', 'POST'])
 @login_required

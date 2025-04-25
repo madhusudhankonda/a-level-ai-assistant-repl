@@ -358,7 +358,12 @@ def generate_mock_paper(source_paper_id, mock_paper_name, num_questions=5, trans
         
         if not source_questions:
             logger.error(f"No source questions found for paper ID {source_paper_id}")
-            return {"success": False, "error": f"No source questions found for paper ID {source_paper_id}"}
+            return {
+                "success": False, 
+                "error": f"No source questions found for paper ID {source_paper_id}. "
+                         f"Please add questions to the source paper before generating mock questions, "
+                         f"or select a different source paper that already contains questions."
+            }
         
         # If specified, get source mark scheme paper and questions
         source_ms_questions = []
