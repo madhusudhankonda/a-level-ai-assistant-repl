@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Minimal Test Page</h1>
+    <p>This is a completely standalone HTML file with inline JavaScript to test button functionality.</p>
+    
+    <div>
+        <button id="button1" class="button">Test Button 1</button>
+        <button id="button2" class="button">Test Button 2</button>
+        <button id="button3" class="button">Test with Spinner</button>
+    </div>
+    
+    <div id="result" class="result">
+        Results will appear here.
+    </div>
+
+    <script>
+        // Very simple button click handlers
+        document.getElementById('button1').addEventListener('click', function() {
+            document.getElementById('result').textContent = 'Button 1 clicked at: ' + new Date().toLocaleTimeString();
+        });
+        
+        document.getElementById('button2').addEventListener('click', function() {
+            document.getElementById('result').textContent = 'Button 2 clicked at: ' + new Date().toLocaleTimeString();
+        });
+        
+        document.getElementById('button3').addEventListener('click', function() {
+            const button = this;
+            const originalText = button.textContent;
+            
+            // Add spinner
+            button.innerHTML = originalText + '<span class="spinner"></span>';
+            button.disabled = true;
+            
+            // Simulate delay
+            setTimeout(function() {
+                document.getElementById('result').textContent = 'Button with spinner clicked at: ' + new Date().toLocaleTimeString();
+                
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 2000);
+        });
+        
+        // Add this to test that JavaScript is executing at all
+        console.log('JavaScript is running on this page');
+        document.getElementById('result').textContent = 'Page loaded at: ' + new Date().toLocaleTimeString();
+    </script>
+</body>
+</html>
