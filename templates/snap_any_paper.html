@@ -109,7 +109,8 @@
                     <!-- Analysis button -->
                     <div class="text-center mt-4">
                         <button id="analyze-button" class="btn btn-lg btn-primary">
-                            <i class="fas fa-brain"></i> Analyze Question
+                            <span class="button-text"><i class="fas fa-brain"></i> Analyze Question</span>
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
                     </div>
 
@@ -301,11 +302,16 @@
             const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
             const subject = document.getElementById('subject-select').value;
 
-            // Show loading
+            // Show loading indicators
             resultsContainer.style.display = 'block';
             analysisResults.innerHTML = '';
             loadingIndicator.style.display = 'block';
+            
+            // Disable button and show spinner inside button
             analyzeButton.disabled = true;
+            analyzeButton.querySelector('.button-text').style.display = 'none';
+            analyzeButton.querySelector('.spinner-border').classList.remove('d-none');
+            
             hideError();
 
             try {
@@ -357,9 +363,13 @@
                 const result = await response.json();
                 console.log('API response parsed:', result);
                 
-                // Hide loading
+                // Hide loading indicators
                 loadingIndicator.style.display = 'none';
+                
+                // Reset button state
                 analyzeButton.disabled = false;
+                analyzeButton.querySelector('.button-text').style.display = '';
+                analyzeButton.querySelector('.spinner-border').classList.add('d-none');
 
                 if (response.ok) {
                     // Update credit display if user is logged in
@@ -400,8 +410,14 @@
                 }
             } catch (err) {
                 console.error('Error during analysis:', err);
+                
+                // Hide loading indicators
                 loadingIndicator.style.display = 'none';
+                
+                // Reset button state
                 analyzeButton.disabled = false;
+                analyzeButton.querySelector('.button-text').style.display = '';
+                analyzeButton.querySelector('.spinner-border').classList.add('d-none');
                 
                 // Show a more specific error message if possible
                 let errorMessage = 'An error occurred while analyzing. Please try again.';

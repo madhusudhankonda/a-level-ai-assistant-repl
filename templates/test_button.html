@@ -10,7 +10,8 @@
     <div class="card mt-4">
         <div class="card-body">
             <button id="test-button" class="btn btn-primary">
-                Test API Call
+                <span class="button-text">Test API Call</span>
+                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
             </button>
             
             <div id="result-container" class="mt-4" style="display: none;">
@@ -45,11 +46,16 @@
         testButton.addEventListener('click', async () => {
             console.log('Test button clicked');
             
-            // Show loading
+            // Show loading indicators
             resultContainer.style.display = 'block';
             resultOutput.innerHTML = '';
             loadingIndicator.style.display = 'block';
             errorMessage.style.display = 'none';
+            
+            // Disable button and show spinner
+            testButton.disabled = true;
+            testButton.querySelector('.button-text').style.display = 'none';
+            testButton.querySelector('.spinner-border').classList.remove('d-none');
             
             try {
                 console.log('Sending test API request...');
@@ -67,8 +73,13 @@
                 const result = await response.json();
                 console.log('API result:', result);
                 
-                // Hide loading
+                // Hide loading indicators
                 loadingIndicator.style.display = 'none';
+                
+                // Reset button state
+                testButton.disabled = false;
+                testButton.querySelector('.button-text').style.display = '';
+                testButton.querySelector('.spinner-border').classList.add('d-none');
                 
                 if (response.ok) {
                     resultOutput.textContent = JSON.stringify(result, null, 2);
@@ -77,7 +88,15 @@
                 }
             } catch (err) {
                 console.error('Error during API call:', err);
+                
+                // Hide loading indicator
                 loadingIndicator.style.display = 'none';
+                
+                // Reset button state
+                testButton.disabled = false;
+                testButton.querySelector('.button-text').style.display = '';
+                testButton.querySelector('.spinner-border').classList.add('d-none');
+                
                 showError('Error: ' + (err.message || 'Unknown error'));
             }
         });
