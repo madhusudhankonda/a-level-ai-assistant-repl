@@ -69,7 +69,7 @@ def save_temp_image(image_data):
                 
             try:
                 img = Image.open(BytesIO(image_data))
-                logger.info(f"Successfully opened image from bytes, format: {img.format}, size: {img.size}")
+                logger.info(f"Successfully opened image from bytes, format: {img.format}, size: {img.size}, mode: {img.mode}")
             except Exception as img_error:
                 logger.error(f"Error opening image from bytes: {str(img_error)}")
                 return None
@@ -100,7 +100,19 @@ def save_temp_image(image_data):
         
         # Save the image
         try:
-            img.save(file_path, "JPEG")
+            # Convert RGBA images (with transparency) to RGB mode before saving as JPEG
+            if img.mode == 'RGBA':
+                logger.info("Converting RGBA image to RGB mode for JPEG compatibility")
+                # Create a white background
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                # Paste the image on the background using the alpha channel
+                background.paste(img, mask=img.split()[3])  # 3 is the alpha channel
+                # Save the RGB image
+                background.save(file_path, "JPEG")
+            else:
+                # Save the image directly if it's already in a compatible mode
+                img.save(file_path, "JPEG")
+                
             logger.info(f"Successfully saved image to {file_path}")
             return file_path
         except Exception as save_error:
