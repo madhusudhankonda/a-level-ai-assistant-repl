@@ -142,3 +142,29 @@ def handle_direct_test():
             "success": False,
             "error": "An unexpected error occurred. Please try again."
         }), 500
+        
+# Add a simple text endpoint to test basic connectivity
+@direct_test_bp.route('/api/simple-echo', methods=['POST'])
+@login_required
+def simple_echo():
+    """Super simple endpoint that echoes back text"""
+    from flask import Response
+    
+    try:
+        logger.info("Simple echo endpoint called")
+        data = request.get_data(as_text=True)
+        logger.info(f"Received data: {data[:100]}...")  # Log first 100 chars
+        
+        # Just echo back what was received
+        return Response(f"Received {len(data)} characters", mimetype='text/plain')
+    except Exception as e:
+        logger.error(f"Error in simple echo: {str(e)}")
+        return Response(f"Error: {str(e)}", mimetype='text/plain')
+        
+# Add a route to serve the static HTML directly
+@direct_test_bp.route('/static-upload-test')
+@login_required
+def static_upload_test():
+    """Redirect to the static HTML file"""
+    from flask import redirect
+    return redirect('/static/direct-upload-test.html')

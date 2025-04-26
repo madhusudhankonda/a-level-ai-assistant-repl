@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            padding: 10px;
+            margin: -15px -15px 15px -15px;
+            border-bottom: 1px solid #ddd;
+            border-radius: 4px 4px 0 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0069d9;
+        }
+        .preview {
+            max-width: 100%;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .logs {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .results {
+            margin-top: 20px;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .success {
+            color: green;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .error {
+            color: red;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Direct Upload Test</h1>
+        <p>This is a simple test for uploading and processing images directly.</p>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Upload Image</h2>
+            </div>
+            <div class="form-group">
+                <label for="image-upload">Select an image file:</label>
+                <input type="file" id="image-upload" accept="image/*">
+            </div>
+            
+            <div class="preview" id="preview-container" style="display: none;">
+                <h3>Image Preview</h3>
+                <img id="image-preview" alt="Preview of uploaded image">
+            </div>
+            
+            <button id="process-button">Process Image</button>
+        </div>
+        
+        <div class="results" id="results-container">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Results</h2>
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing image...</p>
+                </div>
+                <div class="error" id="error-message" style="display: none;"></div>
+                <div class="success" id="success-message" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <div class="logs" id="logs">
+            <!-- Debug logs will appear here -->
+        </div>
+    </div>
+    
+    <script>
+        // Debug logging function
+        function log(message) {
+            const logsElement = document.getElementById('logs');
+            const timestamp = new Date().toISOString().substring(11, 19); // HH:MM:SS
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logsElement.appendChild(logEntry);
+            logsElement.scrollTop = logsElement.scrollHeight;
+            console.log(message);
+        }
+        
+        log('Page loaded');
+        
+        // Get DOM elements
+        const fileInput = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const processButton = document.getElementById('process-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        
+        log('DOM elements initialized');
+        
+        // File input change handler
+        fileInput.addEventListener('change', function(event) {
+            log('File input changed');
+            
+            if (event.target.files && event.target.files[0]) {
+                const file = event.target.files[0];
+                log(`File selected: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+                
+                // Create a FileReader to read the image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    log('FileReader loaded image');
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    log(`Image preview displayed, data URL length: ${e.target.result.length}`);
+                };
+                reader.onerror = function(e) {
+                    log(`FileReader error: ${e}`);
+                };
+                log('Starting FileReader');
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Process button click handler
+        processButton.addEventListener('click', function() {
+            log('Process button clicked');
+            
+            // Check if image is loaded
+            if (!imagePreview.src || imagePreview.src === window.location.href) {
+                log('No image selected');
+                alert('Please select an image first.');
+                return;
+            }
+            
+            // Show results container and loading indicator
+            resultsContainer.style.display = 'block';
+            loading.style.display = 'block';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            
+            log('Preparing API request to /api/direct-test');
+            
+            // Prepare request data
+            const requestData = {
+                image: imagePreview.src
+            };
+            
+            log(`Request data prepared, image data length: ${requestData.image.length}`);
+            
+            // Send API request with the image data
+            fetch('/api/direct-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                log(`Response received, status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                log(`Response data received: ${JSON.stringify(data)}`);
+                
+                // Hide loading indicator
+                loading.style.display = 'none';
+                
+                if (data.success) {
+                    // Show success message
+                    successMessage.textContent = data.message || 'Image processed successfully!';
+                    successMessage.style.display = 'block';
+                } else {
+                    // Show error message
+                    errorMessage.textContent = data.error || 'Failed to process image.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                log(`Error in fetch: ${error.message}`);
+                log(`Error details: ${error.stack || 'No stack trace available'}`);
+                
+                // Hide loading indicator and show error
+                loading.style.display = 'none';
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+            });
+        });
+        
+        log('Event listeners attached');
+    </script>
+</body>
+</html>
