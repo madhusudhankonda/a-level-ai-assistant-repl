@@ -46,56 +46,100 @@ def create_simple_question(question_number, output_path, topic="Mathematics", tr
         Path to the new question image
     """
     try:
-        # Create a blank image
-        width, height = 800, 800
-        img = Image.new('RGB', (width, height), (255, 255, 255))
+        # Create a blank image with a slightly randomized size for visual diversity
+        base_width, base_height = 800, 800
+        width_variance = random.randint(-20, 20)
+        height_variance = random.randint(-20, 20)
+        width = base_width + width_variance
+        height = base_height + height_variance
+        
+        # Create a very slight background color variation for each question
+        bg_r = random.randint(250, 255)
+        bg_g = random.randint(250, 255)
+        bg_b = random.randint(250, 255)
+        img = Image.new('RGB', (width, height), (bg_r, bg_g, bg_b))
         draw = ImageDraw.Draw(img)
         
         # Get fonts
         title_font, regular_font, math_font = get_fonts()
         
-        # Add question number
-        draw.text((30, 30), f"Question {question_number}", fill=(0, 0, 0), font=title_font)
+        # Add question number with a slightly randomized position
+        x_pos = 30 + random.randint(-5, 5)
+        y_pos = 30 + random.randint(-5, 5)
+        draw.text((x_pos, y_pos), f"Question {question_number}", fill=(0, 0, 0), font=title_font)
         
-        # Math topics and questions
+        # Expanded math topics and questions for more variety
         math_topics = {
             "Algebra": [
                 "Solve the equation: {}x² + {}x + {} = 0",
                 "Simplify the expression: {}x² + {}x + {} - {}x - {}",
                 "Factor the expression: {}x² - {}",
-                "Find the value of x that satisfies: {}x + {} = {}x - {}"
+                "Find the value of x that satisfies: {}x + {} = {}x - {}",
+                "Solve the inequality: {}x² - {}x + {} > 0",
+                "Find all values of k for which the equation {}x² + kx + {} = 0 has exactly one solution",
+                "If f(x) = {}x² + {}x and f({}) = {}, find the value of the constant term"
             ],
             "Calculus": [
                 "Find the derivative of f(x) = {}x³ + {}x² + {}x + {}",
                 "Calculate the integral of f(x) = {}x² + {}x + {} with respect to x",
                 "Find the stationary points of f(x) = {}x² - {}x + {}",
-                "Determine the nature of the stationary point at x = {} for f(x) = {}x² + {}x + {}"
+                "Determine the nature of the stationary point at x = {} for f(x) = {}x² + {}x + {}",
+                "Find the area enclosed between the curve y = {}x² - {} and the x-axis",
+                "Calculate the volume generated when the area under y = {}√x between x = {} and x = {} is rotated about the x-axis",
+                "For the function f(x) = {}e^({}x) + {}x, find f'({})"
             ],
             "Trigonometry": [
                 "Solve the equation: sin(x) = {} for 0 ≤ x < 2π",
                 "Prove the identity: sin²(x) + cos²(x) = 1 using the value x = {}π/{}",
                 "Find the value of tan({}) in terms of sin and cos",
-                "Calculate the exact value of sin({}π/{})"
+                "Calculate the exact value of sin({}π/{})",
+                "Find all solutions to the equation: {}sin(x) + {}cos(x) = {} in the interval [0, 2π]",
+                "Prove that tan(x+y) = (tan(x) + tan(y))/(1 - tan(x)tan(y)) for the case where x = {}π/{} and y = {}π/{}",
+                "Find the area of the triangle with sides a = {}, b = {} and included angle C = {}°"
             ],
             "Vectors": [
                 "Given vectors a = ({}, {}, {}) and b = ({}, {}, {}), find a + b",
                 "Calculate the dot product of a = ({}, {}) and b = ({}, {})",
                 "Find the magnitude of the vector ({}, {}, {})",
-                "Determine if the vectors ({}, {}) and ({}, {}) are parallel"
+                "Determine if the vectors ({}, {}) and ({}, {}) are parallel",
+                "Find the angle between vectors a = ({}, {}, {}) and b = ({}, {}, {})",
+                "Find a unit vector perpendicular to both a = ({}, {}, {}) and b = ({}, {}, {})",
+                "Find the equation of the plane passing through the points ({}, {}, {}), ({}, {}, {}), and ({}, {}, {})"
+            ],
+            "Functions": [
+                "Find the domain of the function f(x) = √({}x - {})",
+                "Find the range of the function f(x) = {}x² + {}",
+                "Find the inverse of the function f(x) = {}x + {}",
+                "For functions f(x) = {}x² - {} and g(x) = {}x + {}, find (f∘g)({})",
+                "Find all values of x for which f(x) = 1/({} - {}x) is undefined",
+                "Sketch the graph of the function f(x) = {}|x - {}| + {}",
+                "For the function f(x) = {}x³ - {}x² + {}x - {}, find f({}) and f'({})"
+            ],
+            "Probability": [
+                "The probability of event A is {}/{}. The probability of event B is {}/{}. If A and B are independent, find P(A ∩ B)",
+                "A bag contains {} red balls and {} blue balls. If {} balls are drawn without replacement, find the probability that they are all the same color",
+                "In a normal distribution with mean {} and standard deviation {}, find the probability that a randomly selected value is less than {}",
+                "A biased coin has a probability of {} of landing heads. If the coin is tossed {} times, find the probability of getting exactly {} heads",
+                "The random variable X follows a binomial distribution B({}, {}). Find P(X = {})",
+                "A discrete random variable X has the following probability distribution: P(X=1)={}, P(X=2)={}, P(X=3)={}. Find E(X) and Var(X)"
             ]
         }
         
-        # If topic not in our list, default to Algebra
+        # Ensure we have the target topic or pick a random one
         if topic not in math_topics:
-            topic = "Algebra"
-            
-        # Select a question template
-        questions = math_topics[topic]
-        question_template = random.choice(questions)
+            topic = random.choice(list(math_topics.keys()))
         
-        # Generate random values based on transform level
+        # Select a question template - ensure different questions for adjacent numbers
+        questions = math_topics[topic]
+        question_index = (question_number + hash(topic)) % len(questions)
+        question_template = questions[question_index]
+        
+        # Generate random values based on transform level and question number
         values = []
         num_placeholders = question_template.count("{}")
+        
+        # Use question_number to seed the randomness for more diversity
+        random.seed(question_number * 31 + hash(output_path) % 997)
         
         for i in range(num_placeholders):
             if transform_level <= 2:
@@ -114,8 +158,9 @@ def create_simple_question(question_number, output_path, topic="Mathematics", tr
         # Format the question with random values
         question_text = question_template.format(*values)
         
-        # Draw the question text
-        draw.text((30, 80), f"Topic: {topic}", fill=(0, 0, 150), font=regular_font)
+        # Draw the question text with a random slight color variation
+        topic_color = (0, 0, random.randint(130, 170))
+        draw.text((x_pos, y_pos + 50), f"Topic: {topic}", fill=topic_color, font=regular_font)
         
         # Break up long questions into multiple lines
         words = question_text.split()
@@ -135,22 +180,31 @@ def create_simple_question(question_number, output_path, topic="Mathematics", tr
         if current_line:
             lines.append(current_line)
             
-        # Draw each line of the question
-        y_pos = 120
+        # Draw each line of the question with slight position variations
+        y_pos = 120 + random.randint(-10, 10)
+        line_spacing = 30 + random.randint(-2, 2)
+        
         for line in lines:
-            draw.text((30, y_pos), line, fill=(0, 0, 0), font=math_font)
-            y_pos += 30
+            x_offset = random.randint(-3, 3)
+            draw.text((30 + x_offset, y_pos), line, fill=(0, 0, 0), font=math_font)
+            y_pos += line_spacing
         
         # Add marks based on transform level
         marks = transform_level + 1
         draw.text((30, y_pos + 20), f"[{marks} marks]", fill=(0, 0, 0), font=regular_font)
         
-        # Add a disclaimer
+        # Add a disclaimer with a random position at the bottom
         disclaimer_text = (
             "Note: This is an AI-generated mock question for educational purposes. "
             "It may contain errors and should be reviewed by a qualified teacher."
         )
-        draw.text((30, height - 40), disclaimer_text, fill=(150, 150, 150), font=regular_font)
+        x_disclaimer = 30 + random.randint(-5, 5)
+        y_disclaimer = height - 40 + random.randint(-5, 5)
+        disclaimer_color = (random.randint(140, 160), random.randint(140, 160), random.randint(140, 160))
+        draw.text((x_disclaimer, y_disclaimer), disclaimer_text, fill=disclaimer_color, font=regular_font)
+        
+        # Reset random seed after generating question
+        random.seed()
         
         # Save the image
         img.save(output_path)
@@ -174,89 +228,212 @@ def create_simple_mark_scheme(question_number, output_path, topic="Mathematics",
         Path to the new mark scheme image
     """
     try:
-        # Create a blank image
-        width, height = 800, 800
-        img = Image.new('RGB', (width, height), (255, 255, 255))
+        # Create a blank image with a slightly randomized size for visual diversity
+        base_width, base_height = 800, 800
+        width_variance = random.randint(-20, 20)
+        height_variance = random.randint(-20, 20)
+        width = base_width + width_variance
+        height = base_height + height_variance
+        
+        # Create a very slight background color variation for each mark scheme
+        bg_r = random.randint(250, 255)
+        bg_g = random.randint(250, 255)
+        bg_b = random.randint(250, 255)
+        img = Image.new('RGB', (width, height), (bg_r, bg_g, bg_b))
         draw = ImageDraw.Draw(img)
         
         # Get fonts
         title_font, regular_font, math_font = get_fonts()
         
-        # Add mark scheme title
-        draw.text((30, 30), f"Mark Scheme for Question {question_number}", fill=(0, 0, 0), font=title_font)
+        # Add mark scheme title with a slightly randomized position
+        x_pos = 30 + random.randint(-5, 5)
+        y_pos = 30 + random.randint(-5, 5)
+        draw.text((x_pos, y_pos), f"Mark Scheme for Question {question_number}", fill=(0, 0, 0), font=title_font)
         
-        # Math topics and mark schemes
+        # Expanded math topics and mark schemes
         math_topics = {
             "Algebra": [
-                "M1: Correct application of quadratic formula",
-                "A1: First correct solution x = {:.2f}",
-                "A1: Second correct solution x = {:.2f}",
-                "M1: Clear logical working shown",
-                "Total: {} marks"
+                ["M1: Correct application of quadratic formula", 
+                 "A1: First correct solution x = {:.2f}", 
+                 "A1: Second correct solution x = {:.2f}", 
+                 "M1: Clear logical working shown"],
+                
+                ["M1: Method for solving quadratic equations", 
+                 "A1: Factoring correctly as (x{:+.1f})(x{:+.1f})", 
+                 "A1: Stating both zeros of the quadratic", 
+                 "B1: Checking solutions in original equation"],
+                
+                ["M1: Setting up correct algebraic expression", 
+                 "M1: Using appropriate identities", 
+                 "A1: Simplifying to correct form", 
+                 "A1: Final answer correctly stated as {:.2f}"]
             ],
             "Calculus": [
-                "M1: Correct use of differentiation rules",
-                "A1: Correct derivative found",
-                "M1: Setting derivative equal to zero",
-                "A1: Correct stationary point(s) at x = {:.2f}",
-                "Total: {} marks"
+                ["M1: Correct use of differentiation rules", 
+                 "A1: Correct derivative found", 
+                 "M1: Setting derivative equal to zero", 
+                 "A1: Correct stationary point(s) at x = {:.2f}"],
+                
+                ["M1: Using power rule correctly", 
+                 "M1: Applying chain rule", 
+                 "A1: Correct integration of terms", 
+                 "A1: Correct constant of integration c = {:.2f}"],
+                
+                ["M1: Identifying critical points", 
+                 "A1: Finding where f'(x) = 0", 
+                 "M1: Second derivative test", 
+                 "A1: Classifying critical point at x = {:.2f} as maximum/minimum"]
             ],
             "Trigonometry": [
-                "M1: Correct approach to solving trigonometric equation",
-                "A1: First solution x = {:.2f}",
-                "A1: Second solution x = {:.2f}",
-                "B1: Correct domain consideration",
-                "Total: {} marks"
+                ["M1: Correct approach to solving trigonometric equation", 
+                 "A1: First solution x = {:.2f}", 
+                 "A1: Second solution x = {:.2f}", 
+                 "B1: Correct domain consideration"],
+                
+                ["M1: Using correct trigonometric identity", 
+                 "A1: Substituting values correctly", 
+                 "M1: Algebraic manipulation", 
+                 "A1: Final value sin({:.2f}) = {:.2f}"],
+                
+                ["B1: Recognition of angle in standard position", 
+                 "M1: Using correct trigonometric ratios", 
+                 "A1: Geometric interpretation", 
+                 "A1: Final answer = {:.2f}π"]
             ],
             "Vectors": [
-                "M1: Correct method for vector calculation",
-                "A1: Correct components found",
-                "A1: Correct final answer",
-                "C1: Clear presentation of working",
-                "Total: {} marks"
+                ["M1: Correct method for vector calculation", 
+                 "A1: Correct components found", 
+                 "A1: Correct final answer", 
+                 "C1: Clear presentation of working"],
+                
+                ["M1: Setting up vector equation", 
+                 "M1: Finding direction vectors", 
+                 "A1: Correct cross product calculation", 
+                 "A1: Final answer r = ({:.1f}, {:.1f}, {:.1f}) + λ({:.1f}, {:.1f}, {:.1f})"],
+                
+                ["M1: Identifying vector properties", 
+                 "A1: Computing magnitude |v| = {:.2f}", 
+                 "M1: Finding unit vector", 
+                 "A1: Final answer v̂ = ({:.2f}, {:.2f}, {:.2f})"]
+            ],
+            "Functions": [
+                ["M1: Correct approach to finding domain", 
+                 "M1: Finding critical values", 
+                 "A1: Determining intervals", 
+                 "A1: Domain = [{:.1f}, {:.1f}) ∪ ({:.1f}, ∞)"],
+                
+                ["M1: Analyzing function composition", 
+                 "M1: Substituting g(x) into f(x)", 
+                 "A1: Simplifying algebraic expression", 
+                 "A1: Final answer (f∘g)(x) = {:.1f}x² + {:.1f}x + {:.1f}"],
+                
+                ["M1: Correct method for finding inverse", 
+                 "M1: Swapping variables and solving for y", 
+                 "A1: Rearranging to standard form", 
+                 "A1: f⁻¹(x) = {:.2f}x + {:.2f}"]
+            ],
+            "Probability": [
+                ["M1: Applying correct probability formula", 
+                 "M1: Setting up appropriate model", 
+                 "A1: Correct calculation P(A) = {:.3f}", 
+                 "A1: Final answer P(A∪B) = {:.3f}"],
+                
+                ["B1: Recognizing binomial distribution", 
+                 "M1: Using correct formula C(n,r)p^r(1-p)^(n-r)", 
+                 "M1: Substituting values correctly", 
+                 "A1: Final probability = {:.4f}"],
+                
+                ["M1: Finding mean μ = {:.2f}", 
+                 "M1: Finding standard deviation σ = {:.2f}", 
+                 "A1: Standardizing to z-value", 
+                 "A1: Probability from z-table = {:.4f}"]
             ]
         }
         
-        # If topic not in our list, default to Algebra
+        # Ensure we have the target topic or pick a random one
         if topic not in math_topics:
-            topic = "Algebra"
-            
-        # Select a mark scheme template
-        mark_scheme_templates = math_topics[topic]
+            topic = random.choice(list(math_topics.keys()))
+        
+        # Use question_number to seed the randomness for consistency with the question
+        random.seed(question_number * 31 + hash(output_path) % 997)
+        
+        # Select a mark scheme template based on question number
+        template_sets = math_topics[topic]
+        template_index = (question_number + hash(topic)) % len(template_sets)
+        mark_scheme_templates = template_sets[template_index]
         
         # Generate random values for the template
         x1 = random.uniform(-5, 5)
         x2 = random.uniform(-5, 5)
+        x3 = random.uniform(0, 5) 
+        x4 = random.uniform(-3, 3)
+        x5 = random.uniform(1, 10)
         
         # Marks based on transform level
         marks = transform_level + 1
         
-        # Draw the mark scheme content
-        draw.text((30, 80), f"Topic: {topic}", fill=(0, 0, 150), font=regular_font)
+        # Draw the mark scheme content with a random slight color variation
+        topic_color = (0, 0, random.randint(130, 170))
+        draw.text((x_pos, y_pos + 50), f"Topic: {topic}", fill=topic_color, font=regular_font)
         
-        y_pos = 120
-        for i, template in enumerate(mark_scheme_templates[:-1]):  # Exclude the "Total" line
-            if i < marks:  # Only show as many marking points as there are marks
-                if "{:.2f}" in template:
-                    if i == 1:
-                        line = template.format(x1)
-                    else:
-                        line = template.format(x2)
+        # Calculate how many marking points to show based on marks
+        points_to_show = min(marks, len(mark_scheme_templates))
+        
+        # Draw each line of the mark scheme with slight position variations
+        y_pos = 120 + random.randint(-10, 10)
+        line_spacing = 30 + random.randint(-2, 2)
+        
+        for i in range(points_to_show):
+            template = mark_scheme_templates[i]
+            x_offset = random.randint(-3, 3)
+            
+            # Format template with random values if needed
+            if "{:.2f}" in template or "{:.1f}" in template or "{:.3f}" in template or "{:.4f}" in template:
+                if i == 0:
+                    line = template.format(x1)
+                elif i == 1:
+                    line = template.format(x2)
+                elif i == 2:
+                    line = template.format(x3)
                 else:
-                    line = template
-                    
-                draw.text((30, y_pos), line, fill=(0, 0, 0), font=regular_font)
-                y_pos += 30
+                    # Handle multiple format placeholders
+                    try:
+                        placeholder_count = template.count("{")
+                        if placeholder_count == 1:
+                            line = template.format(x4)
+                        elif placeholder_count == 2:
+                            line = template.format(x1, x2)
+                        elif placeholder_count == 3:
+                            line = template.format(x1, x2, x3)
+                        elif placeholder_count == 6:
+                            line = template.format(x1, x2, x3, x4, x5, random.uniform(-1, 1))
+                        else:
+                            line = template.format(x1)
+                    except Exception as format_error:
+                        logger.warning(f"Format error with template {template}: {format_error}")
+                        line = template.replace("{:.1f}", "?").replace("{:.2f}", "?").replace("{:.3f}", "?").replace("{:.4f}", "?")
+            else:
+                line = template
+                
+            draw.text((30 + x_offset, y_pos), line, fill=(0, 0, 0), font=regular_font)
+            y_pos += line_spacing
         
         # Add the total marks line
-        draw.text((30, y_pos + 20), mark_scheme_templates[-1].format(marks), fill=(0, 0, 0), font=title_font)
+        total_text = f"Total: {marks} marks"
+        draw.text((30, y_pos + 20), total_text, fill=(0, 0, 0), font=title_font)
         
-        # Add a disclaimer
+        # Add a disclaimer with a random position at the bottom
         disclaimer_text = (
             "Note: This is an AI-generated mock mark scheme for educational purposes. "
             "It may contain errors and should be reviewed by a qualified teacher."
         )
-        draw.text((30, height - 40), disclaimer_text, fill=(150, 150, 150), font=regular_font)
+        x_disclaimer = 30 + random.randint(-5, 5)
+        y_disclaimer = height - 40 + random.randint(-5, 5)
+        disclaimer_color = (random.randint(140, 160), random.randint(140, 160), random.randint(140, 160))
+        draw.text((x_disclaimer, y_disclaimer), disclaimer_text, fill=disclaimer_color, font=regular_font)
+        
+        # Reset random seed after generating mark scheme
+        random.seed()
         
         # Save the image
         img.save(output_path)
