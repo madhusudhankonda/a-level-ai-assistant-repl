@@ -244,9 +244,12 @@ def snap_any_paper():
 @login_required
 def analyze_any_paper():
     """API endpoint to analyze an uploaded paper image"""
+    logger.info("API endpoint /api/analyze-any-paper called")
     try:
         # Check if user has enough credits
+        logger.info(f"User credits: {current_user.credits}, Required: {REQUIRED_CREDITS}")
         if current_user.credits < REQUIRED_CREDITS:
+            logger.warning(f"User {current_user.id} does not have enough credits")
             return jsonify({
                 "success": False,
                 "error": f"You don't have enough credits. {REQUIRED_CREDITS} credits required."
@@ -254,17 +257,26 @@ def analyze_any_paper():
         
         # Get request data
         data = request.json
+        logger.info(f"Request data received: {bool(data)}")
         if not data:
+            logger.error("No JSON data provided in request")
             return jsonify({
                 "success": False,
                 "error": "No data provided."
             }), 400
         
+        # Log the keys in the request data for debugging
+        logger.info(f"Request data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dictionary'}")
+        
         image_data = data.get('image')
         analysis_type = data.get('analysis_type', 'question_only')
         subject = data.get('subject', 'mathematics')
         
+        logger.info(f"Analysis type: {analysis_type}, Subject: {subject}")
+        logger.info(f"Image data present: {bool(image_data)}")
+        
         if not image_data:
+            logger.error("No image data provided in request")
             return jsonify({
                 "success": False,
                 "error": "No image provided."

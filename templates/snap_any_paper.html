@@ -309,7 +309,19 @@
             hideError();
 
             try {
+                console.log('Preparing API request with analysis type:', analysisType, 'subject:', subject);
+                console.log('Image data length:', imageData ? imageData.length : 'No image data');
+                
+                // Check if image data is too large (rough estimate)
+                if (imageData && imageData.length > 10000000) { // 10MB limit
+                    showError('Image is too large. Please use a smaller image or reduce resolution.');
+                    loadingIndicator.style.display = 'none';
+                    analyzeButton.disabled = false;
+                    return;
+                }
+                
                 // Submit for analysis
+                console.log('Sending API request to /api/analyze-any-paper...');
                 const response = await fetch('/api/analyze-any-paper', {
                     method: 'POST',
                     headers: {
@@ -321,8 +333,10 @@
                         subject: subject
                     })
                 });
-
+                
+                console.log('API response received:', response.status, response.statusText);
                 const result = await response.json();
+                console.log('API response parsed:', result);
                 
                 // Hide loading
                 loadingIndicator.style.display = 'none';
@@ -366,10 +380,24 @@
                     showError(result.error || 'Failed to analyze the image. Please try again.');
                 }
             } catch (err) {
+                console.error('Error during analysis:', err);
                 loadingIndicator.style.display = 'none';
                 analyzeButton.disabled = false;
-                showError('An error occurred while analyzing. Please try again.');
-                console.error('Error during analysis:', err);
+                
+                // Show a more specific error message if possible
+                let errorMessage = 'An error occurred while analyzing. Please try again.';
+                if (err.name === 'SyntaxError') {
+                    errorMessage = 'Invalid response from the server. Please try again.';
+                } else if (err.message) {
+                    errorMessage = `Error: ${err.message}`;
+                }
+                
+                showError(errorMessage);
+                
+                // Check if there's a network error
+                if (!window.navigator.onLine) {
+                    showError('Network connection lost. Please check your internet connection and try again.');
+                }
             }
         });
 

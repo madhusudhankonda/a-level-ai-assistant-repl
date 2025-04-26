@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Button Test{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Simple Button Test</h1>
+    <p>This page tests if a basic button click works correctly with an AJAX request.</p>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <button id="test-button" class="btn btn-primary">
+                Test API Call
+            </button>
+            
+            <div id="result-container" class="mt-4" style="display: none;">
+                <div class="card">
+                    <div class="card-header">Result</div>
+                    <div class="card-body">
+                        <div id="loading-indicator" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                        <div id="result-output"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const testButton = document.getElementById('test-button');
+        const resultContainer = document.getElementById('result-container');
+        const resultOutput = document.getElementById('result-output');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        
+        testButton.addEventListener('click', async () => {
+            console.log('Test button clicked');
+            
+            // Show loading
+            resultContainer.style.display = 'block';
+            resultOutput.innerHTML = '';
+            loadingIndicator.style.display = 'block';
+            errorMessage.style.display = 'none';
+            
+            try {
+                console.log('Sending test API request...');
+                const response = await fetch('/api/test-endpoint', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        test: 'data'
+                    })
+                });
+                
+                console.log('API response received:', response.status, response.statusText);
+                const result = await response.json();
+                console.log('API result:', result);
+                
+                // Hide loading
+                loadingIndicator.style.display = 'none';
+                
+                if (response.ok) {
+                    resultOutput.textContent = JSON.stringify(result, null, 2);
+                } else {
+                    showError(result.error || 'Request failed');
+                }
+            } catch (err) {
+                console.error('Error during API call:', err);
+                loadingIndicator.style.display = 'none';
+                showError('Error: ' + (err.message || 'Unknown error'));
+            }
+        });
+        
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+    });
+</script>
+{% endblock %}
