@@ -112,6 +112,11 @@
                             <span class="button-text"><i class="fas fa-brain"></i> Analyze Question</span>
                             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
+                        
+                        <!-- Simple Test Button (for debugging) -->
+                        <button id="simple-test-button" class="btn btn-sm btn-secondary ms-2">
+                            Test Connection
+                        </button>
                     </div>
 
                     <!-- Results section (hidden initially) -->
@@ -282,9 +287,67 @@
             }
         });
 
-        // Analyze button
+        // Debug function to log more details about button status
+        function debugButtonState() {
+            console.log('Debug - Button element:', analyzeButton);
+            console.log('Debug - Button disabled:', analyzeButton.disabled);
+            console.log('Debug - Button spinner exists:', !!analyzeButton.querySelector('.spinner-border'));
+            console.log('Debug - Button text exists:', !!analyzeButton.querySelector('.button-text'));
+            // Try to force enable button
+            analyzeButton.disabled = false;
+        }
+        
+        // Simple test button for quick API testing
+        const simpleTestButton = document.getElementById('simple-test-button');
+        if (simpleTestButton) {
+            simpleTestButton.addEventListener('click', async () => {
+                console.log('Simple test button clicked');
+                
+                // Add a spinner to the test button
+                simpleTestButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+                simpleTestButton.disabled = true;
+                
+                try {
+                    // Very simple API test
+                    const testResponse = await fetch('/api/test-endpoint', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            test: 'simple-test-button'
+                        })
+                    });
+                    
+                    const result = await testResponse.json();
+                    console.log('Simple test response:', result);
+                    
+                    if (testResponse.ok) {
+                        // Show success message
+                        showError('Test successful! API is working.');
+                        setTimeout(() => {
+                            errorMessage.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        showError('Test failed: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (err) {
+                    console.error('Test failed:', err);
+                    showError('Test failed: ' + (err.message || 'Connection error'));
+                } finally {
+                    // Reset button regardless of outcome
+                    simpleTestButton.innerHTML = 'Test Connection';
+                    simpleTestButton.disabled = false;
+                }
+            });
+        }
+        
+        // Analyze button - adding more debug logging
         analyzeButton.addEventListener('click', async () => {
-            console.log('Analyze button clicked');
+            console.log('Analyze button clicked - ' + new Date().toISOString());
+            
+            // Call debug function to log button state
+            debugButtonState();
             
             // Get current tab
             const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
