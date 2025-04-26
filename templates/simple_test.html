@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Simple Test | A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Simple API Testing Page</h2>
+                    <p class="text-muted">A minimal page for testing image upload and analysis</p>
+                </div>
+                <div class="card-body">
+                    <!-- Image upload form -->
+                    <div class="mb-4">
+                        <h4>Upload an Image</h4>
+                        <form id="test-form" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="image-upload" class="form-label">Select an image</label>
+                                <input class="form-control" type="file" id="image-upload" name="image" accept="image/*">
+                            </div>
+                            <div id="preview-container" class="mb-3" style="display: none;">
+                                <img id="image-preview" class="img-fluid border rounded" alt="Preview" style="max-height: 300px;">
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Testing buttons -->
+                    <div class="mb-4">
+                        <h4>Test API Endpoints</h4>
+                        <div class="d-flex gap-2 mb-3">
+                            <button id="simple-api-test" class="btn btn-primary">
+                                Test Simple API
+                            </button>
+                            <button id="simple-analyze-button" class="btn btn-info" disabled>
+                                <span class="button-text">Simple Analyze</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                            <button id="analyze-image-button" class="btn btn-success" disabled>
+                                <span class="button-text">Full Analyze</span>
+                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results display -->
+                    <div class="mb-4">
+                        <h4>Results</h4>
+                        <div id="results-container" class="border rounded p-3 bg-light">
+                            <div id="results-content">No results yet. Run a test first.</div>
+                        </div>
+                    </div>
+
+                    <!-- Status messages -->
+                    <div class="mb-4">
+                        <div id="status-message" class="alert alert-info" style="display: none;"></div>
+                        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // DOM elements
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const simpleApiTest = document.getElementById('simple-api-test');
+        const simpleAnalyzeButton = document.getElementById('simple-analyze-button');
+        const analyzeImageButton = document.getElementById('analyze-image-button');
+        const resultsContent = document.getElementById('results-content');
+        const statusMessage = document.getElementById('status-message');
+        const errorMessage = document.getElementById('error-message');
+        
+        let uploadedImage = null;
+        
+        // Show status message
+        function showStatus(message) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        // Hide error message
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+        
+        // Upload image preview
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                hideError();
+                showStatus('Loading image...');
+                
+                // Display file loading message
+                previewContainer.style.display = 'block';
+                imagePreview.src = '';  // Clear previous preview
+                imagePreview.alt = 'Loading image...';
+                
+                const reader = new FileReader();
+                
+                // Set up error handling
+                reader.onerror = (error) => {
+                    console.error('Error reading file:', error);
+                    showError('Error loading image. Please try a different file.');
+                    previewContainer.style.display = 'none';
+                    uploadedImage = null;
+                    analyzeImageButton.disabled = true;
+                    simpleAnalyzeButton.disabled = true;
+                };
+                
+                reader.onload = (e) => {
+                    try {
+                        imagePreview.src = e.target.result;
+                        imagePreview.alt = 'Uploaded image preview';
+                        uploadedImage = e.target.result;
+                        
+                        // Enable the analyze buttons
+                        analyzeImageButton.disabled = false;
+                        simpleAnalyzeButton.disabled = false;
+                        
+                        showStatus('Image loaded successfully');
+                        console.log('Image loaded successfully');
+                    } catch (err) {
+                        console.error('Error processing image:', err);
+                        showError('Error processing image. Please try a different file.');
+                        previewContainer.style.display = 'none';
+                        uploadedImage = null;
+                        analyzeImageButton.disabled = true;
+                        simpleAnalyzeButton.disabled = true;
+                    }
+                };
+                
+                // Read the file as data URL
+                reader.readAsDataURL(file);
+            } else {
+                // No file selected
+                previewContainer.style.display = 'none';
+                uploadedImage = null;
+                analyzeImageButton.disabled = true;
+                simpleAnalyzeButton.disabled = true;
+            }
+        });
+        
+        // Simple API test button
+        simpleApiTest.addEventListener('click', async () => {
+            hideError();
+            showStatus('Testing API connection...');
+            
+            // Add spinner to button
+            const originalText = simpleApiTest.innerHTML;
+            simpleApiTest.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+            simpleApiTest.disabled = true;
+            
+            try {
+                const response = await fetch('/api/test-endpoint', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ test: 'simple-test' })
+                });
+                
+                console.log('API test response status:', response.status);
+                const result = await response.json();
+                console.log('API test result:', result);
+                
+                // Show results
+                resultsContent.innerHTML = `
+                    <h5>API Test Results:</h5>
+                    <pre class="bg-dark text-light p-3 rounded">${JSON.stringify(result, null, 2)}</pre>
+                `;
+                
+                if (response.ok) {
+                    showStatus('API test successful!');
+                } else {
+                    showError('API test failed with status: ' + response.status);
+                }
+            } catch (err) {
+                console.error('API test error:', err);
+                showError('API test failed: ' + err.message);
+                resultsContent.innerHTML = `
+                    <h5>API Test Error:</h5>
+                    <pre class="bg-danger text-light p-3 rounded">${err.message}</pre>
+                `;
+            } finally {
+                // Reset button
+                simpleApiTest.innerHTML = originalText;
+                simpleApiTest.disabled = false;
+            }
+        });
+        
+        // Simple Analyze button for the lighter-weight endpoint
+        simpleAnalyzeButton.addEventListener('click', async () => {
+            if (!uploadedImage) {
+                showError('Please upload an image first');
+                return;
+            }
+            
+            hideError();
+            showStatus('Running simple analysis...');
+            
+            // Update button state
+            simpleAnalyzeButton.disabled = true;
+            simpleAnalyzeButton.querySelector('.button-text').style.display = 'none';
+            simpleAnalyzeButton.querySelector('.spinner-border').classList.remove('d-none');
+            
+            try {
+                console.log('Sending image data for simple analysis...');
+                
+                const requestData = {
+                    image: uploadedImage
+                };
+                
+                console.log('Request data prepared, sending to simple API...');
+                
+                const response = await fetch('/api/simple-analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log('Simple API response status:', response.status);
+                const result = await response.json();
+                console.log('Simple API result:', result);
+                
+                // Show results
+                if (response.ok) {
+                    resultsContent.innerHTML = `
+                        <h5>${result.title || 'Simple Analysis Results'}</h5>
+                        <div class="analysis-content">${result.analysis}</div>
+                    `;
+                    
+                    showStatus('Simple analysis completed successfully!');
+                } else {
+                    showError(result.error || 'Simple analysis failed with status: ' + response.status);
+                    resultsContent.innerHTML = `
+                        <h5>Simple Analysis Error:</h5>
+                        <pre class="bg-danger text-light p-3 rounded">${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            } catch (err) {
+                console.error('Simple analysis error:', err);
+                showError('Simple analysis failed: ' + err.message);
+                resultsContent.innerHTML = `
+                    <h5>Simple Analysis Error:</h5>
+                    <pre class="bg-danger text-light p-3 rounded">${err.message}</pre>
+                `;
+            } finally {
+                // Reset button state
+                simpleAnalyzeButton.disabled = false;
+                simpleAnalyzeButton.querySelector('.button-text').style.display = '';
+                simpleAnalyzeButton.querySelector('.spinner-border').classList.add('d-none');
+            }
+        });
+        
+        // Full Analyze image button
+        analyzeImageButton.addEventListener('click', async () => {
+            if (!uploadedImage) {
+                showError('Please upload an image first');
+                return;
+            }
+            
+            hideError();
+            showStatus('Analyzing image...');
+            
+            // Update button state
+            analyzeImageButton.disabled = true;
+            analyzeImageButton.querySelector('.button-text').style.display = 'none';
+            analyzeImageButton.querySelector('.spinner-border').classList.remove('d-none');
+            
+            try {
+                console.log('Sending image data for analysis...');
+                
+                const requestData = {
+                    image: uploadedImage,
+                    analysis_type: 'question_only',
+                    subject: 'mathematics'
+                };
+                
+                console.log('Request data prepared, sending to API...');
+                
+                const response = await fetch('/api/analyze-any-paper', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log('API analyze response status:', response.status);
+                const result = await response.json();
+                console.log('API analyze result:', result);
+                
+                // Show results
+                if (response.ok) {
+                    resultsContent.innerHTML = `
+                        <h5>${result.title || 'Analysis Results'}</h5>
+                        <div class="analysis-content">${result.analysis}</div>
+                    `;
+                    
+                    showStatus('Analysis completed successfully!');
+                } else {
+                    showError(result.error || 'Analysis failed with status: ' + response.status);
+                    resultsContent.innerHTML = `
+                        <h5>Analysis Error:</h5>
+                        <pre class="bg-danger text-light p-3 rounded">${JSON.stringify(result, null, 2)}</pre>
+                    `;
+                }
+            } catch (err) {
+                console.error('Analysis error:', err);
+                showError('Analysis failed: ' + err.message);
+                resultsContent.innerHTML = `
+                    <h5>Analysis Error:</h5>
+                    <pre class="bg-danger text-light p-3 rounded">${err.message}</pre>
+                `;
+            } finally {
+                // Reset button state
+                analyzeImageButton.disabled = false;
+                analyzeImageButton.querySelector('.button-text').style.display = '';
+                analyzeImageButton.querySelector('.spinner-border').classList.add('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}
