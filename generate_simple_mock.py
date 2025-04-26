@@ -22,16 +22,13 @@ def get_data_folder():
 
 def get_fonts():
     """Try to load appropriate fonts, or use default if not available"""
-    # Try to find system fonts or use default
-    try:
-        title_font = ImageFont.truetype("Arial.ttf", 24)
-        regular_font = ImageFont.truetype("Arial.ttf", 16)
-        math_font = ImageFont.truetype("Arial.ttf", 16)
-    except IOError:
-        # Use default font if Arial not available
-        title_font = ImageFont.load_default()
-        regular_font = ImageFont.load_default()
-        math_font = ImageFont.load_default()
+    # Always use default font to avoid font loading issues in a server environment
+    title_font = ImageFont.load_default()
+    regular_font = ImageFont.load_default()
+    math_font = ImageFont.load_default()
+    
+    # Log the font usage
+    logger.info("Using default fonts for image generation")
     
     return title_font, regular_font, math_font
 
@@ -291,6 +288,21 @@ def generate_simple_mock_paper(source_paper_id, mock_paper_name, num_questions=5
     from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory
     
     try:
+        # Convert parameters to appropriate types to avoid errors
+        try:
+            source_paper_id = int(source_paper_id)
+            num_questions = int(num_questions) if isinstance(num_questions, str) else num_questions
+            transform_level = int(transform_level) if isinstance(transform_level, str) else transform_level
+            
+            # Validate ranges
+            num_questions = max(1, min(15, num_questions))  # Between 1 and 15
+            transform_level = max(1, min(5, transform_level))  # Between 1 and 5
+            
+            logger.info(f"Starting simple mock generation with paper_id={source_paper_id}, questions={num_questions}, transform_level={transform_level}")
+        except ValueError as e:
+            logger.error(f"Parameter conversion error: {str(e)}")
+            return {"success": False, "error": f"Invalid parameters: {str(e)}"}
+            
         # Get the source paper for metadata only
         source_paper = QuestionPaper.query.get(source_paper_id)
         

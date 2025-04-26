@@ -43,7 +43,7 @@
                     {% if papers_with_questions %}
                         <div class="alert alert-primary mb-3">
                             <strong>Source paper selection:</strong> Choose a paper with existing questions to use as templates
-                            <select class="form-select mt-2" id="source_paper_selector" onchange="if(this.value) window.location.href='{{ url_for('admin.generate_mock', paper_id='') }}'+this.value;">
+                            <select class="form-select mt-2" id="source_paper_selector" onchange="if(this.value) window.location.href='{{ url_for('admin.generate_mock', paper_id=0) }}'.replace('/0/', '/'+this.value+'/');">
                                 <option value="">-- Select a paper with questions --</option>
                                 {% for paper_item, question_count in papers_with_questions %}
                                     <option value="{{ paper_item.id }}" {% if paper_item.id == paper.id %}selected{% endif %}>

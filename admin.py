@@ -307,29 +307,34 @@ def generate_mock(paper_id):
         current_question_count = Question.query.filter_by(paper_id=paper_id).count()
         
         # Choose which generation method to use based on paper contents
-        if current_question_count == 0:
-            current_app.logger.info(f"Using simple generation for paper ID {paper_id} because it has no questions")
-            flash(f"Using simple question generation mode because the paper doesn't have any source questions.", 'info')
-            
-            # Use the simple generator instead
-            result = generate_simple_mock_paper(
-                source_paper_id=paper_id,
-                mock_paper_name=mock_paper_name,
-                num_questions=num_questions,
-                transform_level=transform_level,
-                include_mark_scheme=include_mark_scheme
-            )
-        else:
-            # Use the original generator with source questions
-            current_app.logger.info(f"Generating mock paper based on paper ID {paper_id} with {current_question_count} questions")
-            result = generate_mock_paper(
-                source_paper_id=paper_id,
-                mock_paper_name=mock_paper_name,
-                num_questions=num_questions,
-                transform_level=transform_level,
-                include_mark_scheme=include_mark_scheme,
-                source_mark_scheme_paper_id=ms_paper_id
-            )
+        try:
+            if current_question_count == 0:
+                current_app.logger.info(f"Using simple generation for paper ID {paper_id} because it has no questions")
+                flash(f"Using simple question generation mode because the paper doesn't have any source questions.", 'info')
+                
+                # Use the simple generator instead
+                result = generate_simple_mock_paper(
+                    source_paper_id=paper_id,
+                    mock_paper_name=mock_paper_name,
+                    num_questions=num_questions,
+                    transform_level=transform_level,
+                    include_mark_scheme=include_mark_scheme
+                )
+            else:
+                # Use the original generator with source questions
+                current_app.logger.info(f"Generating mock paper based on paper ID {paper_id} with {current_question_count} questions")
+                result = generate_mock_paper(
+                    source_paper_id=paper_id,
+                    mock_paper_name=mock_paper_name,
+                    num_questions=num_questions,
+                    transform_level=transform_level,
+                    include_mark_scheme=include_mark_scheme,
+                    source_mark_scheme_paper_id=ms_paper_id
+                )
+        except Exception as generation_error:
+            current_app.logger.error(f"Unexpected error during mock generation: {str(generation_error)}")
+            flash(f"Error during mock generation: {str(generation_error)}", 'danger')
+            return redirect(url_for('admin.generate_mock', paper_id=paper_id))
         
         if result['success']:
             current_app.logger.info(f"Successfully generated mock paper: {result}")
