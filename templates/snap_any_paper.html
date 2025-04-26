@@ -193,9 +193,9 @@
 
 {% block extra_js %}
 <script>
-    // Direct click handlers - defined outside of event listeners to 
-    // ensure they're globally accessible for onclick attributes
-    function handleAnalyzeDirectClick() {
+    // Direct click handlers - defined at the global scope to 
+    // ensure they're accessible for onclick attributes
+    window.handleAnalyzeDirectClick = function() {
         console.log('Direct analyze click handler called at', new Date().toISOString());
         
         // Get current form data
@@ -261,7 +261,7 @@
         });
     }
     
-    function analyzeWithSimpleMethod() {
+    window.analyzeWithSimpleMethod = function() {
         console.log('Simple analyze method called at', new Date().toISOString());
         
         // Simplified detection of image data
