@@ -237,8 +237,10 @@ def log_user_query(user_id, query_type, subject, image_path=None):
 @snap_paper_bp.route('/snap-any-paper')
 @login_required
 def snap_any_paper():
-    """Render the Snap Any Paper page"""
-    return render_template('snap_any_paper.html')
+    """Render the Snap Any Paper page with template version to bypass cache"""
+    import time
+    # Add current timestamp to ensure the template is not cached
+    return render_template('snap_any_paper.html', version=int(time.time()))
 
 @snap_paper_bp.route('/api/analyze-any-paper', methods=['POST'])
 @login_required

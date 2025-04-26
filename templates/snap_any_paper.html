@@ -25,6 +25,19 @@
                     </div>
                     {% endif %}
 
+                    <!-- Troubleshooting button (visible to all users) -->
+                    <div class="alert alert-light border mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Having issues?</strong> <span class="text-muted">Try our diagnostic tool</span>
+                            </div>
+                            <button id="troubleshoot-button" class="btn btn-outline-primary">
+                                Run Diagnostics
+                            </button>
+                        </div>
+                        <div id="diagnostic-results" class="mt-2" style="display: none;"></div>
+                    </div>
+
                     <!-- Nav tabs for capture/upload options -->
                     <ul class="nav nav-tabs" id="captureOptions" role="tablist">
                         <li class="nav-item" role="presentation">
@@ -296,6 +309,227 @@
             // Try to force enable button
             analyzeButton.disabled = false;
         }
+        
+        // Troubleshooting button handler
+        const troubleshootButton = document.getElementById('troubleshoot-button');
+        const diagnosticResults = document.getElementById('diagnostic-results');
+        
+        if (troubleshootButton) {
+            troubleshootButton.addEventListener('click', async () => {
+                // Show spinner in the button
+                const originalText = troubleshootButton.innerHTML;
+                troubleshootButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Running...';
+                troubleshootButton.disabled = true;
+                
+                // Clear previous results
+                diagnosticResults.innerHTML = '';
+                diagnosticResults.style.display = 'block';
+                
+                // Add initial status message
+                diagnosticResults.innerHTML = `
+                    <div class="alert alert-info">
+                        <strong>Running diagnostics...</strong>
+                    </div>
+                `;
+                
+                let results = '<div class="card"><div class="card-body">';
+                
+                // Test 1: Check JS environment
+                results += `<p><strong>1. JavaScript Environment:</strong> <span class="badge bg-success">OK</span></p>`;
+                
+                // Test 2: Check image upload
+                try {
+                    results += `<p><strong>2. Image System:</strong> `;
+                    if (window.FileReader) {
+                        results += `<span class="badge bg-success">OK</span> (FileReader API available)</p>`;
+                    } else {
+                        results += `<span class="badge bg-danger">Error</span> (FileReader API not available)</p>`;
+                    }
+                } catch (e) {
+                    results += `<span class="badge bg-danger">Error</span> (${e.message})</p>`;
+                }
+                
+                // Test 3: API connectivity - simple test
+                try {
+                    results += `<p><strong>3. API Connection:</strong> `;
+                    const testResponse = await fetch('/api/test-endpoint', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ test: 'diagnostic' })
+                    });
+                    
+                    if (testResponse.ok) {
+                        const data = await testResponse.json();
+                        results += `<span class="badge bg-success">OK</span> (Server responded: ${data.message || 'Success'})</p>`;
+                    } else {
+                        results += `<span class="badge bg-danger">Error</span> (Status: ${testResponse.status})</p>`;
+                    }
+                } catch (e) {
+                    results += `<span class="badge bg-danger">Error</span> (Connection failed: ${e.message})</p>`;
+                }
+                
+                // Add action buttons
+                results += `
+                    <hr>
+                    <p class="mt-3"><strong>Recommendation:</strong></p>
+                    <div class="d-grid gap-2">
+                        <button id="fix-analyze-button" class="btn btn-success">Fix Analyze Button</button>
+                        <button onclick="location.reload()" class="btn btn-outline-secondary">Reload Page</button>
+                    </div>
+                `;
+                
+                results += '</div></div>';
+                
+                // Update the results
+                diagnosticResults.innerHTML = results;
+                
+                // Add event listener for the fix button
+                document.getElementById('fix-analyze-button').addEventListener('click', () => {
+                    // Force reset the analyze button
+                    analyzeButton.disabled = false;
+                    analyzeButton.querySelector('.button-text').style.display = '';
+                    analyzeButton.querySelector('.spinner-border').classList.add('d-none');
+                    
+                    // Create a new analyze button to replace the old one
+                    const newButton = document.createElement('button');
+                    newButton.id = 'analyze-button';
+                    newButton.className = 'btn btn-lg btn-primary';
+                    newButton.innerHTML = `
+                        <span class="button-text"><i class="fas fa-brain"></i> Analyze Question</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    `;
+                    
+                    // Replace the old button
+                    analyzeButton.parentNode.replaceChild(newButton, analyzeButton);
+                    
+                    // Update the reference
+                    analyzeButton = newButton;
+                    
+                    // Add the event listener to the new button
+                    setupAnalyzeButtonHandler();
+                    
+                    // Show success message
+                    showError('Analyze button has been reset. Please try again.');
+                });
+                
+                // Reset the troubleshoot button
+                troubleshootButton.innerHTML = originalText;
+                troubleshootButton.disabled = false;
+            });
+        }
+        
+        // Function to set up the analyze button handler
+        function setupAnalyzeButtonHandler() {
+            analyzeButton.addEventListener('click', handleAnalyzeClick);
+        }
+        
+        // Analyze click handler as a separate function so we can reattach it
+        async function handleAnalyzeClick() {
+            console.log('Analyze button clicked - ' + new Date().toISOString());
+            
+            // Get current tab
+            const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
+            const imageData = activeTab === 'camera-tab' ? capturedImage : uploadedImage;
+            
+            console.log('Active tab:', activeTab);
+            console.log('Image data available:', !!imageData);
+            
+            if (!imageData) {
+                showError('Please capture or upload an image first.');
+                return;
+            }
+
+            // Get selected options
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            const subject = document.getElementById('subject-select').value;
+
+            // Show loading indicators
+            resultsContainer.style.display = 'block';
+            analysisResults.innerHTML = '';
+            loadingIndicator.style.display = 'block';
+            
+            // Disable button and show spinner inside button
+            this.disabled = true;
+            this.querySelector('.button-text').style.display = 'none';
+            this.querySelector('.spinner-border').classList.remove('d-none');
+            
+            hideError();
+
+            try {
+                console.log('Sending API request to /api/analyze-any-paper...');
+                const requestData = {
+                    image: imageData,
+                    analysis_type: analysisType,
+                    subject: subject
+                };
+                
+                const response = await fetch('/api/analyze-any-paper', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log('API response received:', response.status, response.statusText);
+                const result = await response.json();
+                
+                // Hide loading indicators
+                loadingIndicator.style.display = 'none';
+                
+                // Reset button state
+                this.disabled = false;
+                this.querySelector('.button-text').style.display = '';
+                this.querySelector('.spinner-border').classList.add('d-none');
+
+                if (response.ok) {
+                    // Display analysis results
+                    analysisResults.innerHTML = `
+                        <h4>${result.title || 'Analysis Results'}</h4>
+                        <div class="analysis-content">${result.analysis}</div>
+                    `;
+
+                    // Handle any extra sections
+                    if (result.steps && result.steps.length > 0) {
+                        const stepsHtml = result.steps.map(step => `
+                            <div class="step-item mb-2">
+                                <strong>${step.title || 'Step'}:</strong>
+                                <div>${step.content}</div>
+                            </div>
+                        `).join('');
+                        
+                        analysisResults.innerHTML += `
+                            <h5 class="mt-4">Solution Steps</h5>
+                            <div class="solution-steps">${stepsHtml}</div>
+                        `;
+                    }
+
+                    // Add MathJax rendering if needed
+                    if (window.MathJax) {
+                        MathJax.typeset();
+                    }
+                } else {
+                    showError(result.error || 'Failed to analyze the image. Please try again.');
+                }
+            } catch (err) {
+                console.error('Error during analysis:', err);
+                
+                // Hide loading indicators
+                loadingIndicator.style.display = 'none';
+                
+                // Reset button state
+                this.disabled = false;
+                this.querySelector('.button-text').style.display = '';
+                this.querySelector('.spinner-border').classList.add('d-none');
+                
+                showError('Error: ' + (err.message || 'An unexpected error occurred'));
+            }
+        }
+        
+        // Initially set up the analyze button handler
+        setupAnalyzeButtonHandler();
         
         // Simple test button for quick API testing
         const simpleTestButton = document.getElementById('simple-test-button');
