@@ -240,7 +240,7 @@ def snap_any_paper():
     """Render the Snap Any Paper page with template version to bypass cache"""
     import time
     # Add current timestamp to ensure the template is not cached
-    return render_template('snap_any_paper.html', version=int(time.time()))
+    return render_template('snap_any_paper_minimal.html', version=int(time.time()))
 
 @snap_paper_bp.route('/basic-test')
 @login_required

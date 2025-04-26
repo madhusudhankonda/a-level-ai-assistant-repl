@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Snap Any Paper - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0"><i class="fas fa-camera"></i> Snap Any Paper</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Upload an image of any A-Level question and get AI assistance.</p>
+                    
+                    <!-- Image Input Options -->
+                    <div class="mb-4">
+                        <ul class="nav nav-tabs" id="imageTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-tab-pane" type="button" role="tab">
+                                    <i class="fas fa-upload"></i> Upload Image
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-tab-pane" type="button" role="tab">
+                                    <i class="fas fa-camera"></i> Use Camera
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content mt-3" id="imageTabsContent">
+                            <!-- Upload Tab -->
+                            <div class="tab-pane fade show active" id="upload-tab-pane" role="tabpanel" tabindex="0">
+                                <div class="mb-3">
+                                    <label for="image-upload" class="form-label">Upload a question image:</label>
+                                    <input type="file" class="form-control" id="image-upload" accept="image/*">
+                                </div>
+                                <div id="preview-container" class="mt-3 text-center" style="display: none;">
+                                    <p>Image Preview:</p>
+                                    <img id="image-preview" class="img-fluid border rounded" style="max-height: 300px;" alt="Uploaded image preview">
+                                </div>
+                            </div>
+                            
+                            <!-- Camera Tab -->
+                            <div class="tab-pane fade" id="camera-tab-pane" role="tabpanel" tabindex="0">
+                                <div class="text-center">
+                                    <button id="start-camera" class="btn btn-outline-primary">
+                                        <i class="fas fa-video"></i> Start Camera
+                                    </button>
+                                    <video id="video" class="img-fluid mt-3 border rounded" style="display: none; max-height: 300px;"></video>
+                                    <canvas id="canvas" class="img-fluid mt-3 border rounded" style="display: none; max-height: 300px;"></canvas>
+                                    <div class="mt-2">
+                                        <button id="capture-photo" class="btn btn-primary" style="display: none;">
+                                            <i class="fas fa-camera"></i> Capture Photo
+                                        </button>
+                                        <button id="retake-photo" class="btn btn-secondary" style="display: none;">
+                                            <i class="fas fa-redo"></i> Retake Photo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis Options -->
+                    <div class="card mb-4">
+                        <div class="card-header">Analysis Options</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Analysis Type:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="analysisType" id="explanation-only" value="explanation" checked>
+                                    <label class="form-check-label" for="explanation-only">
+                                        <i class="fas fa-info-circle text-info"></i> Explanation Only (10 credits)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="analysisType" id="answer-feedback" value="feedback">
+                                    <label class="form-check-label" for="answer-feedback">
+                                        <i class="fas fa-comment-dots text-success"></i> Answer Feedback (10 credits)
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="subject-select" class="form-label">Subject:</label>
+                                <select class="form-select" id="subject-select">
+                                    <option value="mathematics">Mathematics</option>
+                                    <option value="physics">Physics</option>
+                                    <option value="chemistry">Chemistry</option>
+                                    <option value="biology">Biology</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Analysis button -->
+                    <div class="text-center mt-4">
+                        <button id="analyze-button" class="btn btn-lg btn-primary">
+                            <i class="fas fa-brain"></i> Analyze Question
+                        </button>
+                        
+                        <button id="simplified-analyze" class="btn btn-success ms-2">
+                            Simplified Analyze
+                        </button>
+                    </div>
+                    
+                    <!-- Extra debug info -->
+                    <div class="mt-3">
+                        <small class="text-muted">Note: If the primary button doesn't work, try the "Simplified Analyze" button.</small>
+                    </div>
+
+                    <!-- Results section (hidden initially) -->
+                    <div id="results-container" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5>Analysis Results</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="loading-indicator" class="text-center" style="display: none;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Analyzing your question...</p>
+                                </div>
+                                <div id="analysis-results"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error message area -->
+                    <div id="error-message" class="alert alert-danger mt-3" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Tips for getting good results -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Tips for Best Results</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <i class="fas fa-lightbulb text-warning"></i>
+                            <strong>Good Lighting:</strong> Ensure the question and any handwriting is well-lit
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-crop-alt text-success"></i>
+                            <strong>Clear Framing:</strong> Keep the camera steady and capture the entire question
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-pen text-primary"></i>
+                            <strong>For Handwritten Work:</strong> Write clearly on plain paper with dark pen
+                        </li>
+                        <li class="list-group-item">
+                            <i class="fas fa-pencil-ruler text-danger"></i>
+                            <strong>Diagrams & Graphs:</strong> Make sure all labels and lines are clearly visible
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Wait for the page to load
+    document.addEventListener('DOMContentLoaded', function() {
+        // DOM elements
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const startCameraButton = document.getElementById('start-camera');
+        const capturePhotoButton = document.getElementById('capture-photo');
+        const retakePhotoButton = document.getElementById('retake-photo');
+        const analyzeButton = document.getElementById('analyze-button');
+        const simplifiedAnalyzeButton = document.getElementById('simplified-analyze');
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const resultsContainer = document.getElementById('results-container');
+        const analysisResults = document.getElementById('analysis-results');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        
+        // Variables to store image data
+        let capturedImage = null;
+        let stream = null;
+
+        // Function to show error messages
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        // Function to hide error messages
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+        
+        // Start camera button
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                videoElement.srcObject = stream;
+                videoElement.style.display = 'block';
+                startCameraButton.style.display = 'none';
+                capturePhotoButton.style.display = 'inline-block';
+                // Start video playback
+                videoElement.play();
+            } catch (err) {
+                showError('Camera access denied or not available. Please check permissions or try uploading an image instead.');
+                console.error('Error accessing camera:', err);
+            }
+        });
+        
+        // Capture photo button
+        capturePhotoButton.addEventListener('click', () => {
+            const context = canvasElement.getContext('2d');
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+            
+            capturedImage = canvasElement.toDataURL('image/jpeg');
+            videoElement.style.display = 'none';
+            canvasElement.style.display = 'block';
+            capturePhotoButton.style.display = 'none';
+            retakePhotoButton.style.display = 'inline-block';
+        });
+        
+        // Retake photo button
+        retakePhotoButton.addEventListener('click', () => {
+            canvasElement.style.display = 'none';
+            videoElement.style.display = 'block';
+            capturePhotoButton.style.display = 'inline-block';
+            retakePhotoButton.style.display = 'none';
+            capturedImage = null;
+        });
+        
+        // Image upload
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                previewContainer.style.display = 'block';
+                imagePreview.src = '';
+                imagePreview.alt = 'Loading image...';
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.alt = 'Uploaded image preview';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        });
+        
+        // Analyze button
+        analyzeButton.addEventListener('click', () => {
+            // Get current image data
+            let imageData = null;
+            const activeTab = document.querySelector('.nav-tabs .active').id;
+            
+            if (activeTab === 'camera-tab') {
+                imageData = capturedImage;
+            } else {
+                if (imagePreview.src && imagePreview.src !== window.location.href) {
+                    imageData = imagePreview.src;
+                }
+            }
+            
+            if (!imageData) {
+                alert('Please capture or upload an image first.');
+                return;
+            }
+            
+            // Get analysis options
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            const subject = document.getElementById('subject-select').value;
+            
+            // Show loading
+            resultsContainer.style.display = 'block';
+            loadingIndicator.style.display = 'block';
+            analysisResults.innerHTML = '';
+            hideError();
+            
+            // Send API request
+            fetch('/api/analyze-any-paper', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imageData,
+                    analysis_type: analysisType,
+                    subject: subject
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading
+                loadingIndicator.style.display = 'none';
+                
+                if (data.success !== false) {
+                    // Show results
+                    analysisResults.innerHTML = `
+                        <h4>${data.title || 'Analysis Results'}</h4>
+                        <div class="analysis-content">${data.analysis}</div>
+                    `;
+                } else {
+                    // Show error
+                    showError(data.error || 'Analysis failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingIndicator.style.display = 'none';
+                showError('Error: ' + error.message);
+            });
+        });
+        
+        // Simplified Analyze button - same functionality but with simpler implementation
+        simplifiedAnalyzeButton.addEventListener('click', () => {
+            // Get current image data
+            let imageData = null;
+            
+            if (canvasElement.style.display !== 'none') {
+                // Camera path
+                imageData = canvasElement.toDataURL('image/jpeg');
+            } else if (imagePreview.src && imagePreview.src !== window.location.href) {
+                // Upload path
+                imageData = imagePreview.src;
+            }
+            
+            if (!imageData) {
+                alert('Please capture or upload an image first.');
+                return;
+            }
+            
+            // Simple indication that something is happening
+            simplifiedAnalyzeButton.textContent = 'Processing...';
+            simplifiedAnalyzeButton.disabled = true;
+            
+            // Show messages
+            resultsContainer.style.display = 'block';
+            loadingIndicator.style.display = 'block';
+            analysisResults.innerHTML = '';
+            hideError();
+            
+            // Get options
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            const subject = document.getElementById('subject-select').value;
+            
+            // API call
+            fetch('/api/analyze-any-paper', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    image: imageData,
+                    analysis_type: analysisType,
+                    subject: subject
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading
+                loadingIndicator.style.display = 'none';
+                
+                // Reset button
+                simplifiedAnalyzeButton.textContent = 'Simplified Analyze';
+                simplifiedAnalyzeButton.disabled = false;
+                
+                if (data.success !== false) {
+                    // Show success
+                    analysisResults.innerHTML = `
+                        <h4>${data.title || 'Analysis Results'}</h4>
+                        <div class="analysis-content">${data.analysis}</div>
+                    `;
+                } else {
+                    // Show error
+                    showError(data.error || 'Analysis failed');
+                }
+            })
+            .catch(error => {
+                // Reset button
+                simplifiedAnalyzeButton.textContent = 'Simplified Analyze';
+                simplifiedAnalyzeButton.disabled = false;
+                
+                // Show error
+                loadingIndicator.style.display = 'none';
+                showError('Error: ' + error.message);
+            });
+        });
+    });
+</script>
+{% endblock %}
