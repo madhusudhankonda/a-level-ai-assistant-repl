@@ -245,6 +245,10 @@ def snap_any_paper():
 def analyze_any_paper():
     """API endpoint to analyze an uploaded paper image"""
     logger.info("API endpoint /api/analyze-any-paper called")
+    logger.info(f"Request method: {request.method}")
+    logger.info(f"Content-Type: {request.headers.get('Content-Type')}")
+    logger.info(f"User ID: {current_user.id}, Username: {current_user.username}")
+    
     try:
         # Check if user has enough credits
         logger.info(f"User credits: {current_user.credits}, Required: {REQUIRED_CREDITS}")
@@ -272,8 +276,11 @@ def analyze_any_paper():
         analysis_type = data.get('analysis_type', 'question_only')
         subject = data.get('subject', 'mathematics')
         
+        # More detailed logging
         logger.info(f"Analysis type: {analysis_type}, Subject: {subject}")
         logger.info(f"Image data present: {bool(image_data)}")
+        logger.info(f"Image data length: {len(image_data) if image_data else 0}")
+        logger.info(f"Image data type: {type(image_data).__name__}")
         
         if not image_data:
             logger.error("No image data provided in request")

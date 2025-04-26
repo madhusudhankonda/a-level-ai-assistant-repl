@@ -3,6 +3,12 @@
 {% block title %}Direct Upload Test{% endblock %}
 
 {% block content %}
+<style>
+    /* Adding some styles for the loading state */
+    .btn .spinner-border {
+        margin-left: 5px;
+    }
+</style>
 <div class="container mt-4">
     <h1>Direct Image Upload Test</h1>
     <p>This page tests a simplified image upload form with a direct form submission.</p>
@@ -37,7 +43,10 @@
                     </select>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+                <button type="submit" class="btn btn-primary" id="submit-button">
+                    <span class="button-text">Upload and Analyze</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
             </form>
             
             {% if result %}
@@ -57,4 +66,26 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const submitButton = document.getElementById('submit-button');
+        
+        form.addEventListener('submit', function() {
+            // Show the spinner when the form is submitted
+            const buttonText = submitButton.querySelector('.button-text');
+            const spinner = submitButton.querySelector('.spinner-border');
+            
+            buttonText.style.display = 'none';
+            spinner.classList.remove('d-none');
+            submitButton.disabled = true;
+            
+            // Allow form submission to continue
+            return true;
+        });
+    });
+</script>
 {% endblock %}
