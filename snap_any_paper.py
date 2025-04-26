@@ -132,7 +132,14 @@ def process_image_with_openai(image_path, analysis_type, subject):
             }
         
         # Extract and format content from response
-        content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+        if isinstance(response, dict):
+            content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+        else:
+            # Handle if response is not a dictionary (OpenAI response object)
+            try:
+                content = response.choices[0].message.content
+            except (AttributeError, IndexError):
+                content = "Unable to extract content from response"
         
         # Parse content to identify sections
         # This is a simple implementation; enhance as needed
@@ -195,8 +202,9 @@ def log_user_query(user_id, query_type, subject, image_path=None):
             user_id=user_id,
             query_type=query_type,
             subject=subject,
-            query_date=datetime.now(),
-            credits_used=REQUIRED_CREDITS
+            created_at=datetime.now(),
+            credits_used=REQUIRED_CREDITS,
+            response_text="Processed with Snap Any Paper feature"
         )
         
         # Add reference to the image if provided
