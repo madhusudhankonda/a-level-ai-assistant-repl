@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Snap Any Paper - Debug Version{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0"><i class="fas fa-bug"></i> Snap Any Paper - Debug Mode</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Debug version with extensive logging. Upload an image of any A-Level question.</p>
+                    
+                    <div class="mb-3">
+                        <label for="image-upload" class="form-label">Upload a question image:</label>
+                        <input type="file" class="form-control" id="image-upload" accept="image/*">
+                    </div>
+                    
+                    <div id="preview-container" class="my-3 text-center" style="display: none;">
+                        <p>Image Preview:</p>
+                        <img id="image-preview" class="img-fluid border rounded" style="max-height: 300px;" alt="Uploaded image preview">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Analysis Type:</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="analysisType" id="questionOnly" value="question_only" checked>
+                            <label class="form-check-label" for="questionOnly">Question Only (Explanation)</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="analysisType" id="answerFeedback" value="answer_feedback">
+                            <label class="form-check-label" for="answerFeedback">Answer Feedback (Student Work)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="subject-select" class="form-label">Subject:</label>
+                        <select class="form-select" id="subject-select">
+                            <option value="Mathematics" selected>Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology</option>
+                        </select>
+                    </div>
+                    
+                    <button id="analyze-button" class="btn btn-primary" disabled>
+                        <i class="fas fa-robot"></i> Analyze (10 credits)
+                    </button>
+                    
+                    <div id="log-container" class="mt-3 p-2 bg-light border rounded">
+                        <h5>Debug Logs:</h5>
+                        <pre id="debug-log" style="max-height: 200px; overflow-y: auto; font-size: 0.8rem;"></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Container -->
+            <div id="results-container" class="card mt-4" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Analysis Results</h3>
+                </div>
+                <div class="card-body">
+                    <div id="loading-indicator" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Analyzing your question with AI...</p>
+                    </div>
+                    
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <div id="analysis-results"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Debug logging function
+        function log(message) {
+            const logElement = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(`DEBUG: ${message}`);
+        }
+        
+        log('Page loaded');
+        
+        // Get DOM elements
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const analyzeButton = document.getElementById('analyze-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const analysisResults = document.getElementById('analysis-results');
+        
+        log('DOM elements initialized');
+        
+        // Image upload handling
+        let imageData = null;
+        
+        imageUpload.addEventListener('change', function(e) {
+            log('File input changed');
+            
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                log(`File selected: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+                
+                // Check file type
+                if (!file.type.match('image.*')) {
+                    log('Error: File is not an image');
+                    alert('Please select an image file.');
+                    return;
+                }
+                
+                // Read file
+                log('Starting FileReader');
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    imageData = e.target.result;
+                    log(`FileReader loaded image, data URL length: ${imageData.length}`);
+                    
+                    // Display preview
+                    imagePreview.src = imageData;
+                    previewContainer.style.display = 'block';
+                    
+                    // Enable analyze button
+                    analyzeButton.disabled = false;
+                };
+                
+                reader.onerror = function(e) {
+                    log(`FileReader error: ${e}`);
+                    alert('Error reading the file.');
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Analyze button handling
+        analyzeButton.addEventListener('click', function() {
+            log('Analyze button clicked');
+            
+            if (!imageData) {
+                log('Error: No image data available');
+                alert('Please select an image first.');
+                return;
+            }
+            
+            // Get analysis options
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            const subject = document.getElementById('subject-select').value;
+            
+            log(`Analysis type: ${analysisType}`);
+            log(`Subject: ${subject}`);
+            log(`Image data length: ${imageData.length}`);
+            
+            // Show loading
+            resultsContainer.style.display = 'block';
+            loadingIndicator.style.display = 'block';
+            analysisResults.innerHTML = '';
+            errorMessage.style.display = 'none';
+            
+            // Disable button while processing
+            analyzeButton.disabled = true;
+            analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            // Prepare request data
+            const requestData = {
+                image: imageData,
+                analysis_type: analysisType,
+                subject: subject
+            };
+            
+            log('Sending API request to /api/analyze-any-paper');
+            
+            // Send API request
+            fetch('/api/analyze-any-paper', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            })
+            .then(response => {
+                log(`Response received, status: ${response.status}`);
+                if (!response.ok) {
+                    log(`Error response: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                log(`Response data received: ${JSON.stringify(data).substring(0, 100)}...`);
+                
+                // Hide loading
+                loadingIndicator.style.display = 'none';
+                
+                // Reset button
+                analyzeButton.disabled = false;
+                analyzeButton.innerHTML = '<i class="fas fa-robot"></i> Analyze (10 credits)';
+                
+                if (data.success !== false) {
+                    // Show results
+                    log('Analysis successful, displaying results');
+                    analysisResults.innerHTML = `
+                        <h4>${data.title || 'Analysis Results'}</h4>
+                        <div class="analysis-content">${data.analysis}</div>
+                    `;
+                } else {
+                    // Show error
+                    const errorText = data.error || 'Analysis failed';
+                    log(`Error in response: ${errorText}`);
+                    errorMessage.textContent = errorText;
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                log(`Fetch error: ${error.message}`);
+                
+                // Hide loading
+                loadingIndicator.style.display = 'none';
+                
+                // Reset button
+                analyzeButton.disabled = false;
+                analyzeButton.innerHTML = '<i class="fas fa-robot"></i> Analyze (10 credits)';
+                
+                // Show error
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+            });
+        });
+        
+        log('Event listeners attached');
+    });
+</script>
+{% endblock %}

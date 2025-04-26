@@ -301,6 +301,12 @@ def snap_any_paper():
     import time
     # Add current timestamp to ensure the template is not cached
     return render_template('snap_any_paper_minimal.html', version=int(time.time()))
+    
+@snap_paper_bp.route('/snap-any-paper-debug')
+@login_required
+def snap_any_paper_debug():
+    """Render the debug version of Snap Any Paper with enhanced logging"""
+    return render_template('snap_any_paper_debug.html')
 
 @snap_paper_bp.route('/basic-test')
 @login_required
