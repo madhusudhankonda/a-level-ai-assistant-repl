@@ -41,26 +41,74 @@ def allowed_file(filename):
 def save_temp_image(image_data):
     """Save image data to temporary file and return the path"""
     try:
+        logger.info("="*50)
+        logger.info("SAVE TEMP IMAGE FUNCTION DEBUGGING")
+        logger.info("="*50)
+        logger.info(f"Image data type: {type(image_data)}")
+        logger.info(f"Image data length: {len(image_data) if image_data else 0}")
+        
+        if not image_data:
+            logger.error("Image data is empty or None")
+            return None
+            
+        # Log the first 100 chars to see what we're dealing with
+        sample = image_data[:100] if isinstance(image_data, str) else "Non-string data"
+        logger.info(f"First 100 chars of image_data: {sample}")
+        
         # Check if it's a data URL
-        if image_data.startswith('data:image'):
+        if isinstance(image_data, str) and image_data.startswith('data:image'):
+            logger.info("Detected data URL format, processing as base64")
             # Extract the base64 part
             image_data = re.sub('^data:image/.+;base64,', '', image_data)
-            image_data = base64.b64decode(image_data)
-            img = Image.open(BytesIO(image_data))
+            try:
+                image_data = base64.b64decode(image_data)
+                logger.info(f"Successfully decoded base64 data, length: {len(image_data)}")
+            except Exception as b64_error:
+                logger.error(f"Base64 decoding error: {str(b64_error)}")
+                return None
+                
+            try:
+                img = Image.open(BytesIO(image_data))
+                logger.info(f"Successfully opened image from bytes, format: {img.format}, size: {img.size}")
+            except Exception as img_error:
+                logger.error(f"Error opening image from bytes: {str(img_error)}")
+                return None
         else:
-            # Handle file upload
-            img = Image.open(BytesIO(image_data))
+            # Handle direct binary data
+            logger.info("Not a data URL, treating as direct binary image data")
+            try:
+                if isinstance(image_data, str):
+                    logger.warning("Data is string but not a data URL, attempting to convert to bytes")
+                    try:
+                        # Last resort - try to decode as base64 anyway
+                        image_data = base64.b64decode(image_data)
+                    except:
+                        logger.error("Failed to treat string as base64")
+                        return None
+                        
+                img = Image.open(BytesIO(image_data))
+                logger.info(f"Successfully opened image from bytes, format: {img.format}, size: {img.size}")
+            except Exception as img_error:
+                logger.error(f"Error opening image from binary: {str(img_error)}")
+                return None
         
         # Create a unique filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"snap_any_paper_{timestamp}.jpg"
         file_path = os.path.join(TEMP_FOLDER, filename)
+        logger.info(f"Created temp file path: {file_path}")
         
         # Save the image
-        img.save(file_path, "JPEG")
-        return file_path
+        try:
+            img.save(file_path, "JPEG")
+            logger.info(f"Successfully saved image to {file_path}")
+            return file_path
+        except Exception as save_error:
+            logger.error(f"Error saving image to file: {str(save_error)}")
+            return None
     except Exception as e:
-        logger.error(f"Error saving image: {str(e)}")
+        logger.error(f"Error in save_temp_image: {str(e)}")
+        logger.exception("Detailed traceback:")
         return None
 
 def process_image_with_openai(image_path, analysis_type, subject):
@@ -312,10 +360,18 @@ def basic_test():
 @login_required
 def analyze_any_paper():
     """API endpoint to analyze an uploaded paper image"""
+    logger.info("="*50)
+    logger.info("API ENDPOINT DETAILED DEBUGGING")
+    logger.info("="*50)
     logger.info("API endpoint /api/analyze-any-paper called")
     logger.info(f"Request method: {request.method}")
     logger.info(f"Content-Type: {request.headers.get('Content-Type')}")
     logger.info(f"User ID: {current_user.id}, Username: {current_user.username}")
+    logger.info(f"All request headers: {dict(request.headers)}")
+    logger.info(f"Request args: {request.args}")
+    logger.info(f"Request form: {request.form}")
+    logger.info(f"Request is JSON: {request.is_json}")
+    logger.info(f"Request content length: {request.content_length}")
     
     try:
         # Check if user has enough credits

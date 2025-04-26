@@ -265,17 +265,25 @@
         
         // Analyze button
         analyzeButton.addEventListener('click', () => {
+            console.log("DEBUG: Analyze button clicked");
+            
             // Get current image data
             let imageData = null;
             const activeTab = document.querySelector('.nav-tabs .active').id;
+            console.log("DEBUG: Active tab is", activeTab);
             
             if (activeTab === 'camera-tab') {
+                console.log("DEBUG: Camera tab active, captured image exists:", !!capturedImage);
                 imageData = capturedImage;
             } else {
+                console.log("DEBUG: Upload tab active, image src exists:", !!imagePreview.src);
                 if (imagePreview.src && imagePreview.src !== window.location.href) {
                     imageData = imagePreview.src;
+                    console.log("DEBUG: Using image from preview");
                 }
             }
+            
+            console.log("DEBUG: Final image data exists:", !!imageData);
             
             if (!imageData) {
                 alert('Please capture or upload an image first.');
@@ -293,19 +301,32 @@
             hideError();
             
             // Send API request
+            console.log("DEBUG: Preparing to send API request to /api/analyze-any-paper");
+            console.log("DEBUG: Analysis type:", analysisType);
+            console.log("DEBUG: Subject:", subject);
+            console.log("DEBUG: Image data length:", imageData ? imageData.substring(0, 50) + "..." : "none");
+            
+            const requestData = {
+                image: imageData,
+                analysis_type: analysisType,
+                subject: subject
+            };
+            
+            console.log("DEBUG: Sending request now...");
+            
             fetch('/api/analyze-any-paper', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    image: imageData,
-                    analysis_type: analysisType,
-                    subject: subject
-                })
+                body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log("DEBUG: Response received, status:", response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log("DEBUG: Response data received:", data);
                 // Hide loading
                 loadingIndicator.style.display = 'none';
                 
@@ -321,7 +342,10 @@
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error in fetch operation:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
                 loadingIndicator.style.display = 'none';
                 showError('Error: ' + error.message);
             });
