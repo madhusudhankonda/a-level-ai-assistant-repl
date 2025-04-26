@@ -108,7 +108,7 @@
 
                     <!-- Analysis button -->
                     <div class="text-center mt-4">
-                        <button id="analyze-button" class="btn btn-lg btn-primary" disabled>
+                        <button id="analyze-button" class="btn btn-lg btn-primary">
                             <i class="fas fa-brain"></i> Analyze Question
                         </button>
                     </div>
@@ -239,19 +239,45 @@
         imageUpload.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
+                // Display file loading message
+                previewContainer.style.display = 'block';
+                imagePreview.src = '';  // Clear previous preview
+                imagePreview.alt = 'Loading image...';
+                
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagePreview.src = e.target.result;
-                    uploadedImage = e.target.result;
-                    previewContainer.style.display = 'block';
-                    analyzeButton.disabled = false;
-                    console.log('Image loaded, analyze button enabled');
+                
+                // Set up error handling
+                reader.onerror = (error) => {
+                    console.error('Error reading file:', error);
+                    showError('Error loading image. Please try a different file.');
+                    previewContainer.style.display = 'none';
+                    uploadedImage = null;
                 };
+                
+                reader.onload = (e) => {
+                    try {
+                        imagePreview.src = e.target.result;
+                        imagePreview.alt = 'Uploaded image preview';
+                        uploadedImage = e.target.result;
+                        
+                        // Always ensure the button is enabled
+                        analyzeButton.disabled = false;
+                        
+                        console.log('Image loaded successfully, analyze button enabled');
+                    } catch (err) {
+                        console.error('Error processing image:', err);
+                        showError('Error processing image. Please try a different file.');
+                        previewContainer.style.display = 'none';
+                        uploadedImage = null;
+                    }
+                };
+                
+                // Read the file as data URL
                 reader.readAsDataURL(file);
             } else {
+                // No file selected
                 previewContainer.style.display = 'none';
                 uploadedImage = null;
-                analyzeButton.disabled = true;
             }
         });
 
@@ -369,23 +395,31 @@
         const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
         tabEls.forEach(tabEl => {
             tabEl.addEventListener('shown.bs.tab', event => {
+                console.log('Tab switched to:', event.target.id);
+                
                 // Reset state when switching tabs
                 if (event.target.id === 'camera-tab') {
-                    if (uploadedImage) {
-                        analyzeButton.disabled = capturedImage ? false : true;
-                    }
+                    // When switching to camera tab
+                    analyzeButton.disabled = !capturedImage; // Only disable if no captured image
+                    console.log('Camera tab: button ' + (capturedImage ? 'enabled' : 'disabled'));
                 } else if (event.target.id === 'upload-tab') {
+                    // Stop camera when switching to upload tab
                     if (stream) {
                         stream.getTracks().forEach(track => track.stop());
                         videoElement.srcObject = null;
                         stream = null;
                     }
+                    
+                    // Reset camera UI
                     startCameraButton.style.display = 'inline-block';
                     capturePhotoButton.style.display = 'none';
                     retakePhotoButton.style.display = 'none';
                     canvasElement.style.display = 'none';
                     videoElement.style.display = 'block';
-                    analyzeButton.disabled = uploadedImage ? false : true;
+                    
+                    // Only disable if no uploaded image
+                    analyzeButton.disabled = !uploadedImage;
+                    console.log('Upload tab: button ' + (uploadedImage ? 'enabled' : 'disabled'));
                 }
             });
         });
