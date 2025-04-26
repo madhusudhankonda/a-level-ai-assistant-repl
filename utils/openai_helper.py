@@ -29,6 +29,103 @@ openai = OpenAI(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def check_openai_key():
+    """
+    Check if OpenAI API key is configured
+    
+    Returns:
+        str: The API key if configured, otherwise None
+    """
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        logger.error("OpenAI API key is not configured")
+        return None
+    return api_key
+
+def call_openai_with_retry(model="gpt-4o", messages=None, max_tokens=1000, temperature=0.7, detailed_error=False):
+    """
+    Call OpenAI API with retry logic for handling rate limits and timeouts
+    
+    Args:
+        model (str): The model to use for the completion
+        messages (list): The messages to send to the API
+        max_tokens (int): Maximum number of tokens to generate
+        temperature (float): Temperature for the completion
+        detailed_error (bool): Whether to return detailed error messages
+    
+    Returns:
+        dict: The API response or error details
+    """
+    if not messages:
+        return {"error": "No messages provided"}
+    
+    # Check API key
+    api_key = check_openai_key()
+    if not api_key:
+        return {"error": "OpenAI API key is not configured"}
+    
+    # Retry parameters
+    max_retries = 3
+    retry_count = 0
+    backoff_time = 2.0  # Initial backoff time in seconds
+    
+    while retry_count < max_retries:
+        try:
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
+            response = openai.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            # Convert to dict for consistency
+            return response.model_dump()
+            
+        except Exception as e:
+            retry_count += 1
+            error_message = str(e).lower()
+            error_type = type(e).__name__
+            
+            # Log the error
+            logger.error(f"OpenAI API error ({error_type}): {error_message}")
+            
+            # Check for retryable errors
+            retryable = (
+                "rate limit" in error_message or 
+                "ratelimit" in error_message or
+                "timeout" in error_message or
+                "capacity" in error_message or
+                "overloaded" in error_message or
+                "internal server error" in error_message or
+                "503" in error_message or
+                "502" in error_message
+            )
+            
+            if retry_count < max_retries and retryable:
+                logger.warning(f"Retryable error, attempt {retry_count}/{max_retries}. Retrying in {backoff_time}s...")
+                time.sleep(backoff_time)
+                backoff_time *= 2  # Exponential backoff
+            else:
+                # Either non-retryable or max retries exceeded
+                if retry_count >= max_retries:
+                    logger.error(f"Maximum retries ({max_retries}) exceeded")
+                else:
+                    logger.error(f"Non-retryable error")
+                
+                if detailed_error:
+                    return {
+                        "error": f"OpenAI API error: {error_message}",
+                        "error_type": error_type,
+                        "retryable": retryable,
+                        "attempts": retry_count
+                    }
+                else:
+                    return {"error": "Failed to generate response from OpenAI API"}
+    
+    # Should not reach here, but just in case
+    return {"error": "Unknown error in OpenAI API call"}
+
 def test_openai_connection():
     """
     Test the OpenAI connection with a simple API check
