@@ -121,15 +121,20 @@
 
                     <!-- Analysis button -->
                     <div class="text-center mt-4">
-                        <button id="analyze-button" class="btn btn-lg btn-primary">
+                        <button id="analyze-button" class="btn btn-lg btn-primary" onclick="handleAnalyzeDirectClick()">
                             <span class="button-text"><i class="fas fa-brain"></i> Analyze Question</span>
                             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
                         
-                        <!-- Simple Test Button (for debugging) -->
-                        <button id="simple-test-button" class="btn btn-sm btn-secondary ms-2">
-                            Test Connection
+                        <!-- Simplified Button (direct onclick) -->
+                        <button id="simplified-analyze" class="btn btn-success ms-2" onclick="analyzeWithSimpleMethod()">
+                            Simplified Analyze
                         </button>
+                    </div>
+                    
+                    <!-- Extra debug info -->
+                    <div class="mt-3">
+                        <small class="text-muted">Note: If the primary button doesn't work, try the "Simplified Analyze" button.</small>
                     </div>
 
                     <!-- Results section (hidden initially) -->
@@ -188,6 +193,150 @@
 
 {% block extra_js %}
 <script>
+    // Direct click handlers - defined outside of event listeners to 
+    // ensure they're globally accessible for onclick attributes
+    function handleAnalyzeDirectClick() {
+        console.log('Direct analyze click handler called at', new Date().toISOString());
+        
+        // Get current form data
+        const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
+        const imageData = activeTab === 'camera-tab' ? 
+            (window.capturedImage || null) : 
+            (document.getElementById('image-preview').src || null);
+        
+        if (!imageData) {
+            alert('Please capture or upload an image first.');
+            return;
+        }
+        
+        // Get selected options
+        const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+        const subject = document.getElementById('subject-select').value;
+        
+        // Show loading state
+        document.getElementById('results-container').style.display = 'block';
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('analysis-results').innerHTML = '';
+        
+        // Prepare request data
+        const requestData = {
+            image: imageData,
+            analysis_type: analysisType,
+            subject: subject
+        };
+        
+        // Send API request
+        fetch('/api/analyze-any-paper', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            // Hide loading indicator
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            if (data.success !== false) {
+                // Show results
+                document.getElementById('analysis-results').innerHTML = `
+                    <h4>${data.title || 'Analysis Results'}</h4>
+                    <div class="analysis-content">${data.analysis}</div>
+                `;
+            } else {
+                // Show error
+                document.getElementById('error-message').textContent = data.error || 'Analysis failed';
+                document.getElementById('error-message').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('loading-indicator').style.display = 'none';
+            document.getElementById('error-message').textContent = 'Error: ' + error.message;
+            document.getElementById('error-message').style.display = 'block';
+        });
+    }
+    
+    function analyzeWithSimpleMethod() {
+        console.log('Simple analyze method called at', new Date().toISOString());
+        
+        // Simplified detection of image data
+        let imageData = null;
+        if (document.getElementById('canvas').style.display !== 'none') {
+            // Camera path
+            imageData = document.getElementById('canvas').toDataURL('image/jpeg');
+        } else if (document.getElementById('image-preview').src) {
+            // Upload path
+            imageData = document.getElementById('image-preview').src;
+        }
+        
+        if (!imageData) {
+            alert('Please capture or upload an image first.');
+            return;
+        }
+        
+        // Simple indication that something is happening
+        const button = document.getElementById('simplified-analyze');
+        button.textContent = 'Processing...';
+        button.disabled = true;
+        
+        // Show messages
+        document.getElementById('results-container').style.display = 'block';
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('analysis-results').innerHTML = '';
+        document.getElementById('error-message').style.display = 'none';
+        
+        // Get options directly from DOM
+        const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+        const subject = document.getElementById('subject-select').value;
+        
+        // Make the API call using fetch
+        fetch('/api/analyze-any-paper', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                image: imageData,
+                analysis_type: analysisType,
+                subject: subject
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading indicator
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            // Reset button
+            button.textContent = 'Simplified Analyze';
+            button.disabled = false;
+            
+            if (data.success !== false) {
+                // Show success
+                document.getElementById('analysis-results').innerHTML = `
+                    <h4>${data.title || 'Analysis Results'}</h4>
+                    <div class="analysis-content">${data.analysis}</div>
+                `;
+            } else {
+                // Show error
+                document.getElementById('error-message').textContent = data.error || 'Analysis failed';
+                document.getElementById('error-message').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            // Reset button
+            button.textContent = 'Simplified Analyze';
+            button.disabled = false;
+            
+            // Show error
+            document.getElementById('loading-indicator').style.display = 'none';
+            document.getElementById('error-message').textContent = 'Error: ' + error.message;
+            document.getElementById('error-message').style.display = 'block';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // DOM elements
         const videoElement = document.getElementById('video');
@@ -204,8 +353,9 @@
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMessage = document.getElementById('error-message');
         
-        let capturedImage = null;
-        let uploadedImage = null;
+        // Make these variables accessible globally for the direct click handlers
+        window.capturedImage = null;
+        window.uploadedImage = null;
         let stream = null;
 
         // Start camera
@@ -222,7 +372,7 @@
                 startCameraButton.style.display = 'none';
                 capturePhotoButton.style.display = 'inline-block';
                 analyzeButton.disabled = true;
-                capturedImage = null;
+                window.capturedImage = null;
             } catch (err) {
                 showError('Camera access denied or not available. Please check permissions or try uploading an image instead.');
                 console.error('Error accessing camera:', err);
@@ -236,7 +386,7 @@
             canvasElement.height = videoElement.videoHeight;
             context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
             
-            capturedImage = canvasElement.toDataURL('image/jpeg');
+            window.capturedImage = canvasElement.toDataURL('image/jpeg');
             videoElement.style.display = 'none';
             canvasElement.style.display = 'block';
             capturePhotoButton.style.display = 'none';
@@ -251,7 +401,7 @@
             capturePhotoButton.style.display = 'inline-block';
             retakePhotoButton.style.display = 'none';
             analyzeButton.disabled = true;
-            capturedImage = null;
+            window.capturedImage = null;
         });
 
         // Upload image preview
@@ -431,7 +581,7 @@
             
             // Get current tab
             const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
-            const imageData = activeTab === 'camera-tab' ? capturedImage : uploadedImage;
+            const imageData = activeTab === 'camera-tab' ? window.capturedImage : window.uploadedImage;
             
             console.log('Active tab:', activeTab);
             console.log('Image data available:', !!imageData);
@@ -585,7 +735,7 @@
             
             // Get current tab
             const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
-            const imageData = activeTab === 'camera-tab' ? capturedImage : uploadedImage;
+            const imageData = activeTab === 'camera-tab' ? window.capturedImage : window.uploadedImage;
             
             console.log('Active tab:', activeTab);
             console.log('Image data available:', !!imageData);
