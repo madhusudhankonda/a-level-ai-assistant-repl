@@ -138,22 +138,42 @@ def create_simple_question(question_number, output_path, topic="Mathematics", tr
         values = []
         num_placeholders = question_template.count("{}")
         
-        # Use question_number to seed the randomness for more diversity
-        random.seed(question_number * 31 + hash(output_path) % 997)
+        # Use a combination of factors to ensure unique seeds for each question
+        # Include question_number, output_path hash, and current timestamp to ensure uniqueness
+        seed_value = question_number * 31 + hash(output_path) % 997 + int(datetime.now().timestamp()) % 10000
+        random.seed(seed_value)
         
         for i in range(num_placeholders):
+            # Use both i and question number in the value generation to create more unique patterns
+            # Each placeholder gets a different range of values
+            multiplier = (i + 1) * (question_number % 3 + 1)
+            
             if transform_level <= 2:
-                # Simple numbers for lower transform levels
-                values.append(random.randint(1, 10))
+                # Simple numbers for lower transform levels, but with more variety
+                if i % 3 == 0:  # First value in each triplet
+                    values.append(random.randint(1, 10 * multiplier))
+                elif i % 3 == 1:  # Second value
+                    values.append(random.randint(-5 * multiplier, 5 * multiplier))
+                else:  # Third value
+                    values.append(random.choice([2, 3, 5, 7, 11, 13]) * multiplier)
             elif transform_level <= 4:
                 # More complex numbers for higher transform levels
-                values.append(random.randint(-20, 20))
-            else:
-                # Potentially fractional or more complex for highest level
-                if random.random() < 0.3:  # 30% chance of fraction
-                    values.append(f"{random.randint(1, 5)}/{random.randint(2, 6)}")
+                if i % 3 == 0:
+                    values.append(random.randint(-20 * multiplier, 20 * multiplier))
+                elif i % 3 == 1:
+                    values.append(round(random.uniform(-10, 10) * multiplier, 1))
                 else:
-                    values.append(random.randint(-30, 30))
+                    values.append(random.choice([-7, -5, -3, -2, -1, 1, 2, 3, 5, 7]) * multiplier)
+            else:
+                # Most complex numbers including varied decimals and fractions
+                if i % 4 == 0:
+                    values.append(round(random.uniform(-30, 30) * multiplier, 1))
+                elif i % 4 == 1:
+                    values.append(round(random.uniform(-15, 15) * multiplier, 2))
+                elif i % 4 == 2 and random.random() < 0.4:  # 40% chance of fraction
+                    values.append(f"{random.randint(1, 7)}/{random.randint(2, 9)}")
+                else:
+                    values.append(random.choice([-11, -9, -7, -5, -3, -1, 1, 3, 5, 7, 9, 11]) * multiplier)
         
         # Format the question with random values
         question_text = question_template.format(*values)
@@ -538,8 +558,11 @@ def generate_simple_mock_paper(source_paper_id, mock_paper_name, num_questions=5
         domain = os.environ.get('REPLIT_DEV_DOMAIN') or os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
         
         for question_number in range(1, num_questions + 1):
-            # Select a random topic
-            topic = random.choice(math_topics)
+            # Get available topics from math_topics defined in the create_simple_question function
+            # We'll just use the default set to distribute topic areas across questions
+            available_topics = ["Algebra", "Calculus", "Trigonometry", "Vectors", "Functions", "Probability"]
+            topic_index = (question_number + hash(str(mock_paper.id))) % len(available_topics)
+            topic = available_topics[topic_index]
             
             # Generate unique filenames
             q_filename = f"mock_q{question_number}_{uuid.uuid4().hex}.png"
