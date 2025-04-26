@@ -132,13 +132,28 @@ def process_image_with_openai(image_path, analysis_type, subject):
             }
         
         # Extract and format content from response
-        if isinstance(response, dict):
-            content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+        if response is None:
+            content = "No response received from AI service."
+        elif isinstance(response, dict):
+            # Handle dictionary response
+            choices = response.get("choices", [])
+            if choices and len(choices) > 0:
+                if isinstance(choices[0], dict):
+                    message = choices[0].get("message", {})
+                    if isinstance(message, dict):
+                        content = message.get("content", "")
+                    else:
+                        content = str(message)
+                else:
+                    content = str(choices[0])
+            else:
+                content = "No content in AI response."
         else:
             # Handle if response is not a dictionary (OpenAI response object)
             try:
                 content = response.choices[0].message.content
-            except (AttributeError, IndexError):
+            except (AttributeError, IndexError) as e:
+                logger.error(f"Error extracting content: {str(e)}")
                 content = "Unable to extract content from response"
         
         # Parse content to identify sections

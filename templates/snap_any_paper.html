@@ -245,6 +245,7 @@
                     uploadedImage = e.target.result;
                     previewContainer.style.display = 'block';
                     analyzeButton.disabled = false;
+                    console.log('Image loaded, analyze button enabled');
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -256,9 +257,14 @@
 
         // Analyze button
         analyzeButton.addEventListener('click', async () => {
+            console.log('Analyze button clicked');
+            
             // Get current tab
             const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
             const imageData = activeTab === 'camera-tab' ? capturedImage : uploadedImage;
+            
+            console.log('Active tab:', activeTab);
+            console.log('Image data available:', !!imageData);
             
             if (!imageData) {
                 showError('Please capture or upload an image first.');
