@@ -200,13 +200,27 @@ def create_simple_question(question_number, output_path, topic="Mathematics", tr
         if current_line:
             lines.append(current_line)
             
-        # Draw each line of the question with slight position variations
+        # Draw each line of the question with slight position and color variations
         y_pos = 120 + random.randint(-10, 10)
         line_spacing = 30 + random.randint(-2, 2)
         
-        for line in lines:
+        # Create a slightly unique base color for this question (very subtle variation)
+        # This helps make each question visually unique while still being readable
+        base_r = random.randint(0, 10)  # Very subtle red component
+        base_g = random.randint(0, 10)  # Very subtle green component
+        base_b = random.randint(10, 40)  # Slightly stronger blue component for better readability
+        
+        for i, line in enumerate(lines):
             x_offset = random.randint(-3, 3)
-            draw.text((30 + x_offset, y_pos), line, fill=(0, 0, 0), font=math_font)
+            # Slight color variation for each line
+            r_var = base_r + random.randint(-2, 2)
+            g_var = base_g + random.randint(-2, 2)
+            b_var = base_b + random.randint(-2, 2)
+            color = (max(0, min(r_var, 50)), max(0, min(g_var, 50)), max(0, min(b_var, 50)))
+            
+            # Use different x-positions for odd and even lines (like a subtle indent pattern)
+            x_pos = 30 + x_offset + (5 if i % 2 == 1 else 0)
+            draw.text((x_pos, y_pos), line, fill=color, font=math_font)
             y_pos += line_spacing
         
         # Add marks based on transform level
@@ -374,20 +388,24 @@ def create_simple_mark_scheme(question_number, output_path, topic="Mathematics",
         if topic not in math_topics:
             topic = random.choice(list(math_topics.keys()))
         
-        # Use question_number to seed the randomness for consistency with the question
-        random.seed(question_number * 31 + hash(output_path) % 997)
+        # Use a combination of factors to ensure unique seeds for each mark scheme
+        # While keeping some consistency with the question
+        seed_value = question_number * 37 + hash(output_path) % 997 + int(datetime.now().timestamp()) % 10000
+        random.seed(seed_value)
         
         # Select a mark scheme template based on question number
         template_sets = math_topics[topic]
         template_index = (question_number + hash(topic)) % len(template_sets)
         mark_scheme_templates = template_sets[template_index]
         
-        # Generate random values for the template
-        x1 = random.uniform(-5, 5)
-        x2 = random.uniform(-5, 5)
-        x3 = random.uniform(0, 5) 
-        x4 = random.uniform(-3, 3)
-        x5 = random.uniform(1, 10)
+        # Generate random values with more variety for the template
+        # Use the question_number to influence the value ranges
+        multiplier = question_number % 3 + 1
+        x1 = random.uniform(-5 * multiplier, 5 * multiplier)
+        x2 = random.uniform(-5 * multiplier, 5 * multiplier)
+        x3 = random.uniform(0, 5 * multiplier) 
+        x4 = random.uniform(-3 * multiplier, 3 * multiplier)
+        x5 = random.uniform(1 * multiplier, 10 * multiplier)
         
         # Marks based on transform level
         marks = transform_level + 1
@@ -402,6 +420,11 @@ def create_simple_mark_scheme(question_number, output_path, topic="Mathematics",
         # Draw each line of the mark scheme with slight position variations
         y_pos = 120 + random.randint(-10, 10)
         line_spacing = 30 + random.randint(-2, 2)
+        
+        # Create a slightly unique base color for this mark scheme (very subtle variation)
+        base_r = random.randint(0, 10)  # Very subtle red component
+        base_g = random.randint(0, 10)  # Very subtle green component
+        base_b = random.randint(10, 40)  # Slightly stronger blue component for better readability
         
         for i in range(points_to_show):
             template = mark_scheme_templates[i]
@@ -434,8 +457,47 @@ def create_simple_mark_scheme(question_number, output_path, topic="Mathematics",
                         line = template.replace("{:.1f}", "?").replace("{:.2f}", "?").replace("{:.3f}", "?").replace("{:.4f}", "?")
             else:
                 line = template
+            
+            # Apply color variation based on line type (marking indicators M1, A1, B1, C1)
+            if line.startswith("M1:"):
+                # Method marks slightly bluer
+                r_var = base_r 
+                g_var = base_g
+                b_var = base_b + 10
+            elif line.startswith("A1:"):
+                # Accuracy marks slightly redder
+                r_var = base_r + 10
+                g_var = base_g
+                b_var = base_b
+            elif line.startswith("B1:"):
+                # Bonus marks slightly greener
+                r_var = base_r
+                g_var = base_g + 10
+                b_var = base_b
+            elif line.startswith("C1:"):
+                # Communication marks purple-ish
+                r_var = base_r + 5
+                g_var = base_g
+                b_var = base_b + 5
+            else:
+                # Default color
+                r_var = base_r + random.randint(-2, 2)
+                g_var = base_g + random.randint(-2, 2)
+                b_var = base_b + random.randint(-2, 2)
                 
-            draw.text((30 + x_offset, y_pos), line, fill=(0, 0, 0), font=regular_font)
+            # Ensure color values are in valid range
+            color = (max(0, min(r_var, 50)), max(0, min(g_var, 50)), max(0, min(b_var, 50)))
+            
+            # Use slightly different indentation for different mark types
+            indent = 0
+            if line.startswith("M1:"):
+                indent = 0
+            elif line.startswith("A1:"):
+                indent = 5
+            elif line.startswith("B1:") or line.startswith("C1:"):
+                indent = 10
+                
+            draw.text((30 + x_offset + indent, y_pos), line, fill=color, font=regular_font)
             y_pos += line_spacing
         
         # Add the total marks line
@@ -508,7 +570,7 @@ def generate_simple_mock_paper(source_paper_id, mock_paper_name, num_questions=5
             return {"success": False, "error": f"Source paper ID {source_paper_id} not found"}
         
         # Topic selection for questions
-        math_topics = ["Algebra", "Calculus", "Trigonometry", "Vectors"]
+        math_topics = ["Algebra", "Calculus", "Trigonometry", "Vectors", "Functions", "Probability"]
         
         # Find or create the target subject
         subject = Subject.query.filter_by(name=target_subject).first()
@@ -558,11 +620,10 @@ def generate_simple_mock_paper(source_paper_id, mock_paper_name, num_questions=5
         domain = os.environ.get('REPLIT_DEV_DOMAIN') or os.environ.get('REPLIT_DOMAINS', 'localhost:5000').split(',')[0]
         
         for question_number in range(1, num_questions + 1):
-            # Get available topics from math_topics defined in the create_simple_question function
-            # We'll just use the default set to distribute topic areas across questions
-            available_topics = ["Algebra", "Calculus", "Trigonometry", "Vectors", "Functions", "Probability"]
-            topic_index = (question_number + hash(str(mock_paper.id))) % len(available_topics)
-            topic = available_topics[topic_index]
+            # Use the math_topics list we defined above for consistent topic selection
+            # This distributes topics evenly across questions based on question number and paper ID
+            topic_index = (question_number + hash(str(mock_paper.id))) % len(math_topics)
+            topic = math_topics[topic_index]
             
             # Generate unique filenames
             q_filename = f"mock_q{question_number}_{uuid.uuid4().hex}.png"
