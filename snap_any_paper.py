@@ -242,6 +242,72 @@ def snap_any_paper():
     # Add current timestamp to ensure the template is not cached
     return render_template('snap_any_paper.html', version=int(time.time()))
 
+@snap_paper_bp.route('/basic-test')
+@login_required
+def basic_test():
+    """A super basic test page with minimal JavaScript for debugging"""
+    from flask import render_template_string
+    
+    # Inline HTML template with very basic JavaScript
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Basic Test</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            button { 
+                padding: 10px; 
+                margin: 5px; 
+                background: #4CAF50; 
+                color: white; 
+                border: none; 
+                cursor: pointer; 
+            }
+            #result { 
+                margin-top: 20px; 
+                padding: 10px; 
+                border: 1px solid #ddd; 
+                background: #f9f9f9; 
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Basic JavaScript Test</h1>
+        <p>This is a minimal test page to check if JavaScript is working properly.</p>
+        
+        <button id="test1">Simple Button Test</button>
+        <button id="test2">Alert Test</button>
+        <button id="test3">Show Current Time</button>
+        
+        <div id="result">Results will appear here.</div>
+        
+        <script>
+            // Check if JavaScript is running at all
+            document.getElementById('result').textContent = 'JavaScript is running. Page loaded at: ' + new Date().toString();
+            
+            // Super simple button test
+            document.getElementById('test1').onclick = function() {
+                document.getElementById('result').textContent = 'Button 1 clicked at: ' + new Date().toString();
+            };
+            
+            // Alert test
+            document.getElementById('test2').onclick = function() {
+                alert('This is a test alert');
+                document.getElementById('result').textContent = 'Alert button clicked at: ' + new Date().toString();
+            };
+            
+            // Show time test
+            document.getElementById('test3').onclick = function() {
+                document.getElementById('result').textContent = 'Current time: ' + new Date().toString();
+            };
+        </script>
+    </body>
+    </html>
+    """
+    
+    return render_template_string(html)
+
 @snap_paper_bp.route('/api/analyze-any-paper', methods=['POST'])
 @login_required
 def analyze_any_paper():
