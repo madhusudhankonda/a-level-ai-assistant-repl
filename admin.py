@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from models import db, QuestionPaper, Question, Subject, ExamBoard, PaperCategory, QuestionTopic, Explanation, UserQuery, StudentAnswer, UserFeedback
 from flask_login import login_required, current_user
 from generate_mock_questions import generate_mock_paper
+from generate_simple_mock import generate_simple_mock_paper
 
 # Create admin blueprint
 admin_bp = Blueprint('admin', __name__, template_folder='templates/admin')
@@ -305,22 +306,30 @@ def generate_mock(paper_id):
         # Get the current paper's question count
         current_question_count = Question.query.filter_by(paper_id=paper_id).count()
         
-        # Check if the paper has questions before attempting to generate
+        # Choose which generation method to use based on paper contents
         if current_question_count == 0:
-            current_app.logger.error(f"Cannot generate mock paper: No questions found in paper ID {paper_id}")
-            flash(f"Cannot generate mock questions: The source paper (ID: {paper_id}) doesn't have any questions. Please first add questions to this paper or select a different paper with existing questions.", 'danger')
-            return redirect(url_for('admin.manage_questions', paper_id=paper_id))
-
-        # Generate the mock paper
-        current_app.logger.info(f"Generating mock paper based on paper ID {paper_id} with {current_question_count} questions")
-        result = generate_mock_paper(
-            source_paper_id=paper_id,
-            mock_paper_name=mock_paper_name,
-            num_questions=num_questions,
-            transform_level=transform_level,
-            include_mark_scheme=include_mark_scheme,
-            source_mark_scheme_paper_id=ms_paper_id
-        )
+            current_app.logger.info(f"Using simple generation for paper ID {paper_id} because it has no questions")
+            flash(f"Using simple question generation mode because the paper doesn't have any source questions.", 'info')
+            
+            # Use the simple generator instead
+            result = generate_simple_mock_paper(
+                source_paper_id=paper_id,
+                mock_paper_name=mock_paper_name,
+                num_questions=num_questions,
+                transform_level=transform_level,
+                include_mark_scheme=include_mark_scheme
+            )
+        else:
+            # Use the original generator with source questions
+            current_app.logger.info(f"Generating mock paper based on paper ID {paper_id} with {current_question_count} questions")
+            result = generate_mock_paper(
+                source_paper_id=paper_id,
+                mock_paper_name=mock_paper_name,
+                num_questions=num_questions,
+                transform_level=transform_level,
+                include_mark_scheme=include_mark_scheme,
+                source_mark_scheme_paper_id=ms_paper_id
+            )
         
         if result['success']:
             current_app.logger.info(f"Successfully generated mock paper: {result}")

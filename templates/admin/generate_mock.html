@@ -65,8 +65,12 @@
                 {% endif %}
                 
                 {% if current_paper_question_count is defined and current_paper_question_count == 0 %}
-                    <div class="alert alert-warning">
-                        <strong>Quick Fix Options:</strong>
+                    <div class="alert alert-info">
+                        <strong>Empty Paper Notice:</strong> 
+                        <p>This paper doesn't have any questions, but you can still generate mock questions using our simple mode. 
+                        The system will create generic math problems instead of deriving them from existing questions.</p>
+                        
+                        <p><strong>Options:</strong></p>
                         <ul class="mb-0 mt-2">
                             <li><a href="{{ url_for('admin.add_question', paper_id=paper.id) }}" class="btn btn-sm btn-primary mt-1">
                                 <i class="fas fa-plus"></i> Add Questions Manually
@@ -74,6 +78,9 @@
                             <li><a href="#" onclick="runAddQuestionsScript({{ paper.id }}); return false;" class="btn btn-sm btn-secondary mt-2">
                                 <i class="fas fa-magic"></i> Auto-Generate Basic Questions
                             </a></li>
+                            <li class="mt-2">
+                                <i class="fas fa-info-circle"></i> Or just proceed with mock generation to get synthetic questions
+                            </li>
                         </ul>
                     </div>
                 {% endif %}
