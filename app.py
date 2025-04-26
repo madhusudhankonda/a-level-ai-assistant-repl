@@ -62,11 +62,13 @@ from admin import admin_bp
 from user import user_bp
 from auth import auth_bp
 from snap_any_paper import snap_paper_bp
+from test_endpoint import test_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(user_bp, url_prefix='')
 app.register_blueprint(auth_bp, url_prefix='/')
 app.register_blueprint(snap_paper_bp, url_prefix='')
+app.register_blueprint(test_bp, url_prefix='')
 
 # Root route - redirect to login or dashboard
 @app.route('/')

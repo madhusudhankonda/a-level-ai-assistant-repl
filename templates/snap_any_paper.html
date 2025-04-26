@@ -320,18 +320,37 @@
                     return;
                 }
                 
-                // Submit for analysis
+                // Submit for analysis - use a smaller test request first
+                console.log('Testing API connection...');
+                try {
+                    const testResponse = await fetch('/api/test-endpoint', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            test: 'connection'
+                        })
+                    });
+                    console.log('Test response:', testResponse.status);
+                } catch (err) {
+                    console.error('Test failed:', err);
+                }
+                
                 console.log('Sending API request to /api/analyze-any-paper...');
+                const requestData = {
+                    image: imageData,
+                    analysis_type: analysisType,
+                    subject: subject
+                };
+                
+                // Try standard fetch first
                 const response = await fetch('/api/analyze-any-paper', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        image: imageData,
-                        analysis_type: analysisType,
-                        subject: subject
-                    })
+                    body: JSON.stringify(requestData)
                 });
                 
                 console.log('API response received:', response.status, response.statusText);

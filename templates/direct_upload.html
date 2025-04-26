@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Direct Upload Test{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Direct Image Upload Test</h1>
+    <p>This page tests a simplified image upload form with a direct form submission.</p>
+    
+    <div class="card mt-4">
+        <div class="card-body">
+            <form action="/api/direct-upload" method="post" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file-upload" class="form-label">Select an image</label>
+                    <input type="file" class="form-control" id="file-upload" name="file" accept="image/*">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Analysis Type</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="analysis_type" id="questionOnly" value="question_only" checked>
+                        <label class="form-check-label" for="questionOnly">Question Only</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="analysis_type" id="answerFeedback" value="answer_feedback">
+                        <label class="form-check-label" for="answerFeedback">Answer Feedback</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="subject" class="form-label">Subject</label>
+                    <select class="form-select" id="subject" name="subject">
+                        <option value="mathematics">Mathematics</option>
+                        <option value="physics">Physics</option>
+                        <option value="chemistry">Chemistry</option>
+                        <option value="biology">Biology</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Upload and Analyze</button>
+            </form>
+            
+            {% if result %}
+            <div class="mt-4">
+                <div class="card">
+                    <div class="card-header">Result</div>
+                    <div class="card-body">
+                        <pre>{{ result|safe }}</pre>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if error %}
+            <div class="alert alert-danger mt-3">{{ error }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
