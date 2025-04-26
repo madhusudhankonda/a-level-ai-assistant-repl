@@ -420,14 +420,14 @@
                     console.error('Error reading file:', error);
                     showError('Error loading image. Please try a different file.');
                     previewContainer.style.display = 'none';
-                    uploadedImage = null;
+                    window.uploadedImage = null;
                 };
                 
                 reader.onload = (e) => {
                     try {
                         imagePreview.src = e.target.result;
                         imagePreview.alt = 'Uploaded image preview';
-                        uploadedImage = e.target.result;
+                        window.uploadedImage = e.target.result;
                         
                         // Always ensure the button is enabled
                         analyzeButton.disabled = false;
@@ -437,7 +437,7 @@
                         console.error('Error processing image:', err);
                         showError('Error processing image. Please try a different file.');
                         previewContainer.style.display = 'none';
-                        uploadedImage = null;
+                        window.uploadedImage = null;
                     }
                 };
                 
@@ -446,7 +446,7 @@
             } else {
                 // No file selected
                 previewContainer.style.display = 'none';
-                uploadedImage = null;
+                window.uploadedImage = null;
             }
         });
 
@@ -910,8 +910,8 @@
                 // Reset state when switching tabs
                 if (event.target.id === 'camera-tab') {
                     // When switching to camera tab
-                    analyzeButton.disabled = !capturedImage; // Only disable if no captured image
-                    console.log('Camera tab: button ' + (capturedImage ? 'enabled' : 'disabled'));
+                    analyzeButton.disabled = !window.capturedImage; // Only disable if no captured image
+                    console.log('Camera tab: button ' + (window.capturedImage ? 'enabled' : 'disabled'));
                 } else if (event.target.id === 'upload-tab') {
                     // Stop camera when switching to upload tab
                     if (stream) {
@@ -928,8 +928,8 @@
                     videoElement.style.display = 'block';
                     
                     // Only disable if no uploaded image
-                    analyzeButton.disabled = !uploadedImage;
-                    console.log('Upload tab: button ' + (uploadedImage ? 'enabled' : 'disabled'));
+                    analyzeButton.disabled = !window.uploadedImage;
+                    console.log('Upload tab: button ' + (window.uploadedImage ? 'enabled' : 'disabled'));
                 }
             });
         });
