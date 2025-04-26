@@ -302,8 +302,17 @@ def generate_mock(paper_id):
                 flash('Invalid marking scheme paper selected', 'warning')
                 # Continue without marking scheme
         
+        # Get the current paper's question count
+        current_question_count = Question.query.filter_by(paper_id=paper_id).count()
+        
+        # Check if the paper has questions before attempting to generate
+        if current_question_count == 0:
+            current_app.logger.error(f"Cannot generate mock paper: No questions found in paper ID {paper_id}")
+            flash(f"Cannot generate mock questions: The source paper (ID: {paper_id}) doesn't have any questions. Please first add questions to this paper or select a different paper with existing questions.", 'danger')
+            return redirect(url_for('admin.manage_questions', paper_id=paper_id))
+
         # Generate the mock paper
-        current_app.logger.info(f"Generating mock paper based on paper ID {paper_id}")
+        current_app.logger.info(f"Generating mock paper based on paper ID {paper_id} with {current_question_count} questions")
         result = generate_mock_paper(
             source_paper_id=paper_id,
             mock_paper_name=mock_paper_name,
@@ -318,8 +327,15 @@ def generate_mock(paper_id):
             flash(f"Successfully created mock paper '{mock_paper_name}' with {result['questions_created']} questions and {result['mark_schemes_created']} mark schemes", 'success')
             return redirect(url_for('admin.manage_questions', paper_id=result['paper_id']))
         else:
-            current_app.logger.error(f"Error generating mock paper: {result['error']}")
-            flash(f"Error generating mock paper: {result['error']}", 'danger')
+            error_message = result['error']
+            current_app.logger.error(f"Error generating mock paper: {error_message}")
+            
+            # Provide more helpful error messages
+            if "No source questions found" in error_message:
+                flash(f"Error: {error_message} Please add questions to the paper first, or select a different paper that already has questions.", 'danger')
+            else:
+                flash(f"Error generating mock paper: {error_message}", 'danger')
+                
             return redirect(url_for('admin.generate_mock', paper_id=paper_id))
     
     return render_template('admin/generate_mock.html', 
@@ -438,6 +454,45 @@ def add_question(paper_id):
                 return redirect(url_for('admin.add_question', paper_id=paper_id))
     
     return render_template('admin/add_question.html', paper=paper)
+
+@admin_bp.route('/paper/<int:paper_id>/auto-generate-questions', methods=['POST'])
+@login_required
+def auto_generate_questions(paper_id):
+    """Auto-generate basic questions for a paper"""
+    # Verify user is an admin
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': 'You do not have permission to access this function.'}), 403
+    
+    paper = QuestionPaper.query.get_or_404(paper_id)
+    current_app.logger.info(f"Auto-generating questions for paper ID {paper_id}: {paper.title}")
+    
+    try:
+        # Run the script as a subprocess to avoid blocking
+        import subprocess
+        import sys
+        result = subprocess.run(
+            [sys.executable, 'add_questions_to_paper.py', str(paper_id)],
+            capture_output=True,
+            text=True,
+            timeout=60  # Set a timeout to prevent hanging
+        )
+        
+        if result.returncode == 0:
+            # Count how many questions were added
+            question_count = Question.query.filter_by(paper_id=paper_id).count()
+            return jsonify({
+                'success': True, 
+                'message': f'Successfully generated questions for this paper. New question count: {question_count}'
+            })
+        else:
+            current_app.logger.error(f"Error generating questions: {result.stderr}")
+            return jsonify({
+                'success': False, 
+                'message': f'Error generating questions: {result.stderr}'
+            })
+    except Exception as e:
+        current_app.logger.error(f"Exception when generating questions: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 @admin_bp.route('/question/<int:question_id>/delete', methods=['POST', 'GET'])
 @login_required

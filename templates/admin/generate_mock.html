@@ -20,11 +20,25 @@
         <div class="card-body">
             <div class="mb-4">
                 <h6 class="card-subtitle mb-3 text-muted">Source Paper: {{ paper.title }}</h6>
+                
+                {% if current_paper_question_count is defined %}
+                    <div class="alert {% if current_paper_question_count > 0 %}alert-success{% else %}alert-danger{% endif %} mb-3">
+                        <strong>Source Paper Status:</strong> 
+                        {% if current_paper_question_count > 0 %}
+                            This paper has {{ current_paper_question_count }} questions available to use as templates.
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle"></i> This paper doesn't have any questions. 
+                            Mock generation requires source questions to work properly.
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
                 <p>
                     This tool will generate mock questions based on the source paper's questions.
                     The generated questions will have similar structure but different values, 
                     making them perfect for additional practice.
                 </p>
+                
                 {% if papers_with_questions is defined %}
                     {% if papers_with_questions %}
                         <div class="alert alert-primary mb-3">
@@ -38,14 +52,29 @@
                                 {% endfor %}
                             </select>
                         </div>
+                    {% else %}
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>No source papers with questions found.</strong>
+                            Before generating mock questions, you need to:
+                            <ol class="mt-2 mb-0">
+                                <li>First <a href="{{ url_for('admin.add_question', paper_id=paper.id) }}">add questions to this paper</a></li>
+                                <li>Or create questions for another paper and select it as the source</li>
+                            </ol>
+                        </div>
                     {% endif %}
                 {% endif %}
                 
                 {% if current_paper_question_count is defined and current_paper_question_count == 0 %}
                     <div class="alert alert-warning">
-                        <strong>Warning:</strong> This paper doesn't have any questions yet. 
-                        Please <a href="{{ url_for('admin.add_question', paper_id=paper.id) }}">add questions to this paper</a> 
-                        or select a different paper that already contains questions.
+                        <strong>Quick Fix Options:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><a href="{{ url_for('admin.add_question', paper_id=paper.id) }}" class="btn btn-sm btn-primary mt-1">
+                                <i class="fas fa-plus"></i> Add Questions Manually
+                            </a></li>
+                            <li><a href="#" onclick="runAddQuestionsScript({{ paper.id }}); return false;" class="btn btn-sm btn-secondary mt-2">
+                                <i class="fas fa-magic"></i> Auto-Generate Basic Questions
+                            </a></li>
+                        </ul>
                     </div>
                 {% endif %}
                 
@@ -142,5 +171,57 @@
         // Add event listener
         includeMarkSchemeCheckbox.addEventListener('change', toggleMarkSchemeOptions);
     });
+    
+    // Function to run the add_questions_to_paper.py script for the current paper
+    function runAddQuestionsScript(paperId) {
+        if (!confirm('This will generate 5 basic questions for this paper. Continue?')) {
+            return;
+        }
+        
+        // Show loading message
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'alert alert-info mt-3';
+        loadingDiv.id = 'loading-message';
+        loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating questions... This may take a minute.';
+        document.querySelector('.card-body').appendChild(loadingDiv);
+        
+        // Make AJAX request to run the script
+        fetch('/admin/paper/' + paperId + '/auto-generate-questions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove loading message
+            document.getElementById('loading-message').remove();
+            
+            // Show result message
+            const resultDiv = document.createElement('div');
+            resultDiv.className = data.success ? 'alert alert-success' : 'alert alert-danger';
+            resultDiv.innerHTML = data.message;
+            document.querySelector('.card-body').appendChild(resultDiv);
+            
+            // Reload the page after a short delay if successful
+            if (data.success) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            // Remove loading message
+            if (document.getElementById('loading-message')) {
+                document.getElementById('loading-message').remove();
+            }
+            
+            // Show error message
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger';
+            errorDiv.textContent = 'Error: ' + error.message;
+            document.querySelector('.card-body').appendChild(errorDiv);
+        });
+    }
 </script>
 {% endblock %}
