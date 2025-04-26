@@ -121,13 +121,13 @@
 
                     <!-- Analysis button -->
                     <div class="text-center mt-4">
-                        <button id="analyze-button" class="btn btn-lg btn-primary" onclick="window.handleAnalyzeDirectClick()">
+                        <button id="analyze-button" class="btn btn-lg btn-primary">
                             <span class="button-text"><i class="fas fa-brain"></i> Analyze Question</span>
                             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                         </button>
                         
-                        <!-- Simplified Button (direct onclick) -->
-                        <button id="simplified-analyze" class="btn btn-success ms-2" onclick="window.analyzeWithSimpleMethod()">
+                        <!-- Simplified Button -->
+                        <button id="simplified-analyze" class="btn btn-success ms-2">
                             Simplified Analyze
                         </button>
                     </div>
@@ -193,16 +193,41 @@
 
 {% block extra_js %}
 <script>
-    // Direct click handlers - defined at the global scope to 
-    // ensure they're accessible for onclick attributes
-    window.handleAnalyzeDirectClick = function() {
-        console.log('Direct analyze click handler called at', new Date().toISOString());
+    // Global variables for captured/uploaded images
+    let capturedImage = null;
+    let uploadedImage = null;
+    
+    // Function to show error messages
+    function showError(message) {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+    }
+    
+    // Function to hide error messages
+    function hideError() {
+        document.getElementById('error-message').style.display = 'none';
+    }
+    
+    // Main function to analyze images
+    function analyzeImage() {
+        console.log('analyzeImage function called');
         
         // Get current form data
         const activeTab = document.querySelector('.nav-link.active').getAttribute('id');
-        const imageData = activeTab === 'camera-tab' ? 
-            (window.capturedImage || null) : 
-            (document.getElementById('image-preview').src || null);
+        let imageData = null;
+        
+        if (activeTab === 'camera-tab') {
+            const canvas = document.getElementById('canvas');
+            if (canvas.style.display !== 'none') {
+                imageData = canvas.toDataURL('image/jpeg');
+            }
+        } else {
+            const imagePreview = document.getElementById('image-preview');
+            if (imagePreview.src && imagePreview.src !== '') {
+                imageData = imagePreview.src;
+            }
+        }
         
         if (!imageData) {
             alert('Please capture or upload an image first.');
@@ -260,8 +285,9 @@
             document.getElementById('error-message').style.display = 'block';
         });
     }
-    
-    window.analyzeWithSimpleMethod = function() {
+
+    // Alternative simplified analyze method
+    function analyzeWithSimpleMethod() {
         console.log('Simple analyze method called at', new Date().toISOString());
         
         // Simplified detection of image data
@@ -458,6 +484,21 @@
             console.log('Debug - Button text exists:', !!analyzeButton.querySelector('.button-text'));
             // Try to force enable button
             analyzeButton.disabled = false;
+        }
+        
+        // Add click handler for analyze button
+        analyzeButton.addEventListener('click', function() {
+            console.log('Analyze button clicked via event listener');
+            analyzeImage();
+        });
+        
+        // Add click handler for simplified analyze button
+        const simplifiedAnalyzeButton = document.getElementById('simplified-analyze');
+        if (simplifiedAnalyzeButton) {
+            simplifiedAnalyzeButton.addEventListener('click', function() {
+                console.log('Simplified analyze button clicked via event listener');
+                analyzeWithSimpleMethod();
+            });
         }
         
         // Troubleshooting button handler
