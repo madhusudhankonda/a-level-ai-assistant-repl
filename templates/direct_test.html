@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Direct Image Test{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Direct Image Test</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">This page tests direct image upload and processing.</p>
+                    
+                    <!-- File Input -->
+                    <div class="mb-3">
+                        <label for="image-upload" class="form-label">Upload an image:</label>
+                        <input type="file" class="form-control" id="image-upload" accept="image/*">
+                    </div>
+                    
+                    <!-- Preview Container -->
+                    <div id="preview-container" class="mt-3 text-center" style="display: none;">
+                        <p>Image Preview:</p>
+                        <img id="image-preview" class="img-fluid border rounded" style="max-height: 300px;" alt="Uploaded image preview">
+                    </div>
+                    
+                    <!-- Process Button -->
+                    <div class="text-center mt-4">
+                        <button id="process-button" class="btn btn-primary">
+                            Process Image
+                        </button>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div id="results-container" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="mb-0">Processing Results</h4>
+                            </div>
+                            <div class="card-body">
+                                <div id="loading-indicator" class="text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Processing your image...</p>
+                                </div>
+                                <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                                <div id="success-message" class="alert alert-success" style="display: none;"></div>
+                                <div id="result-details" style="display: none;">
+                                    <pre id="result-json" class="p-3 bg-light rounded"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Debug Logs -->
+                    <div class="mt-4 border-top pt-3">
+                        <h5>Debug Logs</h5>
+                        <pre id="debug-logs" class="p-2 bg-light rounded" style="max-height: 200px; overflow-y: auto;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple debug logging function
+    function log(message) {
+        const debugLogs = document.getElementById('debug-logs');
+        const timestamp = new Date().toISOString().substring(11, 19); // HH:MM:SS
+        debugLogs.textContent += `[${timestamp}] ${message}\n`;
+        debugLogs.scrollTop = debugLogs.scrollHeight;
+        console.log(message);
+    }
+
+    // When the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        log('Page loaded');
+        
+        // Get DOM elements
+        const fileInput = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const processButton = document.getElementById('process-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        const resultDetails = document.getElementById('result-details');
+        const resultJson = document.getElementById('result-json');
+        
+        log('DOM elements initialized');
+        
+        // File input change handler
+        fileInput.addEventListener('change', function(event) {
+            log('File input changed');
+            
+            if (event.target.files && event.target.files[0]) {
+                const file = event.target.files[0];
+                log(`File selected: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+                
+                // Create a FileReader to read the image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    log('FileReader loaded image');
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    log(`Image preview displayed, data URL length: ${e.target.result.length}`);
+                };
+                reader.onerror = function(e) {
+                    log(`FileReader error: ${e}`);
+                };
+                log('Starting FileReader');
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Process button click handler
+        processButton.addEventListener('click', function() {
+            log('Process button clicked');
+            
+            // Check if image is loaded
+            if (!imagePreview.src || imagePreview.src === window.location.href) {
+                log('No image selected');
+                alert('Please select an image first.');
+                return;
+            }
+            
+            // Show results container and loading indicator
+            resultsContainer.style.display = 'block';
+            loadingIndicator.style.display = 'block';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            resultDetails.style.display = 'none';
+            
+            log('Preparing API request');
+            
+            // Send API request with the image data
+            fetch('/api/direct-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: imagePreview.src
+                })
+            })
+            .then(response => {
+                log(`Response received, status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                log(`Response data: ${JSON.stringify(data)}`);
+                
+                // Hide loading indicator
+                loadingIndicator.style.display = 'none';
+                
+                if (data.success) {
+                    // Show success message
+                    successMessage.textContent = data.message || 'Image processed successfully!';
+                    successMessage.style.display = 'block';
+                    
+                    // Show result details
+                    resultJson.textContent = JSON.stringify(data, null, 2);
+                    resultDetails.style.display = 'block';
+                } else {
+                    // Show error message
+                    errorMessage.textContent = data.error || 'Failed to process image.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                log(`Error in fetch: ${error.message}`);
+                
+                // Hide loading indicator and show error
+                loadingIndicator.style.display = 'none';
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.style.display = 'block';
+            });
+        });
+        
+        log('Event listeners attached');
+    });
+</script>
+{% endblock %}

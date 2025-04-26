@@ -64,6 +64,7 @@ from auth import auth_bp
 from snap_any_paper import snap_paper_bp
 from test_endpoint import test_bp
 from test_simple import simple_test_bp
+from test_direct_upload import direct_test_bp
 
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(user_bp, url_prefix='')
@@ -71,6 +72,7 @@ app.register_blueprint(auth_bp, url_prefix='/')
 app.register_blueprint(snap_paper_bp, url_prefix='')
 app.register_blueprint(test_bp, url_prefix='')
 app.register_blueprint(simple_test_bp, url_prefix='')
+app.register_blueprint(direct_test_bp, url_prefix='')
 
 # Log registered routes
 logger.info("Registered routes:")
