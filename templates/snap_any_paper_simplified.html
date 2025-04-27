@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Snap Any Paper - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <h2 class="mb-3">
+                <i class="fas fa-camera text-primary"></i> Snap Any Paper
+                <div class="ai-sparkle-icon ms-3" style="width: 30px; height: 30px; display: inline-block; vertical-align: middle;"></div>
+            </h2>
+            <p class="lead">Upload an image of any A-Level question and get AI assistance.</p>
+            
+            <!-- Credits warning -->
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Credits:</strong> Each analysis costs 10 credits. You currently have {{ current_user.credits }} credits.
+            </div>
+
+            <!-- Main card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Upload Question</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Analysis options -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Analysis Type:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="analysisType" id="questionOnly" value="question_only" checked>
+                                <label class="form-check-label" for="questionOnly">
+                                    <strong>Question Only</strong> - Get explanation for a question
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="analysisType" id="answerFeedback" value="answer_feedback">
+                                <label class="form-check-label" for="answerFeedback">
+                                    <strong>Answer Feedback</strong> - Get feedback on your work
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="subject-select" class="form-label">Subject:</label>
+                            <select class="form-select" id="subject-select">
+                                <option value="Mathematics" selected>Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- File upload area -->
+                    <div class="mb-4">
+                        <div class="border rounded-3 p-4 text-center bg-light">
+                            <i class="fas fa-cloud-upload-alt mb-3 text-primary" style="font-size: 3rem;"></i>
+                            <p class="mb-3">Upload an image of your question or work</p>
+                            
+                            <label for="image-upload" class="btn btn-primary mb-3">
+                                <i class="fas fa-file-upload me-2"></i> Select Image
+                            </label>
+                            <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                            
+                            <p class="text-muted small">Supported formats: JPG, PNG, GIF</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Image preview -->
+                    <div id="preview-container" class="mb-4 text-center" style="display: none;">
+                        <h5 class="mb-3">Image Preview:</h5>
+                        <img id="image-preview" class="img-fluid border rounded" style="max-height: 400px;" alt="Uploaded image">
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-center mt-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetImageUpload()">
+                                <i class="fas fa-undo me-2"></i> Try Different Image
+                            </button>
+                            <button type="button" class="btn btn-success" id="analyze-button" onclick="analyzeImage()">
+                                <i class="fas fa-robot me-2"></i> Analyze with AI (10 credits)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results card (initially hidden) -->
+            <div id="results-container" class="card mb-4" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-robot me-2"></i> Analysis Results
+                        <div class="ai-sparkle-icon ms-2" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle;"></div>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Loading indicator -->
+                    <div id="loading-indicator" class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="lead">Analyzing your question with AI...</p>
+                        <p class="text-muted">This may take a few moments.</p>
+                    </div>
+                    
+                    <!-- Error message -->
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <!-- Results content -->
+                    <div id="analysis-results" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let imageData = null;
+    
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        console.log(`File selected: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+        
+        // Check if it's an image file
+        if (!file.type.match('image.*')) {
+            alert('Please select an image file.');
+            return;
+        }
+        
+        // Read the file
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imageData = e.target.result;
+            console.log(`Image loaded, data URL length: ${imageData.length}`);
+            
+            // Display preview
+            document.getElementById('image-preview').src = imageData;
+            document.getElementById('preview-container').style.display = 'block';
+            document.querySelector('.border.rounded-3.p-4').style.display = 'none';
+        };
+        
+        reader.onerror = function() {
+            console.error('Error reading file');
+            alert('Error reading the file. Please try again.');
+        };
+        
+        reader.readAsDataURL(file);
+    }
+    
+    function resetImageUpload() {
+        // Reset everything
+        imageData = null;
+        document.getElementById('image-upload').value = '';
+        document.getElementById('preview-container').style.display = 'none';
+        document.querySelector('.border.rounded-3.p-4').style.display = 'block';
+    }
+    
+    function analyzeImage() {
+        if (!imageData) {
+            alert('Please select an image first.');
+            return;
+        }
+        
+        // Get analysis options
+        const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+        const subject = document.getElementById('subject-select').value;
+        
+        console.log(`Analyzing image - Type: ${analysisType}, Subject: ${subject}`);
+        
+        // Show loading state
+        document.getElementById('results-container').style.display = 'block';
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('analysis-results').style.display = 'none';
+        document.getElementById('error-message').style.display = 'none';
+        
+        // Disable analyze button
+        const analyzeButton = document.getElementById('analyze-button');
+        analyzeButton.disabled = true;
+        analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+        
+        // Prepare request data exactly like in camera_capture.html
+        const requestData = {
+            image_data: imageData,
+            subject: subject,
+            mode: analysisType === 'question_only' ? 'question-only' : 'answer-feedback'
+        };
+        
+        console.log('Sending request to API...');
+        
+        // Send to API endpoint
+        fetch('/api/analyze-captured-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            console.log(`Response status: ${response.status}`);
+            if (!response.ok) {
+                // Handle authentication errors
+                if (response.status === 401) {
+                    window.location.href = '/login?next=/snap-any-paper-simplified';
+                    throw new Error('You need to log in to use this feature');
+                }
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Failed to analyze image');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Analysis complete:', data);
+            
+            // Hide loading
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            // Enable analyze button
+            analyzeButton.disabled = false;
+            analyzeButton.innerHTML = '<i class="fas fa-robot me-2"></i> Analyze with AI (10 credits)';
+            
+            if (data.success === false) {
+                // Show error
+                const errorElement = document.getElementById('error-message');
+                errorElement.textContent = data.message || 'Failed to analyze image';
+                errorElement.style.display = 'block';
+                return;
+            }
+            
+            // Show results
+            const resultsElement = document.getElementById('analysis-results');
+            resultsElement.innerHTML = `
+                <div class="mb-3">
+                    <span class="badge bg-primary px-3 py-2">${subject}</span>
+                    <span class="badge bg-secondary px-3 py-2 ms-2">${analysisType === 'question_only' ? 'Explanation' : 'Answer Feedback'}</span>
+                    <span class="badge bg-info px-3 py-2 ms-2">Credits: ${data.credits_remaining}</span>
+                </div>
+                <div class="explanation-content">
+                    ${data.explanation}
+                </div>
+            `;
+            resultsElement.style.display = 'block';
+            
+            // Scroll to results
+            resultsElement.scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Hide loading
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            // Enable analyze button
+            analyzeButton.disabled = false;
+            analyzeButton.innerHTML = '<i class="fas fa-robot me-2"></i> Analyze with AI (10 credits)';
+            
+            // Show error
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = error.message || 'An unexpected error occurred';
+            errorElement.style.display = 'block';
+        });
+    }
+</script>
+{% endblock %}
