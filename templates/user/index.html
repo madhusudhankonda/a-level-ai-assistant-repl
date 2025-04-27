@@ -1,24 +1,87 @@
 {% extends "base.html" %}
 
-{% block title %}Available Papers - A-Level AI Assistant{% endblock %}
+{% block title %}A-Level AI Assistant - Snap Any Exam Paper{% endblock %}
 
 {% block content %}
-<!-- Hero section with mobile optimization -->
-<div class="hero-section mb-4 py-3">
+<!-- Hero section with focus on Snap Any Paper -->
+<div class="container mt-3">
     <div class="row align-items-center">
-        <div class="col-md-8 mb-4 mb-md-0">
+        <div class="col-lg-6 mb-4 mb-lg-0">
             <h1 class="display-5 mb-3">A-Level AI Assistant</h1>
-            <p class="lead">Get instant explanations for A-Level questions in Mathematics, Physics, Chemistry, and Biology</p>
+            <p class="lead">Instantly analyze any A-Level question with our AI-powered assistant</p>
+            <p class="mb-4">Take a photo or upload any question from Mathematics, Physics, Chemistry, or Biology and get detailed explanations in seconds.</p>
+            
+            <!-- Credit Info -->
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-coins me-3 fs-4"></i>
+                <div>
+                    <strong>You have {{ current_user.credits }} credits</strong>
+                    <p class="mb-0 small">Each analysis costs 10 credits</p>
+                </div>
+            </div>
         </div>
-        <div class="col-md-4">
-            <!-- Camera capture card with prominent styling for easy mobile access -->
-            <div class="card border-primary shadow-sm">
-                <div class="card-body text-center p-4">
-                    <i class="fas fa-camera fa-3x mb-3 text-primary"></i>
-                    <h5 class="card-title">Analyze with Camera</h5>
-                    <p class="card-text d-none d-sm-block">Take a photo of any question for an instant AI-powered explanation</p>
-                    <a href="{{ url_for('user.camera_capture') }}" class="btn btn-lg btn-primary w-100">
-                        <i class="fas fa-camera me-1"></i> Capture Question
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-0">
+                    <div class="d-flex">
+                        <div class="flex-grow-1 p-4 bg-primary text-white rounded-start">
+                            <h2 class="mb-3"><i class="fas fa-camera me-2"></i> Snap Any Paper</h2>
+                            <p>Upload or capture any A-Level question and get an instant AI-powered explanation.</p>
+                            <a href="{{ url_for('snap_paper.snap_any_paper') }}" class="btn btn-light btn-lg px-4 fw-bold">
+                                Try Now <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                        <div class="d-none d-md-flex bg-primary-subtle align-items-center justify-content-center rounded-end" style="width: 30%;">
+                            <div class="ai-sparkle-icon" style="width: 80px; height: 80px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features section -->
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon bg-primary-subtle p-3 rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-camera text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="card-title h5">Snap Any Paper</h3>
+                    <p class="card-text">Take a photo of any A-Level question from any exam board.</p>
+                    <a href="{{ url_for('snap_paper.snap_any_paper') }}" class="btn btn-primary">
+                        Try Now
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon bg-success-subtle p-3 rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-file-upload text-success" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="card-title h5">Upload Solution</h3>
+                    <p class="card-text">Get feedback on your answers and step-by-step improvement guidance.</p>
+                    <a href="{{ url_for('snap_paper.snap_any_paper') }}?mode=answer_feedback" class="btn btn-success">
+                        Analyze Answer
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon bg-info-subtle p-3 rounded-circle mx-auto mb-3" style="width: 80px; height: 80px;">
+                        <i class="fas fa-book-open text-info" style="font-size: 2rem;"></i>
+                    </div>
+                    <h3 class="card-title h5">Browse Papers</h3>
+                    <p class="card-text">Explore our library of curated past papers and practice questions.</p>
+                    <a href="{{ url_for('user.view_subject', subject_id=1) }}" class="btn btn-info">
+                        Browse Library
                     </a>
                 </div>
             </div>
@@ -26,27 +89,56 @@
     </div>
 </div>
 
-<!-- Mobile-optimized subject navigation -->
-<div class="subject-navigation mb-4">
-    <h2 class="mb-3">Available Question Papers</h2>
-    
-    <!-- Mobile subject tabs -->
-    <div class="d-md-none mb-3">
-        <ul class="nav nav-pills nav-fill">
-            <li class="nav-item">
-                <a class="nav-link active" href="#math-section" data-bs-toggle="pill">Math</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#physics-section" data-bs-toggle="pill">Physics</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#chemistry-section" data-bs-toggle="pill">Chemistry</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#biology-section" data-bs-toggle="pill">Biology</a>
-            </li>
-        </ul>
+<!-- Quick access paper browse navigation -->
+<div class="container mt-5 mb-5">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="mb-0">Quick Access to Subjects</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <a href="{{ url_for('user.view_subject', subject_id=1) }}" class="btn btn-outline-primary w-100 py-3">
+                        <i class="fas fa-square-root-alt me-2"></i> Mathematics
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <a href="{{ url_for('user.view_subject', subject_id=2) }}" class="btn btn-outline-primary w-100 py-3">
+                        <i class="fas fa-atom me-2"></i> Physics
+                    </a>
+                </div>
+                <div class="col-md-3 mb-3 mb-md-0">
+                    <a href="{{ url_for('user.view_subject', subject_id=3) }}" class="btn btn-outline-primary w-100 py-3">
+                        <i class="fas fa-flask me-2"></i> Chemistry
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{{ url_for('user.view_subject', subject_id=4) }}" class="btn btn-outline-primary w-100 py-3">
+                        <i class="fas fa-dna me-2"></i> Biology
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
+<!-- For mobile - simpler subject navigation -->
+<div class="d-md-none mb-3">
+    <ul class="nav nav-pills nav-fill">
+        <li class="nav-item">
+            <a class="nav-link active" href="#math-section" data-bs-toggle="pill">Math</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#physics-section" data-bs-toggle="pill">Physics</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#chemistry-section" data-bs-toggle="pill">Chemistry</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#biology-section" data-bs-toggle="pill">Biology</a>
+        </li>
+    </ul>
+</div>
     
     <!-- Tab content -->
     <div class="tab-content">

@@ -103,19 +103,49 @@
                             <i class="fas fa-home me-1"></i> Home
                         </a>
                     </li>
+                    <!-- Prominently feature Snap Any Paper -->
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="{{ url_for('user.index') }}">
-                            <i class="fas fa-book me-1"></i> Papers
+                        <a class="nav-link text-white fw-bold" href="{{ url_for('snap_paper.snap_any_paper') }}">
+                            <i class="fas fa-camera me-1 text-warning"></i> Snap Any Paper
                         </a>
+                    </li>
+                    <!-- Papers dropdown menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" id="papersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-book me-1"></i> Browse Papers
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="papersDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('user.index') }}">
+                                    <i class="fas fa-th-list me-2"></i> All Subjects
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('user.view_subject', subject_id=1) }}">
+                                    <i class="fas fa-square-root-alt me-2"></i> Mathematics
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('user.view_subject', subject_id=2) }}">
+                                    <i class="fas fa-atom me-2"></i> Physics
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('user.view_subject', subject_id=3) }}">
+                                    <i class="fas fa-flask me-2"></i> Chemistry
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('user.view_subject', subject_id=4) }}">
+                                    <i class="fas fa-dna me-2"></i> Biology
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="{{ url_for('user.camera_capture') }}">
                             <i class="fas fa-robot me-1 text-warning"></i> AI Analysis
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white" href="{{ url_for('snap_paper.snap_any_paper') }}">
-                            <i class="fas fa-camera me-1 text-warning"></i> Snap Any Paper
                         </a>
                     </li>
                     <li class="nav-item">
