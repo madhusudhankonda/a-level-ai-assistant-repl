@@ -570,6 +570,13 @@ def get_question_image(question_id):
 def process_math_notation(text):
     """Process mathematical notation in explanation text to ensure proper rendering"""
     
+    # Remove hash symbols from headers (##, ###) and replace with HTML headers
+    text = re.sub(r'^\s*#{2,3}\s+(.*?)$', r'<h3>\1</h3>', text, flags=re.MULTILINE)
+    
+    # Remove any remaining hash prefixes at the beginning of lines or text
+    text = re.sub(r'^(\s*)#{1,3}\s+', r'\1', text, flags=re.MULTILINE)
+    text = re.sub(r'(^|\n)(\s*)#{1,3}\s+', r'\1\2', text, flags=re.MULTILINE)
+    
     # Replace markdown headers with HTML headers to avoid conflicts with LaTeX
     text = re.sub(r'### (.*?)(\n|$)', r'<h3>\1</h3>\n', text)
     text = re.sub(r'#### (.*?)(\n|$)', r'<h4>\1</h4>\n', text)
@@ -580,8 +587,36 @@ def process_math_notation(text):
     # Replace italic markdown with HTML italic
     text = re.sub(r'\*(.*?)\*', r'<em>\1</em>', text)
     
+    # First, replace escaped LaTeX delimiter sequences with temporary placeholders
+    text = re.sub(r'\\\\', '__DOUBLE_BACKSLASH__', text)
+    text = re.sub(r'\\left\(', '__LEFT_PAREN__', text)
+    text = re.sub(r'\\right\)', '__RIGHT_PAREN__', text) 
+    text = re.sub(r'\\left\[', '__LEFT_BRACKET__', text)
+    text = re.sub(r'\\right\]', '__RIGHT_BRACKET__', text)
+    text = re.sub(r'\\left\{', '__LEFT_BRACE__', text)
+    text = re.sub(r'\\right\}', '__RIGHT_BRACE__', text)
+    
+    # Clean up excessive LaTeX delimiters
+    text = re.sub(r'\\[\(\)]', '', text)
+    text = re.sub(r'\\[\[\]]', '', text)
+    
     # Wrap display math ($$..$$) in special containers for better styling
     text = re.sub(r'\$\$(.*?)\$\$', r'<div class="math-container display-math">\n$$\1$$\n</div>', text, flags=re.DOTALL)
+    
+    # Remove extra backslashes before LaTeX commands
+    text = re.sub(r'\\\\([a-zA-Z]+)', r'\\\1', text)
+    
+    # Replace markdown hashes used at start of math expressions
+    text = re.sub(r'([\$]{1,2}[^$]*?)#+\s*', r'\1', text, flags=re.DOTALL)
+    
+    # Restore the placeholders
+    text = re.sub(r'__DOUBLE_BACKSLASH__', r'\\\\', text)
+    text = re.sub(r'__LEFT_PAREN__', r'\\left(', text)
+    text = re.sub(r'__RIGHT_PAREN__', r'\\right)', text)
+    text = re.sub(r'__LEFT_BRACKET__', r'\\left[', text)
+    text = re.sub(r'__RIGHT_BRACKET__', r'\\right]', text)
+    text = re.sub(r'__LEFT_BRACE__', r'\\left{', text)
+    text = re.sub(r'__RIGHT_BRACE__', r'\\right}', text)
     
     # Ensure inline math ($...$) is properly spaced
     text = re.sub(r'([^\$])\$([^\$])', r'\1 $\2', text)
