@@ -307,6 +307,12 @@ def snap_any_paper():
 def snap_any_paper_debug():
     """Render the debug version of Snap Any Paper with enhanced logging"""
     return render_template('snap_any_paper_debug.html')
+    
+@snap_paper_bp.route('/snap-any-paper-simplified')
+@login_required
+def snap_any_paper_simplified():
+    """Render a simplified version of Snap Any Paper that uses the working analyze-captured-image endpoint"""
+    return render_template('snap_any_paper_simplified.html')
 
 @snap_paper_bp.route('/basic-test')
 @login_required
