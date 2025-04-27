@@ -831,14 +831,34 @@ def analyze_captured_image():
         db.session.commit()
         current_app.logger.info(f"Deducted 10 credits from user {current_user.id}, new balance: {current_user.credits}")
         
-        # Create a well-structured response
-        return jsonify({
+        # Build response data
+        response_data = {
             'success': True,
             'explanation': processed_text,
             'subject': subject,
             'credits_remaining': current_user.credits,
             'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        })
+        }
+        
+        # Ensure the response is properly formatted before returning
+        try:
+            # Test that the response serializes correctly
+            json_response = json.dumps(response_data)
+            # Return the serialized response
+            return current_app.response_class(
+                response=json_response,
+                status=200,
+                mimetype='application/json'
+            )
+        except Exception as json_error:
+            current_app.logger.error(f"Error serializing JSON response: {str(json_error)}")
+            # If serialization fails, create a simpler version
+            return jsonify({
+                'success': True,
+                'explanation': f"<div class='markdown-content'>{explanation_text}</div>",
+                'subject': subject,
+                'credits_remaining': current_user.credits
+            })
         
     except Exception as e:
         current_app.logger.error(f"Error analyzing captured image: {str(e)}")
