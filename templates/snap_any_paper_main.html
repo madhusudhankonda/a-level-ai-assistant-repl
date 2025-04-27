@@ -308,11 +308,34 @@
                     window.location.href = '/login?next=/snap-any-paper';
                     throw new Error('You need to log in to use this feature');
                 }
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Failed to analyze image');
+                // For 502 errors (Bad Gateway), show a more helpful message
+                if (response.status === 502) {
+                    throw new Error('Server error: The API server is experiencing issues. This could be due to the image size or server load. Please try again with a smaller image or wait a moment and retry.');
+                }
+                
+                // Try to parse response as JSON, but handle cases where it's not valid JSON
+                return response.text().then(text => {
+                    try {
+                        // Try to parse as JSON
+                        const data = JSON.parse(text);
+                        throw new Error(data.message || 'Failed to analyze image');
+                    } catch (e) {
+                        // If not valid JSON, return the text directly (truncated if too long)
+                        const truncatedText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+                        throw new Error(`Server error: ${truncatedText}`);
+                    }
                 });
             }
-            return response.json();
+            
+            // Try to parse successful response as JSON, but handle errors
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    console.error('Error parsing response as JSON:', e);
+                    throw new Error(`Invalid response format: ${e.message}`);
+                }
+            });
         })
         .then(data => {
             console.log('Analysis complete:', data);
