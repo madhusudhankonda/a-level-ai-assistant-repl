@@ -1,0 +1,379 @@
+{% extends "base.html" %}
+
+{% block title %}Snap Any Paper - A-Level AI Assistant{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <h2 class="mb-3">
+                <i class="fas fa-camera text-primary"></i> Snap Any Paper
+                <div class="ai-sparkle-icon ms-3" style="width: 30px; height: 30px; display: inline-block; vertical-align: middle;"></div>
+            </h2>
+            <p class="lead">Upload an image of any A-Level question and get instant AI assistance.</p>
+            
+            <!-- Credits warning -->
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Credits:</strong> Each analysis costs 10 credits. You currently have {{ current_user.credits }} credits.
+            </div>
+
+            <!-- Main card -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Upload or Capture Question</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Analysis options -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Analysis Type:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="analysisType" id="questionOnly" value="question_only" checked>
+                                <label class="form-check-label" for="questionOnly">
+                                    <strong>Question Only</strong> - Get explanation for a question
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="analysisType" id="answerFeedback" value="answer_feedback">
+                                <label class="form-check-label" for="answerFeedback">
+                                    <strong>Answer Feedback</strong> - Get feedback on your work
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="subject-select" class="form-label">Subject:</label>
+                            <select class="form-select" id="subject-select">
+                                <option value="Mathematics" selected>Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Capture method tabs -->
+                    <ul class="nav nav-tabs mb-3" id="captureMethodTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-tab-pane" type="button" role="tab">
+                                <i class="fas fa-upload me-2"></i> Upload Image
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera-tab-pane" type="button" role="tab">
+                                <i class="fas fa-camera me-2"></i> Use Camera
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="captureMethodTabsContent">
+                        <!-- Upload tab -->
+                        <div class="tab-pane fade show active" id="upload-tab-pane" role="tabpanel" tabindex="0">
+                            <!-- File upload area -->
+                            <div class="mb-4">
+                                <div class="border rounded-3 p-4 text-center bg-light">
+                                    <i class="fas fa-cloud-upload-alt mb-3 text-primary" style="font-size: 3rem;"></i>
+                                    <p class="mb-3">Upload an image of your question or work</p>
+                                    
+                                    <label for="image-upload" class="btn btn-primary mb-3">
+                                        <i class="fas fa-file-upload me-2"></i> Select Image
+                                    </label>
+                                    <input type="file" id="image-upload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                                    
+                                    <p class="text-muted small">Supported formats: JPG, PNG, GIF</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Camera tab -->
+                        <div class="tab-pane fade" id="camera-tab-pane" role="tabpanel" tabindex="0">
+                            <div class="text-center">
+                                <button id="start-camera" class="btn btn-outline-primary mb-3">
+                                    <i class="fas fa-video me-2"></i> Start Camera
+                                </button>
+                                
+                                <video id="video" width="100%" autoplay playsinline muted 
+                                    style="background-color: #000; display: none; max-height: 70vh; object-fit: contain;"></video>
+                                
+                                <button id="capture-photo" class="btn btn-primary mt-3" style="display: none;">
+                                    <i class="fas fa-camera me-2"></i> Take Photo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Image preview (shown for both upload and camera) -->
+                    <div id="preview-container" class="mb-4 text-center" style="display: none;">
+                        <h5 class="mb-3">Image Preview:</h5>
+                        <img id="image-preview" class="img-fluid border rounded" style="max-height: 400px;" alt="Uploaded image">
+                        <canvas id="canvas" style="display: none;"></canvas>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-center mt-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetImageUpload()">
+                                <i class="fas fa-undo me-2"></i> Try Different Image
+                            </button>
+                            <button type="button" class="btn btn-success" id="analyze-button" onclick="analyzeImage()">
+                                <i class="fas fa-robot me-2"></i> Analyze with AI (10 credits)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results card (initially hidden) -->
+            <div id="results-container" class="card mb-4" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-robot me-2"></i> Analysis Results
+                        <div class="ai-sparkle-icon ms-2" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle;"></div>
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Loading indicator -->
+                    <div id="loading-indicator" class="text-center py-5">
+                        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="lead">Analyzing your question with AI...</p>
+                        <p class="text-muted">This may take a few moments.</p>
+                    </div>
+                    
+                    <!-- Error message -->
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    
+                    <!-- Results content -->
+                    <div id="analysis-results" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let imageData = null;
+    let videoStream = null;
+    
+    // DOM elements
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
+    const startCameraButton = document.getElementById('start-camera');
+    const capturePhotoButton = document.getElementById('capture-photo');
+    const imagePreview = document.getElementById('image-preview');
+    const previewContainer = document.getElementById('preview-container');
+    const analyzeButton = document.getElementById('analyze-button');
+    
+    // Event for starting camera
+    startCameraButton.addEventListener('click', async () => {
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            videoElement.srcObject = videoStream;
+            videoElement.style.display = 'block';
+            capturePhotoButton.style.display = 'block';
+            startCameraButton.style.display = 'none';
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            alert('Error accessing camera. Please make sure you have allowed camera access or try using image upload instead.');
+        }
+    });
+    
+    // Event for capturing photo
+    capturePhotoButton.addEventListener('click', () => {
+        // Set canvas dimensions to match video
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+        
+        // Draw current video frame to canvas
+        const context = canvasElement.getContext('2d');
+        context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+        
+        // Get image data
+        imageData = canvasElement.toDataURL('image/jpeg');
+        
+        // Display captured image
+        imagePreview.src = imageData;
+        previewContainer.style.display = 'block';
+        
+        // Stop camera stream
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+        }
+        
+        // Hide video elements
+        videoElement.style.display = 'none';
+        capturePhotoButton.style.display = 'none';
+        startCameraButton.style.display = 'block';
+        
+        // Switch to preview tab
+        const uploadTab = document.getElementById('upload-tab');
+        uploadTab.click();
+    });
+    
+    // Handle file upload
+    function handleImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        console.log(`File selected: ${file.name}, type: ${file.type}, size: ${file.size} bytes`);
+        
+        // Check if it's an image file
+        if (!file.type.match('image.*')) {
+            alert('Please select an image file.');
+            return;
+        }
+        
+        // Read the file
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imageData = e.target.result;
+            console.log(`Image loaded, data URL length: ${imageData.length}`);
+            
+            // Display preview
+            imagePreview.src = imageData;
+            previewContainer.style.display = 'block';
+            document.querySelector('.tab-pane.active .border.rounded-3.p-4').style.display = 'none';
+        };
+        
+        reader.onerror = function() {
+            console.error('Error reading file');
+            alert('Error reading the file. Please try again.');
+        };
+        
+        reader.readAsDataURL(file);
+    }
+    
+    // Reset the image upload/capture
+    function resetImageUpload() {
+        // Reset everything
+        imageData = null;
+        document.getElementById('image-upload').value = '';
+        previewContainer.style.display = 'none';
+        
+        // Show the appropriate upload area
+        if (document.getElementById('upload-tab-pane').classList.contains('active')) {
+            document.querySelector('#upload-tab-pane .border.rounded-3.p-4').style.display = 'block';
+        } else {
+            startCameraButton.style.display = 'block';
+            videoElement.style.display = 'none';
+            capturePhotoButton.style.display = 'none';
+        }
+    }
+    
+    // Analyze the image
+    function analyzeImage() {
+        if (!imageData) {
+            alert('Please select or capture an image first.');
+            return;
+        }
+        
+        // Get analysis options
+        const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+        const subject = document.getElementById('subject-select').value;
+        
+        console.log(`Analyzing image - Type: ${analysisType}, Subject: ${subject}`);
+        
+        // Show loading state
+        document.getElementById('results-container').style.display = 'block';
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('analysis-results').style.display = 'none';
+        document.getElementById('error-message').style.display = 'none';
+        
+        // Disable analyze button
+        analyzeButton.disabled = true;
+        analyzeButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+        
+        // Prepare request data - use format from camera_capture.html that works
+        const requestData = {
+            image_data: imageData,
+            subject: subject,
+            mode: analysisType === 'question_only' ? 'question-only' : 'answer-feedback'
+        };
+        
+        console.log('Sending request to API...');
+        
+        // Send to API endpoint
+        fetch('/api/analyze-captured-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => {
+            console.log(`Response status: ${response.status}`);
+            if (!response.ok) {
+                // Handle authentication errors
+                if (response.status === 401) {
+                    window.location.href = '/login?next=/snap-any-paper';
+                    throw new Error('You need to log in to use this feature');
+                }
+                return response.json().then(data => {
+                    throw new Error(data.message || 'Failed to analyze image');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Analysis complete:', data);
+            
+            // Hide loading
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            // Enable analyze button
+            analyzeButton.disabled = false;
+            analyzeButton.innerHTML = '<i class="fas fa-robot me-2"></i> Analyze with AI (10 credits)';
+            
+            if (data.success === false) {
+                // Show error
+                const errorElement = document.getElementById('error-message');
+                errorElement.textContent = data.message || 'Failed to analyze image';
+                errorElement.style.display = 'block';
+                return;
+            }
+            
+            // Show results
+            const resultsElement = document.getElementById('analysis-results');
+            resultsElement.innerHTML = `
+                <div class="mb-3">
+                    <span class="badge bg-primary px-3 py-2">${subject}</span>
+                    <span class="badge bg-secondary px-3 py-2 ms-2">${analysisType === 'question_only' ? 'Explanation' : 'Answer Feedback'}</span>
+                    <span class="badge bg-info px-3 py-2 ms-2">Credits: ${data.credits_remaining}</span>
+                </div>
+                <div class="explanation-content">
+                    ${data.explanation}
+                </div>
+            `;
+            resultsElement.style.display = 'block';
+            
+            // Scroll to results
+            resultsElement.scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Hide loading
+            document.getElementById('loading-indicator').style.display = 'none';
+            
+            // Enable analyze button
+            analyzeButton.disabled = false;
+            analyzeButton.innerHTML = '<i class="fas fa-robot me-2"></i> Analyze with AI (10 credits)';
+            
+            // Show error
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = error.message || 'An unexpected error occurred';
+            errorElement.style.display = 'block';
+        });
+    }
+    
+    // Initialize tab event handlers
+    document.querySelectorAll('#captureMethodTabs button').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', event => {
+            // Reset the preview when switching tabs
+            if (previewContainer.style.display === 'block') {
+                resetImageUpload();
+            }
+        });
+    });
+</script>
+{% endblock %}
